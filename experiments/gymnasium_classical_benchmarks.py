@@ -420,9 +420,16 @@ def plot_environment(env_name: str, test_results: dict[str, dict], output: Path)
 
 def main() -> None:
     load_env_file()
+    available_adapters = {
+        adapter.env_id: (name, adapter)
+        for name, adapter in {**ADAPTERS, **LOCOMOTION_ADAPTERS}.items()
+    }
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--suite", choices=("classical", "locomotion", "all"), default="classical"
+        "--environment",
+        choices=tuple(sorted(available_adapters)),
+        required=True,
+        help="run one supported Gymnasium environment",
     )
     parser.add_argument("--model", default=os.environ.get("NVIDIA_MODEL", DEFAULT_NVIDIA_MODEL))
     parser.add_argument(
@@ -450,7 +457,7 @@ def main() -> None:
         "run_id": run_id,
         "started_at": started_at.isoformat(),
         "status": "running",
-        "requested_suite": args.suite,
+        "requested_environment": args.environment,
     }
     if args.resume_run and manifest_path.exists():
         manifest.update(json.loads(manifest_path.read_text(encoding="utf-8")))
@@ -481,15 +488,11 @@ def main() -> None:
         else {}
     )
 
-    adapters = {
-        "classical": ADAPTERS,
-        "locomotion": LOCOMOTION_ADAPTERS,
-        "all": {**ADAPTERS, **LOCOMOTION_ADAPTERS},
-    }[args.suite]
+    env_name, adapter = available_adapters[args.environment]
+    adapters = {env_name: adapter}
     manifest["environment_folders"] = [adapter.env_id for adapter in adapters.values()]
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     for env_index, (env_name, adapter) in enumerate(adapters.items()):
-        suite_name = "classical" if env_name in ADAPTERS else "locomotion"
         environment_output = run_root / adapter.env_id
         for child in ("classical", "lawevo", "plot", "summary"):
             (environment_output / child).mkdir(parents=True, exist_ok=True)
@@ -581,7 +584,6 @@ def main() -> None:
             (generation_output / f"generation_{generation:03d}.json").write_text(
                 json.dumps(
                     {
-                        "suite": suite_name,
                         "environment": adapter.env_id,
                         "generation": generation,
                         "best_so_far": {
@@ -729,7 +731,6 @@ def main() -> None:
         test_results = evaluate_test(adapter, comparison_records, test_seeds)
         plot_environment(adapter.env_id, test_results, environment_output / "plot")
         all_results[env_name] = {
-            "suite": suite_name,
             "environment": adapter.env_id,
             "train_seeds": train_seeds,
             "test_seeds": test_seeds,
@@ -768,7 +769,7 @@ def main() -> None:
         "cem_population": args.cem_population,
         "train_episodes": args.train_episodes,
         "test_episodes": args.test_episodes,
-        "requested_suite": args.suite,
+        "requested_environment": args.environment,
         "prompt_context": "task-specific environment description and control goal",
     }
     for env_name, result in all_results.items():
@@ -793,7 +794,7 @@ def main() -> None:
             json.dumps(
                 {
                     "model": args.model,
-                    "protocol": {**protocol, "suite": result["suite"]},
+                    "protocol": protocol,
                     "result": result,
                 },
                 indent=2,

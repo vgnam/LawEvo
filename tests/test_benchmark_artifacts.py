@@ -3,7 +3,6 @@ import re
 import sys
 
 from lawevo.evolve.nvidia_nim import NVIDIAChatClient
-from lawevo.pid import ADAPTERS
 
 
 def test_timestamped_environment_artifact_layout(tmp_path, monkeypatch) -> None:
@@ -22,8 +21,8 @@ def test_timestamped_environment_artifact_layout(tmp_path, monkeypatch) -> None:
         "argv",
         [
             "gymnasium_classical_benchmarks",
-            "--suite",
-            "classical",
+            "--environment",
+            "InvertedPendulum-v5",
             "--generations",
             "1",
             "--proposals",
@@ -48,14 +47,14 @@ def test_timestamped_environment_artifact_layout(tmp_path, monkeypatch) -> None:
     run_root = run_roots[0]
     manifest = json.loads((run_root / "run_manifest.json").read_text(encoding="utf-8"))
     assert manifest["status"] == "complete"
-    for adapter in ADAPTERS.values():
-        environment = run_root / adapter.env_id
-        assert (environment / "classical" / "controllers.json").is_file()
-        assert (environment / "lawevo" / "best_controller.json").is_file()
-        assert (environment / "lawevo" / "generations" / "generation_000.json").is_file()
-        assert (environment / "lawevo" / "generations" / "generation_001.json").is_file()
-        assert list((environment / "plot").glob("*_comparison.png"))
-        assert list((environment / "plot").glob("*_comparison.pdf"))
-        assert (environment / "summary" / "metrics_summary.csv").is_file()
-        assert (environment / "summary" / "rollout_metrics.csv").is_file()
-        assert (environment / "summary" / "results.json").is_file()
+    assert manifest["requested_environment"] == "InvertedPendulum-v5"
+    environment = run_root / "InvertedPendulum-v5"
+    assert (environment / "classical" / "controllers.json").is_file()
+    assert (environment / "lawevo" / "best_controller.json").is_file()
+    assert (environment / "lawevo" / "generations" / "generation_000.json").is_file()
+    assert (environment / "lawevo" / "generations" / "generation_001.json").is_file()
+    assert list((environment / "plot").glob("*_comparison.png"))
+    assert list((environment / "plot").glob("*_comparison.pdf"))
+    assert (environment / "summary" / "metrics_summary.csv").is_file()
+    assert (environment / "summary" / "rollout_metrics.csv").is_file()
+    assert (environment / "summary" / "results.json").is_file()

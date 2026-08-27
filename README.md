@@ -76,54 +76,38 @@ classical gain with the same CEM budget using **6 training episodes**, and repor
 controller over exactly **30 held-out test episodes**. The CLI defaults use this 20/6/30
 protocol.
 
-### Suite: `classical`
+### Commands for each environment
 
-Runs task-specific classical-control and MuJoCo manipulation environments: `Pendulum-v1`,
-`InvertedPendulum-v5`, `Reacher-v5`, and `Pusher-v5`.
-
-```powershell
-py -m experiments.gymnasium_classical_benchmarks `
-  --suite classical `
-  --generations 20 `
-  --proposals 6 `
-  --proposal-attempts 3 `
-  --cem-iterations 10 `
-  --cem-population 32 `
-  --train-episodes 6 `
-  --test-episodes 30
-```
-
-### Suite: `locomotion`
-
-Runs the MuJoCo locomotion environments `Hopper-v5`, `Walker2d-v5`, `HalfCheetah-v5`,
-`Ant-v5`, and `Humanoid-v5` against tuned Posture P, Posture PD, CPG, and CPG+PD baselines.
+Run exactly one environment per command. These commands explicitly use the standard
+20-generation, 6-training-episode, 30-test-episode protocol:
 
 ```powershell
-py -m experiments.gymnasium_classical_benchmarks `
-  --suite locomotion `
-  --generations 20 `
-  --proposals 6 `
-  --proposal-attempts 3 `
-  --cem-iterations 10 `
-  --cem-population 32 `
-  --train-episodes 6 `
-  --test-episodes 30
-```
+# Pendulum-v1
+py -m experiments.gymnasium_classical_benchmarks --environment Pendulum-v1 --generations 20 --train-episodes 6 --test-episodes 30
 
-### Suite: `all`
+# InvertedPendulum-v5
+py -m experiments.gymnasium_classical_benchmarks --environment InvertedPendulum-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-Runs both suites in one timestamped benchmark:
+# Reacher-v5
+py -m experiments.gymnasium_classical_benchmarks --environment Reacher-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-```powershell
-py -m experiments.gymnasium_classical_benchmarks `
-  --suite all `
-  --generations 20 `
-  --proposals 6 `
-  --proposal-attempts 3 `
-  --cem-iterations 10 `
-  --cem-population 32 `
-  --train-episodes 6 `
-  --test-episodes 30
+# Pusher-v5
+py -m experiments.gymnasium_classical_benchmarks --environment Pusher-v5 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Hopper-v5
+py -m experiments.gymnasium_classical_benchmarks --environment Hopper-v5 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Walker2d-v5
+py -m experiments.gymnasium_classical_benchmarks --environment Walker2d-v5 --generations 20 --train-episodes 6 --test-episodes 30
+
+# HalfCheetah-v5
+py -m experiments.gymnasium_classical_benchmarks --environment HalfCheetah-v5 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Ant-v5
+py -m experiments.gymnasium_classical_benchmarks --environment Ant-v5 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Humanoid-v5
+py -m experiments.gymnasium_classical_benchmarks --environment Humanoid-v5 --generations 20 --train-episodes 6 --test-episodes 30
 ```
 
 The reported return, success rate, energy, and jerk are means over the 30 held-out test
@@ -160,7 +144,7 @@ run, provide its directory name:
 
 ```powershell
 py -m experiments.gymnasium_classical_benchmarks `
-  --suite all `
+  --environment Ant-v5 `
   --resume-run 20260827_231500 `
   --generations 20 `
   --proposals 6 `
@@ -172,17 +156,17 @@ py -m experiments.gymnasium_classical_benchmarks `
 
 ### Supported Gymnasium environments
 
-| Suite | Environment | Tuned classical baselines |
-|---|---|---|
-| `classical` | `Pendulum-v1` | P, PI, PD, PID |
-| `classical` | `InvertedPendulum-v5` | P, PI, PD, PID, LQR |
-| `classical` | `Reacher-v5` | task-space P, PI, PD, PID |
-| `classical` | `Pusher-v5` | task-space P, PI, PD, PID |
-| `locomotion` | `Hopper-v5` | Posture P, Posture PD, CPG, CPG+PD |
-| `locomotion` | `Walker2d-v5` | Posture P, Posture PD, CPG, CPG+PD |
-| `locomotion` | `HalfCheetah-v5` | Posture P, Posture PD, CPG, CPG+PD |
-| `locomotion` | `Ant-v5` | Posture P, Posture PD, CPG, CPG+PD |
-| `locomotion` | `Humanoid-v5` | Posture P, Posture PD, CPG, CPG+PD |
+| Environment | Tuned classical baselines |
+|---|---|
+| `Pendulum-v1` | P, PI, PD, PID |
+| `InvertedPendulum-v5` | P, PI, PD, PID, LQR |
+| `Reacher-v5` | task-space P, PI, PD, PID |
+| `Pusher-v5` | task-space P, PI, PD, PID |
+| `Hopper-v5` | Posture P, Posture PD, CPG, CPG+PD |
+| `Walker2d-v5` | Posture P, Posture PD, CPG, CPG+PD |
+| `HalfCheetah-v5` | Posture P, Posture PD, CPG, CPG+PD |
+| `Ant-v5` | Posture P, Posture PD, CPG, CPG+PD |
+| `Humanoid-v5` | Posture P, Posture PD, CPG, CPG+PD |
 
 These are the environments currently implemented by LawEvo adapters. Other Gymnasium
 environments can be added, but require an adapter defining observation-to-signal mapping,
