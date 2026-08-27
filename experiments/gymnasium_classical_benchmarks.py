@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import getpass
 import itertools
 import json
@@ -264,6 +265,76 @@ def evaluate_test(adapter, records: list[dict], seeds: list[int]) -> dict[str, d
     return output
 
 
+def write_metric_logs(all_results: dict[str, object], output: Path) -> None:
+    """Write aggregate and per-rollout comparison logs in analysis-friendly CSV files."""
+    summary_fields = (
+        "environment",
+        "controller",
+        "controller_kind",
+        "return",
+        "success_rate",
+        "energy",
+        "jerk",
+        "score",
+        "complexity",
+    )
+    rollout_fields = (
+        "environment",
+        "controller",
+        "controller_kind",
+        "rollout",
+        "seed",
+        "return",
+        "success",
+        "energy",
+        "jerk",
+    )
+    with (output / "metrics_summary.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=summary_fields)
+        writer.writeheader()
+        for result in all_results.values():
+            for controller, values in result["test"].items():
+                metrics = values["metrics"]
+                writer.writerow(
+                    {
+                        "environment": result["environment"],
+                        "controller": controller,
+                        "controller_kind": (
+                            "evolved" if controller == "Evolved Structure" else "classical"
+                        ),
+                        "return": metrics["episode_return"],
+                        "success_rate": metrics["success_rate"],
+                        "energy": metrics["energy"],
+                        "jerk": metrics["jerk"],
+                        "score": metrics["score"],
+                        "complexity": metrics["complexity"],
+                    }
+                )
+    with (output / "rollout_metrics.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=rollout_fields)
+        writer.writeheader()
+        for result in all_results.values():
+            for controller, values in result["test"].items():
+                for index, seed in enumerate(result["test_seeds"]):
+                    writer.writerow(
+                        {
+                            "environment": result["environment"],
+                            "controller": controller,
+                            "controller_kind": (
+                                "evolved"
+                                if controller == "Evolved Structure"
+                                else "classical"
+                            ),
+                            "rollout": index + 1,
+                            "seed": seed,
+                            "return": values["episode_returns"][index],
+                            "success": values["success"][index],
+                            "energy": values["energy"][index],
+                            "jerk": values["jerk"][index],
+                        }
+                    )
+
+
 def plot_environment(env_name: str, test_results: dict[str, dict], output: Path) -> None:
     mpl.rcParams.update(
         {
@@ -313,7 +384,9 @@ def main() -> None:
     load_env_file()
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=Path("results/gymnasium_benchmarks"))
-    parser.add_argument("--suite", choices=("classical", "locomotion"), default="classical")
+    parser.add_argument(
+        "--suite", choices=("classical", "locomotion", "all"), default="classical"
+    )
     parser.add_argument("--model", default=os.environ.get("NVIDIA_MODEL", DEFAULT_NVIDIA_MODEL))
     parser.add_argument(
         "--base-url", default=os.environ.get("NVIDIA_BASE_URL", DEFAULT_NVIDIA_BASE_URL)
@@ -352,7 +425,11 @@ def main() -> None:
         else {}
     )
 
-    adapters = ADAPTERS if args.suite == "classical" else LOCOMOTION_ADAPTERS
+    adapters = {
+        "classical": ADAPTERS,
+        "locomotion": LOCOMOTION_ADAPTERS,
+        "all": {**ADAPTERS, **LOCOMOTION_ADAPTERS},
+    }[args.suite]
     for env_index, (env_name, adapter) in enumerate(adapters.items()):
         train_seeds = [
             10_000 * (env_index + 1) + index for index in range(args.train_episodes)
@@ -592,6 +669,18 @@ def main() -> None:
     (args.output / "nim_responses.json").write_text(
         json.dumps(raw_responses, indent=2), encoding="utf-8"
     )
+    write_metric_logs(all_results, args.output)
+    print("\nHeld-out controller comparison:", flush=True)
+    for result in all_results.values():
+        for controller, values in result["test"].items():
+            metrics = values["metrics"]
+            print(
+                f"env={result['environment']} controller={controller!r} "
+                f"return={metrics['episode_return']:.6g} "
+                f"success_rate={metrics['success_rate']:.3f} "
+                f"energy={metrics['energy']:.6g} jerk={metrics['jerk']:.6g}",
+                flush=True,
+            )
     print(
         json.dumps({name: result["best_evolved"] for name, result in all_results.items()}, indent=2)
     )

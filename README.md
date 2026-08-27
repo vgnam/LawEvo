@@ -69,6 +69,56 @@ settings. Never commit a real API key.
 
 ## Running the experiments
 
+### Evolve and compare every supported benchmark
+
+The following single command evolves task-specific structures, tunes every evolved and
+classical gain with the same CEM budget, and reports each controller over exactly **10
+held-out rollouts**:
+
+```powershell
+py -m experiments.gymnasium_classical_benchmarks `
+  --suite all `
+  --output results/all_gymnasium_10_rollouts `
+  --generations 8 `
+  --proposals 6 `
+  --proposal-attempts 3 `
+  --cem-iterations 10 `
+  --cem-population 32 `
+  --train-episodes 6 `
+  --test-episodes 10
+```
+
+The reported return, success rate, energy, and jerk are means over those 10 held-out
+rollouts. The output directory contains:
+
+- `metrics_summary.csv`: one aggregate row per environment/controller.
+- `rollout_metrics.csv`: return, success, energy, and jerk for every seed and rollout.
+- `results.json`: protocol, optimized gains, aggregate metrics, and full episode arrays.
+- `<environment>_comparison.png` and `.pdf`: return/success/energy/jerk comparison plots.
+- `nim_responses.json`: raw structure-generation responses and fallback events.
+- `evaluation_cache.json` and `generation_plans.json`: resumable evolution state.
+
+The same metrics are also printed to the console when the run finishes. Re-run the exact
+command to resume an interrupted run. Use `--fresh` only to intentionally discard the
+cache and start a new evolution trajectory.
+
+### Supported Gymnasium environments
+
+| Suite | Environment | Tuned classical baselines |
+|---|---|---|
+| `classical` | `Pendulum-v1` | P, PI, PD, PID |
+| `classical` | `InvertedPendulum-v5` | P, PI, PD, PID, LQR |
+| `classical` | `Reacher-v5` | task-space P, PI, PD, PID |
+| `locomotion` | `Hopper-v5` | Posture P, Posture PD, CPG, CPG+PD |
+| `locomotion` | `Walker2d-v5` | Posture P, Posture PD, CPG, CPG+PD |
+| `locomotion` | `HalfCheetah-v5` | Posture P, Posture PD, CPG, CPG+PD |
+
+These are the environments currently implemented by LawEvo adapters. Other Gymnasium
+environments can be added, but require an adapter defining observation-to-signal mapping,
+action semantics, classical structures, success criteria, and task-specific prompt goals.
+
+### Run one suite only
+
 Task-specific classical-control and MuJoCo manipulation benchmarks:
 
 ```powershell
@@ -78,7 +128,8 @@ py -m experiments.gymnasium_classical_benchmarks `
   --generations 8 `
   --proposals 6 `
   --cem-iterations 10 `
-  --cem-population 32
+  --cem-population 32 `
+  --test-episodes 10
 ```
 
 Additional MuJoCo locomotion baselines (`Hopper-v5`, `Walker2d-v5`, and
@@ -94,7 +145,7 @@ py -m experiments.gymnasium_classical_benchmarks `
   --cem-iterations 10 `
   --cem-population 32 `
   --train-episodes 4 `
-  --test-episodes 20
+  --test-episodes 10
 ```
 
 Runs checkpoint every evaluated structure and save complete generation plans. Re-run the
