@@ -1,0 +1,734 @@
+{
+  "model": "openai/gpt-oss-120b",
+  "outer_generations": 3,
+  "api_calls": 3,
+  "cem": {
+    "iterations": 7,
+    "population": 32
+  },
+  "train_scenarios": 10,
+  "test_scenarios": 30,
+  "objective": "120*success - 10*distance - 1.2*settling - 0.10*energy - 0.003*jerk - 2*heading_error - 0.08*term_count",
+  "best_structure": {
+    "name": "Minimal_TanhGate",
+    "distance_terms": [
+      "tanh_error",
+      "tanh_derivative"
+    ],
+    "heading_terms": [
+      "tanh_error",
+      "tanh_derivative"
+    ],
+    "velocity_gate": "cosine"
+  },
+  "best_gains": [
+    3.075684361705416,
+    -1.177941516951889,
+    3.9098801186666385,
+    -0.5721519341221044
+  ],
+  "best_formula": "v = gate[cosine]((3.076)\u00b7tanh_error + (-1.178)\u00b7tanh_derivative); omega = (3.91)\u00b7tanh_error + (-0.5722)\u00b7tanh_derivative",
+  "best_train_metrics": {
+    "score": 113.8342046269481,
+    "success_rate": 1.0,
+    "mean_final_distance": 0.015375167869945658,
+    "mean_settling_time": 3.56,
+    "mean_energy": 10.274069235748659,
+    "mean_jerk": 15.780461651422097,
+    "mean_heading_error": 0.1726476929116571
+  },
+  "fixed_pid_cem_gains": [
+    3.7071053815321773,
+    2.147354763314775,
+    1.3642100820652883,
+    4.745718869832875,
+    0.01025512168053333,
+    0.403127141331165
+  ],
+  "fixed_pid_train_metrics": {
+    "score": 113.5612255920207,
+    "success_rate": 1.0,
+    "mean_final_distance": 0.017858059376040777,
+    "mean_settling_time": 3.5900000000000007,
+    "mean_energy": 10.186467266721376,
+    "mean_jerk": 19.54856627738733,
+    "mean_heading_error": 0.19745069435729662
+  },
+  "heldout": {
+    "Grid PID": {
+      "score": 113.02856224760814,
+      "final_distance": 0.07261676767826115,
+      "settling_time": 3.4099999999999993,
+      "energy": 9.602755813582009,
+      "jerk": 17.556017164169567,
+      "success": 1.0
+    },
+    "Gain-only NIM": {
+      "score": 113.50534958864449,
+      "final_distance": 0.028782184231251094,
+      "settling_time": 3.2633333333333336,
+      "energy": 10.022920413048633,
+      "jerk": 30.424207265644345,
+      "success": 1.0
+    },
+    "PID + CEM": {
+      "score": 113.61772468666724,
+      "final_distance": 0.021025989017991322,
+      "settling_time": 3.256666666666667,
+      "energy": 10.067810929747822,
+      "jerk": 27.08823224537038,
+      "success": 1.0
+    },
+    "Structure + CEM": {
+      "score": 113.99011241323815,
+      "final_distance": 0.020880667849354342,
+      "settling_time": 3.1599999999999997,
+      "energy": 9.931739048103017,
+      "jerk": 18.33596071315263,
+      "success": 1.0
+    }
+  },
+  "valid_structures_per_call": [
+    5,
+    5,
+    5
+  ],
+  "all_structures": [
+    {
+      "structure": {
+        "name": "Minimal_TanhGate",
+        "distance_terms": [
+          "tanh_error",
+          "tanh_derivative"
+        ],
+        "heading_terms": [
+          "tanh_error",
+          "tanh_derivative"
+        ],
+        "velocity_gate": "cosine"
+      },
+      "gains": [
+        3.075684361705416,
+        -1.177941516951889,
+        3.9098801186666385,
+        -0.5721519341221044
+      ],
+      "train_metrics": {
+        "score": 113.8342046269481,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.015375167869945658,
+        "mean_settling_time": 3.56,
+        "mean_energy": 10.274069235748659,
+        "mean_jerk": 15.780461651422097,
+        "mean_heading_error": 0.1726476929116571
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "PD",
+        "distance_terms": [
+          "error",
+          "derivative"
+        ],
+        "heading_terms": [
+          "error",
+          "derivative"
+        ],
+        "velocity_gate": "positive_cosine"
+      },
+      "gains": [
+        3.943406433681333,
+        -3.1479643336424488,
+        3.7392459221997236,
+        0.048101142697356616
+      ],
+      "train_metrics": {
+        "score": 113.72751341910633,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.018380202394126164,
+        "mean_settling_time": 3.5900000000000007,
+        "mean_energy": 10.211049687186701,
+        "mean_jerk": 16.89697835149131,
+        "mean_heading_error": 0.19444432658962382
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PI",
+        "distance_terms": [
+          "error",
+          "integral"
+        ],
+        "heading_terms": [
+          "error",
+          "integral"
+        ],
+        "velocity_gate": "positive_cosine"
+      },
+      "gains": [
+        1.0699047118008589,
+        1.8361213192485164,
+        4.992025451539274,
+        0.013676709090878656
+      ],
+      "train_metrics": {
+        "score": 113.70931373023504,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.022089133798937118,
+        "mean_settling_time": 3.585,
+        "mean_energy": 10.323033166851863,
+        "mean_jerk": 17.549676771448233,
+        "mean_heading_error": 0.18142129238803825
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PD_tanh",
+        "distance_terms": [
+          "error",
+          "derivative",
+          "tanh_error"
+        ],
+        "heading_terms": [
+          "error",
+          "derivative",
+          "tanh_derivative"
+        ],
+        "velocity_gate": "cosine"
+      },
+      "gains": [
+        0.3766493515608049,
+        -1.2485015931069505,
+        0.9344345151849739,
+        2.9593862744963673,
+        -0.4704337696267811,
+        0.212718554922736
+      ],
+      "train_metrics": {
+        "score": 113.66317479286224,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.016587830145882436,
+        "mean_settling_time": 3.56,
+        "mean_energy": 10.148340524491125,
+        "mean_jerk": 14.22619557498999,
+        "mean_heading_error": 0.1807171332524224
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Minimal_PD_Gate",
+        "distance_terms": [
+          "error",
+          "derivative"
+        ],
+        "heading_terms": [
+          "error",
+          "derivative"
+        ],
+        "velocity_gate": "none"
+      },
+      "gains": [
+        3.019383300150322,
+        -1.6634022968388695,
+        2.46348660686773,
+        -0.4477077869849745
+      ],
+      "train_metrics": {
+        "score": 113.64562828751157,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.019193818575472033,
+        "mean_settling_time": 3.6399999999999997,
+        "mean_energy": 10.779778220336764,
+        "mean_jerk": 8.09888342819475,
+        "mean_heading_error": 0.18607952720773085
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Coupled_PD",
+        "distance_terms": [
+          "error",
+          "derivative",
+          "heading_coupling"
+        ],
+        "heading_terms": [
+          "error",
+          "derivative",
+          "distance_coupling"
+        ],
+        "velocity_gate": "cosine"
+      },
+      "gains": [
+        0.5777023048895649,
+        -3.5634581092736966,
+        -0.26317775272047794,
+        1.839198139314268,
+        -0.14244897564902007,
+        1.4847684450626801
+      ],
+      "train_metrics": {
+        "score": 113.64280237449697,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.016829532943552238,
+        "mean_settling_time": 3.56,
+        "mean_energy": 10.304914091460914,
+        "mean_jerk": 21.76666420791213,
+        "mean_heading_error": 0.1705554471488346
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "PD_TanhSqrt",
+        "distance_terms": [
+          "error",
+          "derivative",
+          "tanh_error",
+          "sqrt_error"
+        ],
+        "heading_terms": [
+          "error",
+          "derivative",
+          "tanh_derivative"
+        ],
+        "velocity_gate": "cosine"
+      },
+      "gains": [
+        2.904326147649508,
+        -0.047565935543247395,
+        1.1718660240685996,
+        3.6126315802356013,
+        3.562638026498612,
+        0.1056758326437382,
+        -0.48536514371755546
+      ],
+      "train_metrics": {
+        "score": 113.56849926654259,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.010844653570722989,
+        "mean_settling_time": 3.56,
+        "mean_energy": 10.32287485668507,
+        "mean_jerk": 32.709851400041316,
+        "mean_heading_error": 0.18031857894077247
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Fixed PID",
+        "distance_terms": [
+          "error",
+          "integral",
+          "derivative"
+        ],
+        "heading_terms": [
+          "error",
+          "integral",
+          "derivative"
+        ],
+        "velocity_gate": "positive_cosine"
+      },
+      "gains": [
+        3.7071053815321773,
+        2.147354763314775,
+        1.3642100820652883,
+        4.745718869832875,
+        0.01025512168053333,
+        0.403127141331165
+      ],
+      "train_metrics": {
+        "score": 113.5612255920207,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.017858059376040777,
+        "mean_settling_time": 3.5900000000000007,
+        "mean_energy": 10.186467266721376,
+        "mean_jerk": 19.54856627738733,
+        "mean_heading_error": 0.19745069435729662
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PI_sqrt_coupling",
+        "distance_terms": [
+          "error",
+          "integral",
+          "sqrt_error"
+        ],
+        "heading_terms": [
+          "error",
+          "integral",
+          "distance_coupling"
+        ],
+        "velocity_gate": "positive_cosine"
+      },
+      "gains": [
+        0.730621483529871,
+        1.5985161554181055,
+        0.4778154005271986,
+        3.160972364689459,
+        0.011828685476017823,
+        0.2972269948258923
+      ],
+      "train_metrics": {
+        "score": 113.55295970664058,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.02202692955568373,
+        "mean_settling_time": 3.585,
+        "mean_energy": 10.219268832696349,
+        "mean_jerk": 15.029637606517406,
+        "mean_heading_error": 0.18887760085669986
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Sqrt_Tanh_Combined",
+        "distance_terms": [
+          "error",
+          "sqrt_error",
+          "tanh_error"
+        ],
+        "heading_terms": [
+          "error",
+          "tanh_derivative",
+          "distance_coupling"
+        ],
+        "velocity_gate": "none"
+      },
+      "gains": [
+        5.07834150846496,
+        2.3960496585687583,
+        4.884148608375863,
+        -0.2410901389956631,
+        0.41044525312627694,
+        2.2396863936134186
+      ],
+      "train_metrics": {
+        "score": 113.50986559359168,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.014490951234837198,
+        "mean_settling_time": 3.6399999999999997,
+        "mean_energy": 10.776364152639722,
+        "mean_jerk": 12.520550726524828,
+        "mean_heading_error": 0.19101341330820107
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Hybrid_PD_Tanh_Coupled",
+        "distance_terms": [
+          "error",
+          "derivative",
+          "tanh_error",
+          "heading_coupling"
+        ],
+        "heading_terms": [
+          "error",
+          "derivative",
+          "tanh_derivative",
+          "distance_coupling"
+        ],
+        "velocity_gate": "cosine"
+      },
+      "gains": [
+        0.16143286270236423,
+        -1.1283860500415996,
+        1.26901711073182,
+        2.590401078599832,
+        3.0786876713272116,
+        0.3007301058686587,
+        -0.03115352926768311,
+        1.1426206054546946
+      ],
+      "train_metrics": {
+        "score": 113.47758696410219,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.017558216900739256,
+        "mean_settling_time": 3.5549999999999997,
+        "mean_energy": 10.238435028987507,
+        "mean_jerk": 18.348484303320312,
+        "mean_heading_error": 0.1809709555408461
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "PI_QuadraticCoupled",
+        "distance_terms": [
+          "error",
+          "integral",
+          "quadratic_error",
+          "heading_coupling"
+        ],
+        "heading_terms": [
+          "error",
+          "integral",
+          "distance_coupling"
+        ],
+        "velocity_gate": "positive_cosine"
+      },
+      "gains": [
+        3.5573328392778993,
+        2.65472678851032,
+        2.6254560846089623,
+        -0.09177852568257647,
+        1.942462004226957,
+        -0.0013745812855573414,
+        0.9457473312157629
+      ],
+      "train_metrics": {
+        "score": 113.46758392494232,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.018972747258669306,
+        "mean_settling_time": 3.5900000000000007,
+        "mean_energy": 10.364144818136918,
+        "mean_jerk": 22.713913232318546,
+        "mean_heading_error": 0.18506619048016146
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Coupled_SqrtPD",
+        "distance_terms": [
+          "error",
+          "derivative",
+          "sqrt_error",
+          "heading_coupling"
+        ],
+        "heading_terms": [
+          "error",
+          "derivative",
+          "distance_coupling",
+          "sqrt_error"
+        ],
+        "velocity_gate": "none"
+      },
+      "gains": [
+        -2.3946194924302655,
+        -0.3686622753840055,
+        3.0809756979801928,
+        3.565254709746741,
+        0.4593272673941214,
+        0.05277395303951393,
+        0.945832526560569,
+        0.4845276955616614
+      ],
+      "train_metrics": {
+        "score": 113.46613535581608,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.014672329207683531,
+        "mean_settling_time": 3.5549999999999997,
+        "mean_energy": 10.117651544694214,
+        "mean_jerk": 34.82820668344412,
+        "mean_heading_error": 0.1824457887936621
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Coupled_Triple",
+        "distance_terms": [
+          "error",
+          "derivative",
+          "heading_coupling",
+          "quadratic_error"
+        ],
+        "heading_terms": [
+          "error",
+          "derivative",
+          "distance_coupling",
+          "tanh_derivative"
+        ],
+        "velocity_gate": "cosine"
+      },
+      "gains": [
+        -1.0434523474985857,
+        -1.6467415272914292,
+        2.2986666256800343,
+        0.2352625830972963,
+        1.9288509609491256,
+        0.3946265035436764,
+        1.8001531444977983,
+        -0.4710840496074197
+      ],
+      "train_metrics": {
+        "score": 113.43710747630287,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.020141418398986678,
+        "mean_settling_time": 3.5700000000000003,
+        "mean_energy": 10.299888412036601,
+        "mean_jerk": 19.442228898365475,
+        "mean_heading_error": 0.17458140590424867
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Quadratic_PI",
+        "distance_terms": [
+          "error",
+          "integral",
+          "quadratic_error"
+        ],
+        "heading_terms": [
+          "error",
+          "integral"
+        ],
+        "velocity_gate": "positive_cosine"
+      },
+      "gains": [
+        1.2785079627710756,
+        0.43548026939365025,
+        1.5372931176503721,
+        3.142018471376931,
+        0.18995694264489538
+      ],
+      "train_metrics": {
+        "score": 113.39903587179646,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.033650213570766946,
+        "mean_settling_time": 3.5900000000000007,
+        "mean_energy": 10.312788195875475,
+        "mean_jerk": 24.808524082937836,
+        "mean_heading_error": 0.2253788003297518
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "P",
+        "distance_terms": [
+          "error"
+        ],
+        "heading_terms": [
+          "error"
+        ],
+        "velocity_gate": "positive_cosine"
+      },
+      "gains": [
+        6.0,
+        4.2499060503036254
+      ],
+      "train_metrics": {
+        "score": 113.35996461296475,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.06857705090734677,
+        "mean_settling_time": 3.6050000000000004,
+        "mean_energy": 10.13842045442587,
+        "mean_jerk": 27.330297740002095,
+        "mean_heading_error": 0.186215969649597
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "Hybrid_PI_PD",
+        "distance_terms": [
+          "error",
+          "integral",
+          "derivative",
+          "quadratic_error"
+        ],
+        "heading_terms": [
+          "error",
+          "integral",
+          "derivative",
+          "tanh_derivative"
+        ],
+        "velocity_gate": "positive_cosine"
+      },
+      "gains": [
+        3.4824115846538164,
+        0.34081657399347476,
+        0.6843372247062108,
+        1.9555758803373022,
+        3.0737365653740354,
+        -0.03645531781305156,
+        -0.1040519453659155,
+        0.2955987568772822
+      ],
+      "train_metrics": {
+        "score": 113.14344061062603,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.038470275996743665,
+        "mean_settling_time": 3.6,
+        "mean_energy": 10.011425832045008,
+        "mean_jerk": 20.802953762460533,
+        "mean_heading_error": 0.22415259245733093
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Sparse_Tanh",
+        "distance_terms": [
+          "tanh_error",
+          "sqrt_error"
+        ],
+        "heading_terms": [
+          "tanh_derivative",
+          "quadratic_error"
+        ],
+        "velocity_gate": "none"
+      },
+      "gains": [
+        3.0687975218061467,
+        1.6718821082971824,
+        0.24891943947497225,
+        5.963870995475763
+      ],
+      "train_metrics": {
+        "score": 112.62563682031265,
+        "success_rate": 1.0,
+        "mean_final_distance": 0.07246400239162305,
+        "mean_settling_time": 3.72,
+        "mean_energy": 10.952011329663348,
+        "mean_jerk": 28.170500591221604,
+        "mean_heading_error": 0.343005260515562
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Nonlinear_PID",
+        "distance_terms": [
+          "quadratic_error",
+          "tanh_error",
+          "integral"
+        ],
+        "heading_terms": [
+          "quadratic_error",
+          "tanh_derivative",
+          "integral"
+        ],
+        "velocity_gate": "none"
+      },
+      "gains": [
+        1.764373794846669,
+        0.9932787274082935,
+        3.25757415131459,
+        6.0,
+        0.906592423915455,
+        2.4837169051815864
+      ],
+      "train_metrics": {
+        "score": 97.31860599548763,
+        "success_rate": 0.9,
+        "mean_final_distance": 0.1820925017894777,
+        "mean_settling_time": 4.66,
+        "mean_energy": 17.792145192270496,
+        "mean_jerk": 21.23609152110493,
+        "mean_heading_error": 0.4727730964136141
+      },
+      "generation": 1
+    }
+  ]
+}

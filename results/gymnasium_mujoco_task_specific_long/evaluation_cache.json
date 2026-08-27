@@ -1,0 +1,2866 @@
+{
+  "pendulum": [
+    {
+      "structure": {
+        "name": "P",
+        "terms": [
+          "angle"
+        ]
+      },
+      "gains": [
+        -9.143070044306297
+      ],
+      "metrics": {
+        "score": -835.8506012568862,
+        "episode_return": -835.7245839431034,
+        "success_rate": 0.16666666666666666,
+        "energy": 33.935440908417895,
+        "jerk": 1907.3215982974136,
+        "complexity": 1
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PI",
+        "terms": [
+          "angle",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -12.026326582655447,
+        2.646619496948004
+      ],
+      "metrics": {
+        "score": -792.0126942340135,
+        "episode_return": -791.872262220783,
+        "success_rate": 0.16666666666666666,
+        "energy": 31.98036004141615,
+        "jerk": 1823.5646573802708,
+        "complexity": 2
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PD",
+        "terms": [
+          "angle",
+          "angular_velocity"
+        ]
+      },
+      "gains": [
+        -6.5865319253858035,
+        -1.0930258929254932
+      ],
+      "metrics": {
+        "score": -790.428058722346,
+        "episode_return": -790.2942948165587,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.129050534559692,
+        "jerk": 1775.2902359118946,
+        "complexity": 2
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PID",
+        "terms": [
+          "angle",
+          "integral_angle",
+          "angular_velocity"
+        ]
+      },
+      "gains": [
+        -5.95633101810245,
+        0.2798911377888478,
+        -0.6161155479306357
+      ],
+      "metrics": {
+        "score": -790.6581315699469,
+        "episode_return": -790.5038099948882,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.403457029309568,
+        "jerk": 1775.733050007395,
+        "complexity": 3
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "P_sin",
+        "terms": [
+          "angle",
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        -3.2327321438725405,
+        -3.3886906996437567
+      ],
+      "metrics": {
+        "score": -824.4595753019398,
+        "episode_return": -824.3162129452367,
+        "success_rate": 0.16666666666666666,
+        "energy": 33.295949409287026,
+        "jerk": 1838.5228942281385,
+        "complexity": 2
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "PD_tanh_angle",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -4.067183836589353,
+        -1.4911349979591337,
+        -3.867446120751809
+      ],
+      "metrics": {
+        "score": -790.4444199473081,
+        "episode_return": -790.290648042585,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.12742127727172,
+        "jerk": 1775.8531084301394,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "PID_tanh_velocity",
+        "terms": [
+          "angle",
+          "integral_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -5.495357803877817,
+        -0.01896290776351428,
+        -0.9648136139538386
+      ],
+      "metrics": {
+        "score": -790.472981341184,
+        "episode_return": -790.3191770467338,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.15550098044182,
+        "jerk": 1774.6646244693338,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "PD_sqrt_angle",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        -2.751849160005129,
+        -1.138397901584622,
+        -2.2548517332907494
+      ],
+      "metrics": {
+        "score": -790.4769130495733,
+        "episode_return": -790.3228885848893,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.20566489484368,
+        "jerk": 1780.6567447235695,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "PI_cubic_angle",
+        "terms": [
+          "angle",
+          "integral_angle",
+          "cubic_angle"
+        ]
+      },
+      "gains": [
+        -7.6546981343426905,
+        0.6253800220382485,
+        1.4055106335143686
+      ],
+      "metrics": {
+        "score": -750.7239152985351,
+        "episode_return": -750.5190225377656,
+        "success_rate": 0.16666666666666666,
+        "energy": 31.16547365099579,
+        "jerk": 4128.090673374257,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Sin_Tanh_Combined",
+        "terms": [
+          "sin_angle",
+          "tanh_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -4.560390853303032,
+        -6.34359350984292,
+        -0.3773763256954889
+      ],
+      "metrics": {
+        "score": -836.1899915155145,
+        "episode_return": -836.025525643185,
+        "success_rate": 0.16666666666666666,
+        "energy": 33.08868582994064,
+        "jerk": 1914.4250334823785,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Angle_Cubic_TanhV",
+        "terms": [
+          "angle",
+          "cubic_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -6.082696084516954,
+        -2.4658636789625197,
+        -1.1438086107977274
+      ],
+      "metrics": {
+        "score": -790.4469279888793,
+        "episode_return": -790.2931653016716,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.128604259870404,
+        "jerk": 1775.2739343993323,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "PD_Integral_Sin",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "integral_angle",
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        -7.115638324015908,
+        -1.7524345755750843,
+        -0.3320866214983989,
+        -2.308659983196787
+      ],
+      "metrics": {
+        "score": -790.4727462230086,
+        "episode_return": -790.2989026788381,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.149553867278353,
+        "jerk": 1777.2218217919244,
+        "complexity": 4
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Angle_Sqrt_TanhAngle_TanhVel",
+        "terms": [
+          "angle",
+          "sqrt_angle",
+          "tanh_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -2.0824154346581087,
+        -4.189305279598364,
+        0.5299506492031372,
+        -3.51573913113511
+      ],
+      "metrics": {
+        "score": -790.2967963117284,
+        "episode_return": -790.1221966545332,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.371514875097144,
+        "jerk": 1792.831372242709,
+        "complexity": 4
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Full_Nonlinear",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "integral_angle",
+          "cubic_angle",
+          "sin_angle",
+          "tanh_angle",
+          "tanh_velocity",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        -2.0448728227796895,
+        -1.2998132299451826,
+        -0.8010050392788182,
+        -4.524396607031688,
+        -0.7311213779650656,
+        -6.000737772368984,
+        -1.3690216455820028,
+        -0.5937503587917581
+      ],
+      "metrics": {
+        "score": -790.5502651690879,
+        "episode_return": -790.2964494087447,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.138507410996393,
+        "jerk": 1776.937276059157,
+        "complexity": 8
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Integral_Sin_TanhAngle",
+        "terms": [
+          "integral_angle",
+          "sin_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        2.8558708153517878,
+        -6.116352026990251,
+        -3.2590999696813863
+      ],
+      "metrics": {
+        "score": -741.2983610099039,
+        "episode_return": -741.1473385639065,
+        "success_rate": 0.0,
+        "energy": 33.357548954518904,
+        "jerk": 1215.3674044213838,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Angle_Cubic_Sqrt",
+        "terms": [
+          "angle",
+          "cubic_angle",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        -6.9589296800718214,
+        -1.328769000320151,
+        -0.3706704725867547
+      ],
+      "metrics": {
+        "score": -836.5422747617855,
+        "episode_return": -836.3769621500278,
+        "success_rate": 0.16666666666666666,
+        "energy": 33.58050848681986,
+        "jerk": 1907.5797392060915,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Angle_Sin_TanhVelocity",
+        "terms": [
+          "angle",
+          "sin_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -7.421723854945829,
+        -4.0032195125048755,
+        -3.058622721323321
+      ],
+      "metrics": {
+        "score": -790.4411837682127,
+        "episode_return": -790.2873690816399,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.13169074093,
+        "jerk": 1777.5652545485827,
+        "complexity": 3
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Integral_TanhAngle_TanhVelocity",
+        "terms": [
+          "integral_angle",
+          "tanh_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        0.7474389234791279,
+        -6.982388340838188,
+        -0.5278314288853279
+      ],
+      "metrics": {
+        "score": -791.0444298268862,
+        "episode_return": -790.8890415189636,
+        "success_rate": 0.16666666666666666,
+        "energy": 29.91468766273206,
+        "jerk": 1777.9466298658342,
+        "complexity": 3
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Cubic_Sqrt_TanhAngle",
+        "terms": [
+          "cubic_angle",
+          "sqrt_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -4.461901895565557,
+        -1.8246052369324846,
+        -1.5500055651673057
+      ],
+      "metrics": {
+        "score": -836.3331205460221,
+        "episode_return": -836.1690804030842,
+        "success_rate": 0.16666666666666666,
+        "energy": 33.07173129833925,
+        "jerk": 1894.8340170644635,
+        "complexity": 3
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Angle_Integral_Sqrt",
+        "terms": [
+          "angle",
+          "integral_angle",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        5.072783102832086,
+        0.47898483626404015,
+        -9.144905296309977
+      ],
+      "metrics": {
+        "score": -766.4039362788493,
+        "episode_return": -766.2381682871586,
+        "success_rate": 0.16666666666666666,
+        "energy": 34.85961099868773,
+        "jerk": 1802.4384846709745,
+        "complexity": 3
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Angle_TanhAngle_TanhVelocity_Sin",
+        "terms": [
+          "angle",
+          "tanh_angle",
+          "tanh_velocity",
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        -6.194207054874358,
+        -2.721392944779394,
+        -2.9455521352062592,
+        -2.618908937653666
+      ],
+      "metrics": {
+        "score": -790.4615304275732,
+        "episode_return": -790.2876989009155,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.13548144186218,
+        "jerk": 1778.0281886954508,
+        "complexity": 4
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Angle_Integral_Cubic_TanhVelocity",
+        "terms": [
+          "angle",
+          "integral_angle",
+          "cubic_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -7.010773245530714,
+        0.19978129519611043,
+        -4.261629245536986,
+        -1.0159000914758225
+      ],
+      "metrics": {
+        "score": -790.5018788336786,
+        "episode_return": -790.3279497332068,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.195587188515372,
+        "jerk": 1776.8963047361513,
+        "complexity": 4
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "PID_TanhAngle",
+        "terms": [
+          "angle",
+          "integral_angle",
+          "angular_velocity",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -4.069213128180847,
+        0.7334226356122152,
+        -0.4013477136421178,
+        -5.186217897930309
+      ],
+      "metrics": {
+        "score": -790.7673090033818,
+        "episode_return": -790.592204237592,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.69535262590732,
+        "jerk": 1785.7030269000286,
+        "complexity": 4
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "PD_Sin_TanhAngle",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "sin_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -4.441656461834377,
+        -2.044903832058503,
+        -2.6110389717237528,
+        -2.634945897380926
+      ],
+      "metrics": {
+        "score": -790.462093957736,
+        "episode_return": -790.2883033274861,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.12799417969072,
+        "jerk": 1776.7320945205684,
+        "complexity": 4
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "Integral_Cubic_TanhAngle",
+        "terms": [
+          "integral_angle",
+          "cubic_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        0.21434664187932334,
+        0.3044459342661363,
+        -5.659192243903567
+      ],
+      "metrics": {
+        "score": -802.8697917866555,
+        "episode_return": -802.6871848379254,
+        "success_rate": 0.0,
+        "energy": 30.254060993249425,
+        "jerk": 3104.9413371824244,
+        "complexity": 3
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "Angle_Sin_Cubic_TanhVel",
+        "terms": [
+          "angle",
+          "sin_angle",
+          "cubic_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -3.8507282031260184,
+        -4.2461259302133225,
+        -3.7543944516363568,
+        -1.7159094530627896
+      ],
+      "metrics": {
+        "score": -790.4648198108795,
+        "episode_return": -790.291016880297,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.136514837491877,
+        "jerk": 1776.4950453758931,
+        "complexity": 4
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "Velocity_Sqrt_TanhAngle",
+        "terms": [
+          "angular_velocity",
+          "sqrt_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -1.1394626495606897,
+        -3.5244306667235037,
+        -3.3359771114540653
+      ],
+      "metrics": {
+        "score": -790.5381791508519,
+        "episode_return": -790.3832288238395,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.445915624442645,
+        "jerk": 1802.924788176806,
+        "complexity": 3
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "Angle_Integral_Sin_Sqrt",
+        "terms": [
+          "angle",
+          "integral_angle",
+          "sin_angle",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        1.3434135858795382,
+        1.5421470104611759,
+        -4.06285283246494,
+        -3.504115123864433
+      ],
+      "metrics": {
+        "score": -724.2329001363304,
+        "episode_return": -724.0655719521119,
+        "success_rate": 0.16666666666666666,
+        "energy": 32.70223880622507,
+        "jerk": 1096.1853302981615,
+        "complexity": 4
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "angle",
+          "tanh_angle",
+          "tanh_velocity",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        -3.0390301544359395,
+        -0.493026458139853,
+        -2.2118868174012207,
+        -3.687801203651522
+      ],
+      "metrics": {
+        "score": -790.4904606467362,
+        "episode_return": -790.3160968587408,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.24120677298453,
+        "jerk": 1794.0687224642606,
+        "complexity": 4
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "angular_velocity"
+        ]
+      },
+      "gains": [
+        0.02128607682466229
+      ],
+      "metrics": {
+        "score": -1047.765401824169,
+        "episode_return": -1047.7452267409933,
+        "success_rate": 0.0,
+        "energy": 0.08215648347561604,
+        "jerk": 0.5385104320776195,
+        "complexity": 1
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "angle",
+          "cubic_angle"
+        ]
+      },
+      "gains": [
+        -6.598801867037876,
+        -2.098658750139132
+      ],
+      "metrics": {
+        "score": -835.5280657852903,
+        "episode_return": -835.3835525924943,
+        "success_rate": 0.16666666666666666,
+        "energy": 33.33320598774457,
+        "jerk": 1892.3390410269967,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "angle",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        -4.044035882872775,
+        -3.839983204070247
+      ],
+      "metrics": {
+        "score": -815.5588016081983,
+        "episode_return": -815.4059359396125,
+        "success_rate": 0.16666666666666666,
+        "energy": 36.35835550796863,
+        "jerk": 2007.447878496686,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "integral_angle",
+          "cubic_angle"
+        ]
+      },
+      "gains": [
+        -1.6840864958801744,
+        -5.503642729055244
+      ],
+      "metrics": {
+        "score": -946.4447145004099,
+        "episode_return": -946.2908774928375,
+        "success_rate": 0.0,
+        "energy": 35.011238956547515,
+        "jerk": 2190.7264829675664,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "integral_angle",
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        1.1801698973029338,
+        0.929893842746836
+      ],
+      "metrics": {
+        "score": -861.2178198816883,
+        "episode_return": -861.1619929876512,
+        "success_rate": 0.16666666666666666,
+        "energy": 6.474943351006676,
+        "jerk": 143.85036675981362,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "integral_angle",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        0.8598073070559097,
+        -2.849314196263303
+      ],
+      "metrics": {
+        "score": -791.429795200944,
+        "episode_return": -791.2920198331893,
+        "success_rate": 0.3333333333333333,
+        "energy": 30.803685886570033,
+        "jerk": 1808.399799079105,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "integral_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        0.4855601096044554,
+        -6.756544979217357
+      ],
+      "metrics": {
+        "score": -814.1965376442523,
+        "episode_return": -814.0551640657692,
+        "success_rate": 0.16666666666666666,
+        "energy": 32.31397280358872,
+        "jerk": 1837.2816437972995,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "sin_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -2.593677896845685,
+        -4.07676881594062
+      ],
+      "metrics": {
+        "score": -835.5574506731683,
+        "episode_return": -835.4129901598614,
+        "success_rate": 0.16666666666666666,
+        "energy": 33.31037610773633,
+        "jerk": 1891.9880545748172,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "cubic_angle"
+        ]
+      },
+      "gains": [
+        -5.99174099413858,
+        -0.5055239246246348,
+        -4.118746864533866
+      ],
+      "metrics": {
+        "score": -790.6338705329314,
+        "episode_return": -790.4795323384477,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.400081692977594,
+        "jerk": 1776.9015548887492,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -6.545867580041908,
+        -0.755232728086834,
+        0.13966198468139793
+      ],
+      "metrics": {
+        "score": -790.4825832865042,
+        "episode_return": -790.3286857064212,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.1873178720906,
+        "jerk": 1776.147216946658,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        -6.1797629571873305,
+        -2.394113563511641,
+        -4.300871361350777
+      ],
+      "metrics": {
+        "score": -790.4414845826966,
+        "episode_return": -790.2876895328972,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.12695106228153,
+        "jerk": 1777.0573837477816,
+        "complexity": 3
+      },
+      "generation": 6
+    }
+  ],
+  "inverted_pendulum": [
+    {
+      "structure": {
+        "name": "P",
+        "terms": [
+          "cart_position",
+          "pole_angle"
+        ]
+      },
+      "gains": [
+        0.1887120942041122,
+        4.417341102292336
+      ],
+      "metrics": {
+        "score": 496.12639202737074,
+        "episode_return": 496.1666666666667,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.2426430978551193,
+        "jerk": 15.998099033120107,
+        "complexity": 2
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PI",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "integral_cart",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        0.3785871370209396,
+        3.6105501567182645,
+        -0.052754452896512705,
+        1.0629922791633617
+      ],
+      "metrics": {
+        "score": 499.9198443366184,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.14167686453042158,
+        "jerk": 6.993258545426236,
+        "complexity": 4
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PD",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity",
+          "pole_velocity"
+        ]
+      },
+      "gains": [
+        0.057184469567048674,
+        5.287852517785142,
+        0.7239241890206102,
+        1.7467865605123316
+      ],
+      "metrics": {
+        "score": 499.9199624361712,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.015247269511165637,
+        "jerk": 11.158279634482838,
+        "complexity": 4
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PID",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity",
+          "pole_velocity",
+          "integral_cart",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        0.1857478520144067,
+        4.764064242314393,
+        1.7407619121163278,
+        2.272711157551148,
+        0.4664253171614112,
+        2.322731858997142
+      ],
+      "metrics": {
+        "score": 499.8799472432186,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.031485468104391005,
+        "jerk": 10.635656634189816,
+        "complexity": 6
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PD_TanhVelocity",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "tanh_cart_velocity",
+          "tanh_pole_velocity"
+        ]
+      },
+      "gains": [
+        0.49617229799458856,
+        5.289076530959278,
+        0.5779371981402761,
+        1.2226959007747946
+      ],
+      "metrics": {
+        "score": 499.91997279171164,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.016020345245995393,
+        "jerk": 5.593971560058189,
+        "complexity": 4
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "PI_TanhAngle",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "integral_cart",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        1.7643262667954769,
+        -0.7995246620499046,
+        -1.0018025704344977,
+        1.621264965243526
+      ],
+      "metrics": {
+        "score": 137.75296955109624,
+        "episode_return": 137.83333333333334,
+        "success_rate": 0.0,
+        "energy": 0.30397341634527436,
+        "jerk": 29.904410364751133,
+        "complexity": 4
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "P_Tanh",
+        "terms": [
+          "cart_position",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        0.11817330389915287,
+        0.8684800615453813
+      ],
+      "metrics": {
+        "score": 499.9598065377948,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.17059010357242207,
+        "jerk": 11.436050811150809,
+        "complexity": 2
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "PD_IntegralAngle",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity",
+          "pole_velocity",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -0.29654657196540235,
+        2.5604753040987545,
+        1.544435863614751,
+        3.0969107893219587,
+        -0.30357858940697857
+      ],
+      "metrics": {
+        "score": 281.16858507120645,
+        "episode_return": 281.5,
+        "success_rate": 0.16666666666666666,
+        "energy": 39.391980491148516,
+        "jerk": 96011.47415120032,
+        "complexity": 5
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "TanhOnly",
+        "terms": [
+          "tanh_cart",
+          "tanh_angle",
+          "tanh_cart_velocity",
+          "tanh_pole_velocity"
+        ]
+      },
+      "gains": [
+        0.557185878597737,
+        1.2977274818681268,
+        0.7373952933239796,
+        2.1367362465486646
+      ],
+      "metrics": {
+        "score": 499.9199536650996,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.01983672292156086,
+        "jerk": 13.249088746359023,
+        "complexity": 4
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "IntegralOnly",
+        "terms": [
+          "integral_cart",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -2.3050723798137494,
+        1.2106674201680714
+      ],
+      "metrics": {
+        "score": 17.293272052940058,
+        "episode_return": 17.333333333333332,
+        "success_rate": 0.0,
+        "energy": 0.06068006086365737,
+        "jerk": 0.300166206670371,
+        "complexity": 2
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "P_TanhAngle_IntegralAngle",
+        "terms": [
+          "cart_position",
+          "tanh_angle",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        0.40999808292059803,
+        0.8536827926144916,
+        0.6378153541827937
+      ],
+      "metrics": {
+        "score": 499.93984513246915,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.13976365839064558,
+        "jerk": 7.551936223622413,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "PD_TanhCart",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity",
+          "tanh_cart"
+        ]
+      },
+      "gains": [
+        -0.09559048207229379,
+        2.395870095025823,
+        -0.1519350297679356,
+        -0.032971056107139796
+      ],
+      "metrics": {
+        "score": 45.75329817129217,
+        "episode_return": 45.833333333333336,
+        "success_rate": 0.0,
+        "energy": 0.03157380517795028,
+        "jerk": 1.7941179932167548,
+        "complexity": 4
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "PI_TanhVelocity",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "integral_cart",
+          "tanh_cart_velocity",
+          "tanh_pole_velocity"
+        ]
+      },
+      "gains": [
+        -0.6586051323345324,
+        1.905220182248037,
+        0.21062856864763568,
+        0.36736722805612954,
+        1.198607384970376
+      ],
+      "metrics": {
+        "score": 93.89987565169284,
+        "episode_return": 94.0,
+        "success_rate": 0.0,
+        "energy": 0.0820555116449464,
+        "jerk": 21.146397763861746,
+        "complexity": 5
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "PID_TanhAngle",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity",
+          "pole_velocity",
+          "integral_cart",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        2.9319630731403143,
+        3.343903386082486,
+        1.6161612466879216,
+        1.5881371576107783,
+        -0.9419510434845935,
+        3.8408759755277395
+      ],
+      "metrics": {
+        "score": 499.87964305919866,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.12586510571109352,
+        "jerk": 115.53784782733213,
+        "complexity": 6
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "FullTanhInt",
+        "terms": [
+          "tanh_cart",
+          "tanh_angle",
+          "tanh_cart_velocity",
+          "tanh_pole_velocity",
+          "integral_cart",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        2.0248089079560017,
+        2.1423654090170823,
+        1.9138852212220963,
+        2.6514848266571613,
+        -0.003998266650150406,
+        3.1702378772321986
+      ],
+      "metrics": {
+        "score": 499.87992597462534,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.03044282867413912,
+        "jerk": 21.791272990324657,
+        "complexity": 6
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "P_IntegralCart",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "integral_cart"
+        ]
+      },
+      "gains": [
+        0.2123208105202622,
+        3.5520081114776825,
+        -0.037088726011310386
+      ],
+      "metrics": {
+        "score": 499.93992050422383,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.0715455163601391,
+        "jerk": 3.9751299077062403,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "P_CartPoleVel",
+        "terms": [
+          "cart_position",
+          "pole_velocity"
+        ]
+      },
+      "gains": [
+        -1.045360600912697,
+        2.2679987326713826
+      ],
+      "metrics": {
+        "score": 70.7904853944256,
+        "episode_return": 70.83333333333333,
+        "success_rate": 0.0,
+        "energy": 0.5025821202729451,
+        "jerk": 1172.6783937249352,
+        "complexity": 2
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Angle_TanhCart",
+        "terms": [
+          "pole_angle",
+          "tanh_cart"
+        ]
+      },
+      "gains": [
+        3.9078782946358235,
+        0.11013357670864854
+      ],
+      "metrics": {
+        "score": 499.95986181628194,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.12198910516500698,
+        "jerk": 8.09730645422323,
+        "complexity": 2
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Vel_TanhAngle",
+        "terms": [
+          "cart_velocity",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -0.4760998222293591,
+        3.0700051290812462
+      ],
+      "metrics": {
+        "score": 107.62326999036155,
+        "episode_return": 107.66666666666667,
+        "success_rate": 0.0,
+        "energy": 2.1956833751005522,
+        "jerk": 600.4964650038174,
+        "complexity": 2
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "IntCart_TanhCartVel",
+        "terms": [
+          "integral_cart",
+          "tanh_cart_velocity"
+        ]
+      },
+      "gains": [
+        -4.072113026569343,
+        -1.368315913845869
+      ],
+      "metrics": {
+        "score": 21.45997554077754,
+        "episode_return": 21.5,
+        "success_rate": 0.0,
+        "energy": 0.02044020506388809,
+        "jerk": 2.009508699728596,
+        "complexity": 2
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "IntAngle_TanhPoleVel",
+        "terms": [
+          "integral_angle",
+          "tanh_pole_velocity"
+        ]
+      },
+      "gains": [
+        4.120135240663646,
+        2.9409337590360796
+      ],
+      "metrics": {
+        "score": 84.25141388116039,
+        "episode_return": 84.33333333333333,
+        "success_rate": 0.0,
+        "energy": 7.583576049212474,
+        "jerk": 17167.938061860117,
+        "complexity": 2
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "CartPos_IntCart_TanhAngle_TanhCartVel",
+        "terms": [
+          "cart_position",
+          "integral_cart",
+          "tanh_angle",
+          "tanh_cart_velocity"
+        ]
+      },
+      "gains": [
+        1.2481145129321074,
+        -0.4085691472570205,
+        3.629819876745307,
+        -1.0309896028498873
+      ],
+      "metrics": {
+        "score": 165.25174621067677,
+        "episode_return": 165.33333333333334,
+        "success_rate": 0.0,
+        "energy": 1.1447638984589215,
+        "jerk": 221.1793790512373,
+        "complexity": 4
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "cart_position",
+          "integral_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        0.41649073678886206,
+        -0.178621678065208,
+        1.127774925828882
+      ],
+      "metrics": {
+        "score": 429.93910754328004,
+        "episode_return": 430.0,
+        "success_rate": 0.5,
+        "energy": 0.7859622495790627,
+        "jerk": 53.247235209728444,
+        "complexity": 3
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "cart_position"
+        ]
+      },
+      "gains": [
+        -0.6719727047764837
+      ],
+      "metrics": {
+        "score": 19.979985929094607,
+        "episode_return": 20.0,
+        "success_rate": 0.0,
+        "energy": 0.012657586037688991,
+        "jerk": 0.7066596780648712,
+        "complexity": 1
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "pole_angle"
+        ]
+      },
+      "gains": [
+        4.7463197382639875
+      ],
+      "metrics": {
+        "score": 206.47940917926917,
+        "episode_return": 206.5,
+        "success_rate": 0.0,
+        "energy": 0.5145479671694485,
+        "jerk": 38.13638183324023,
+        "complexity": 1
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        1.1307461692494918
+      ],
+      "metrics": {
+        "score": 210.64518110297968,
+        "episode_return": 210.66666666666666,
+        "success_rate": 0.0,
+        "energy": 1.2824314341893668,
+        "jerk": 101.56612638567752,
+        "complexity": 1
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "tanh_cart"
+        ]
+      },
+      "gains": [
+        -0.6781838854236794
+      ],
+      "metrics": {
+        "score": 20.6466529880186,
+        "episode_return": 20.666666666666668,
+        "success_rate": 0.0,
+        "energy": 0.012380544034286537,
+        "jerk": 0.6490520150530411,
+        "complexity": 1
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "cart_position",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -0.6939915441536576,
+        -0.25384093768114646
+      ],
+      "metrics": {
+        "score": 18.959986438906935,
+        "episode_return": 19.0,
+        "success_rate": 0.0,
+        "energy": 0.0120720863377043,
+        "jerk": 0.7445033630608732,
+        "complexity": 2
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "cart_position",
+          "integral_cart"
+        ]
+      },
+      "gains": [
+        -1.025590076060425,
+        1.4784659293819231
+      ],
+      "metrics": {
+        "score": 18.959983554283994,
+        "episode_return": 19.0,
+        "success_rate": 0.0,
+        "energy": 0.013362533354224623,
+        "jerk": 1.5415913259044667,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "integral_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        0.6216558618563085,
+        0.9908784105703807
+      ],
+      "metrics": {
+        "score": 229.9589664398238,
+        "episode_return": 230.0,
+        "success_rate": 0.0,
+        "energy": 0.9122927337356996,
+        "jerk": 60.63372123423155,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "pole_angle",
+          "integral_cart"
+        ]
+      },
+      "gains": [
+        2.6077133865904707,
+        0.0075657749899869856
+      ],
+      "metrics": {
+        "score": 174.95994487692371,
+        "episode_return": 175.0,
+        "success_rate": 0.0,
+        "energy": 0.04834652369988682,
+        "jerk": 3.388276295550814,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "cart_position",
+          "cart_velocity",
+          "pole_velocity"
+        ]
+      },
+      "gains": [
+        -0.7260815700200142,
+        0.8225297499268236,
+        2.6921983386521937
+      ],
+      "metrics": {
+        "score": 93.0624817333106,
+        "episode_return": 93.16666666666667,
+        "success_rate": 0.0,
+        "energy": 7.8257441532606045,
+        "jerk": 18179.59460139712,
+        "complexity": 3
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "cart_position",
+          "cart_velocity",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        3.4394436684382654,
+        -1.1444737084872627,
+        5.749586174564012
+      ],
+      "metrics": {
+        "score": 165.60044710735377,
+        "episode_return": 165.66666666666666,
+        "success_rate": 0.0,
+        "energy": 4.358741747358671,
+        "jerk": 930.4087827586899,
+        "complexity": 3
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "cart_position",
+          "integral_cart",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        1.637116562219713,
+        -0.4121671051083823,
+        1.3022774097856005
+      ],
+      "metrics": {
+        "score": 204.1064857952001,
+        "episode_return": 204.16666666666666,
+        "success_rate": 0.0,
+        "energy": 0.16467052261067575,
+        "jerk": 8.100471978287874,
+        "complexity": 3
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "Angle_TanhVelocity",
+        "terms": [
+          "pole_angle",
+          "tanh_pole_velocity"
+        ]
+      },
+      "gains": [
+        2.387219123618198,
+        0.1771436376450699
+      ],
+      "metrics": {
+        "score": 118.45995973222124,
+        "episode_return": 118.5,
+        "success_rate": 0.0,
+        "energy": 0.03401357366174465,
+        "jerk": 3.127102545360532,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "CartVel_IntegralAngle",
+        "terms": [
+          "cart_velocity",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -0.7032797743518888,
+        6.336233240611025
+      ],
+      "metrics": {
+        "score": 17.626653468687046,
+        "episode_return": 17.666666666666668,
+        "success_rate": 0.0,
+        "energy": 0.012155139321130264,
+        "jerk": 0.5214201523763388,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "PoleAngle_IntegralCart_TanhAngle",
+        "terms": [
+          "pole_angle",
+          "integral_cart",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -1.922080916579332,
+        -0.009661767016114597,
+        1.3697902865700327
+      ],
+      "metrics": {
+        "score": 192.77284385232363,
+        "episode_return": 192.83333333333334,
+        "success_rate": 0.0,
+        "energy": 0.4262115587729709,
+        "jerk": 31.63472547814285,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "CartPos_TanhCart_TanhAngle",
+        "terms": [
+          "cart_position",
+          "tanh_cart",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        3.0297058825198144,
+        -2.3507534582016705,
+        1.5602774538617086
+      ],
+      "metrics": {
+        "score": 142.77180252719856,
+        "episode_return": 142.83333333333334,
+        "success_rate": 0.0,
+        "energy": 1.2711622486826268,
+        "jerk": 129.82194304205936,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "PoleVel_IntegralCart",
+        "terms": [
+          "pole_velocity",
+          "integral_cart"
+        ]
+      },
+      "gains": [
+        2.0733137665588255,
+        -2.0204216233473966
+      ],
+      "metrics": {
+        "score": 58.626611444099744,
+        "episode_return": 58.666666666666664,
+        "success_rate": 0.0,
+        "energy": 0.04465840635968191,
+        "jerk": 5.282080282174097,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "FullPD_TanhAngle",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity",
+          "pole_velocity",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        1.2979057383088377,
+        -3.664147083840926,
+        0.44080589089034894,
+        0.8324864282545505,
+        2.3822940200633402
+      ],
+      "metrics": {
+        "score": 499.8999554722052,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.03037166141404017,
+        "jerk": 7.078066674382378,
+        "complexity": 5
+      },
+      "generation": 6
+    }
+  ],
+  "reacher": [
+    {
+      "structure": {
+        "name": "Task P",
+        "terms": [
+          "jt_error"
+        ]
+      },
+      "gains": [
+        4.051906544450672
+      ],
+      "metrics": {
+        "score": -6.877108008255937,
+        "episode_return": -6.857059652727606,
+        "success_rate": 0.0,
+        "energy": 0.003991964626904263,
+        "jerk": 0.42179410311349574,
+        "complexity": 1
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "Task PI",
+        "terms": [
+          "jt_error",
+          "integral_jt_error"
+        ]
+      },
+      "gains": [
+        4.524850812839686,
+        -5.046402574129427
+      ],
+      "metrics": {
+        "score": -6.4161994549141905,
+        "episode_return": -6.376151687175912,
+        "success_rate": 0.0,
+        "energy": 0.0038300603175584597,
+        "jerk": 0.4733567551766047,
+        "complexity": 2
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "Task PD",
+        "terms": [
+          "jt_error",
+          "joint_velocity"
+        ]
+      },
+      "gains": [
+        4.982224640362009,
+        -0.0096952673353745
+      ],
+      "metrics": {
+        "score": -6.296158086264533,
+        "episode_return": -6.256110213996333,
+        "success_rate": 0.16666666666666666,
+        "energy": 0.0036444569678450735,
+        "jerk": 0.5713849260734525,
+        "complexity": 2
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "Task PID",
+        "terms": [
+          "jt_error",
+          "integral_jt_error",
+          "joint_velocity"
+        ]
+      },
+      "gains": [
+        3.1641001475685124,
+        0.7580591085419243,
+        -0.08623147635830261
+      ],
+      "metrics": {
+        "score": -8.374729682541654,
+        "episode_return": -8.314723961074192,
+        "success_rate": 0.3333333333333333,
+        "energy": 0.00014291020595067277,
+        "jerk": 0.21461827011202297,
+        "complexity": 3
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "Task PD+Tanh",
+        "terms": [
+          "jt_error",
+          "joint_velocity",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        2.307833172145411,
+        -0.06250964650498979,
+        1.5825844997880019
+      ],
+      "metrics": {
+        "score": -4.88852125254583,
+        "episode_return": -4.828281375270122,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.009375151230606428,
+        "jerk": 7.3062881700954945,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Task Damped",
+        "terms": [
+          "jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        6.886859168985845,
+        -0.6012240298720157
+      ],
+      "metrics": {
+        "score": -5.8656136298656305,
+        "episode_return": -5.825568500355447,
+        "success_rate": 0.3333333333333333,
+        "energy": 0.0025467198935586076,
+        "jerk": 0.9831155623733573,
+        "complexity": 2
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Task Norm+Tanh",
+        "terms": [
+          "jt_error",
+          "normalized_jt_error",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        -1.0778804313944312,
+        0.09281318188667412,
+        -0.0308310232111092
+      ],
+      "metrics": {
+        "score": -6.525217879360634,
+        "episode_return": -6.46511204490303,
+        "success_rate": 0.3333333333333333,
+        "energy": 0.005653493757514904,
+        "jerk": 2.4649760014570608,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Integral TanhV",
+        "terms": [
+          "integral_jt_error",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        2.1586324363306764,
+        -0.005781051829438888
+      ],
+      "metrics": {
+        "score": -8.81157098007597,
+        "episode_return": -8.771568306848252,
+        "success_rate": 0.0,
+        "energy": 0.0002657005973574833,
+        "jerk": 0.0008110873297013491,
+        "complexity": 2
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Task PD+Norm+Damp",
+        "terms": [
+          "jt_error",
+          "joint_velocity",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        1.683034689286806,
+        -0.08974390497994117,
+        0.053569197848969186,
+        1.258751708046677
+      ],
+      "metrics": {
+        "score": -6.191368539044123,
+        "episode_return": -6.111316375977306,
+        "success_rate": 0.5,
+        "energy": 0.002480013778428353,
+        "jerk": 1.3681464516237727,
+        "complexity": 4
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Task P+TanhV+Norm",
+        "terms": [
+          "jt_error",
+          "tanh_velocity",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        -0.317126359572241,
+        -0.13648952181668506,
+        0.217598516373737
+      ],
+      "metrics": {
+        "score": -6.31888298058876,
+        "episode_return": -6.257890972137961,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.02308075969592513,
+        "jerk": 38.060042692001346,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Task PD+Tanh+Damp",
+        "terms": [
+          "jt_error",
+          "task_damping",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        3.66096823321034,
+        -1.6005152109483816,
+        2.3256966048341075
+      ],
+      "metrics": {
+        "score": -4.674844236966457,
+        "episode_return": -4.614330646526852,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.017225677245990785,
+        "jerk": 17.066683357270445,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Task PD+Norm",
+        "terms": [
+          "jt_error",
+          "joint_velocity",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        0.8539390565432488,
+        -0.1260706086475476,
+        0.22376177510395448
+      ],
+      "metrics": {
+        "score": -7.056500259751272,
+        "episode_return": -6.995734872857196,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.011711679056049128,
+        "jerk": 32.41350517576574,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Task PI+Tanh",
+        "terms": [
+          "jt_error",
+          "integral_jt_error",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        -0.06030779420631477,
+        -3.4252822464912285,
+        0.44779023360319536
+      ],
+      "metrics": {
+        "score": -6.545071455784923,
+        "episode_return": -6.48502453215917,
+        "success_rate": 0.0,
+        "energy": 0.003799350812715622,
+        "jerk": 0.44650588130776564,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Task Norm+Damp",
+        "terms": [
+          "jt_error",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        6.627782031891805,
+        0.08081124669688472,
+        -0.5877595612783044
+      ],
+      "metrics": {
+        "score": -5.094389692333252,
+        "episode_return": -5.034143935253518,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.012960759721093685,
+        "jerk": 5.80747412615121,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Task TanhV+Damp",
+        "terms": [
+          "jt_error",
+          "tanh_velocity",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        2.227046803126723,
+        0.09805421022915178,
+        -1.0229745682664835
+      ],
+      "metrics": {
+        "score": -7.216775781844066,
+        "episode_return": -7.1566854798787105,
+        "success_rate": 0.0,
+        "energy": 0.007982762738562695,
+        "jerk": 0.5237168985043312,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Task PD+TanhV+Norm",
+        "terms": [
+          "jt_error",
+          "joint_velocity",
+          "tanh_velocity",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "metrics": {
+        "score": -9.839400583627434,
+        "episode_return": -9.759400583627434,
+        "success_rate": 0.0,
+        "energy": 0.0,
+        "jerk": 0.0,
+        "complexity": 4
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "jt_error",
+          "tanh_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -0.9345874176859998,
+        2.615025420597795,
+        -1.5867772593039104
+      ],
+      "metrics": {
+        "score": -4.6635172931983675,
+        "episode_return": -4.603075173054491,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.014853840366617988,
+        "jerk": 14.679087010530369,
+        "complexity": 3
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "joint_velocity"
+        ]
+      },
+      "gains": [
+        0.037510262279652595
+      ],
+      "metrics": {
+        "score": -9.68063515364674,
+        "episode_return": -9.660633257852435,
+        "success_rate": 0.16666666666666666,
+        "energy": 0.0001780162219842496,
+        "jerk": 0.0057816042583019615,
+        "complexity": 1
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "task_damping"
+        ]
+      },
+      "gains": [
+        0.7358735550613399
+      ],
+      "metrics": {
+        "score": -9.656201202430482,
+        "episode_return": -9.636195616876805,
+        "success_rate": 0.16666666666666666,
+        "energy": 0.0005185675790766955,
+        "jerk": 0.019993894320474215,
+        "complexity": 1
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "joint_velocity",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        -0.12898685160811948,
+        3.311455191480499
+      ],
+      "metrics": {
+        "score": -4.853110815364596,
+        "episode_return": -4.812450606319352,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.013821019815049582,
+        "jerk": 26.099942354694722,
+        "complexity": 2
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "jt_error",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        -1.0039159466815675,
+        0.11235765305418352
+      ],
+      "metrics": {
+        "score": -6.482281922728572,
+        "episode_return": -6.4421016031709994,
+        "success_rate": 0.3333333333333333,
+        "energy": 0.009968045619316399,
+        "jerk": 4.0319550689665755,
+        "complexity": 2
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "jt_error",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        -2.1698774984469114,
+        0.6369821289058197
+      ],
+      "metrics": {
+        "score": -6.880874328608716,
+        "episode_return": -6.840824701153998,
+        "success_rate": 0.0,
+        "energy": 0.004101900411386622,
+        "jerk": 0.4304225301656734,
+        "complexity": 2
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Full_Signal_Plus",
+        "terms": [
+          "jt_error",
+          "joint_velocity",
+          "integral_jt_error",
+          "tanh_jt_error",
+          "tanh_velocity",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "metrics": {
+        "score": -9.899400583627434,
+        "episode_return": -9.759400583627434,
+        "success_rate": 0.0,
+        "energy": 0.0,
+        "jerk": 0.0,
+        "complexity": 7
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "Integral_Damping",
+        "terms": [
+          "integral_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        8.96049235350646,
+        -1.028719222652442
+      ],
+      "metrics": {
+        "score": -8.572016924277902,
+        "episode_return": -8.532014594029677,
+        "success_rate": 0.0,
+        "energy": 0.00022861383640863171,
+        "jerk": 0.0022054930691500795,
+        "complexity": 2
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "TanhV_Norm",
+        "terms": [
+          "tanh_velocity",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        -0.08669341113388308,
+        0.1538472188965434
+      ],
+      "metrics": {
+        "score": -5.968179277968448,
+        "episode_return": -5.927749602304497,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.012601986961284029,
+        "jerk": 15.182789716937528,
+        "complexity": 2
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "PD_TanhV_TanhJ",
+        "terms": [
+          "jt_error",
+          "joint_velocity",
+          "tanh_jt_error",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -1.118792779984145,
+        -0.4075810099085965,
+        1.8357056483173635,
+        0.3908217159025311
+      ],
+      "metrics": {
+        "score": -6.429308671543646,
+        "episode_return": -6.34910769255995,
+        "success_rate": 0.3333333333333333,
+        "energy": 0.002644071867939019,
+        "jerk": 8.726913250834313,
+        "complexity": 4
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "Integral_TanhJ_Damp",
+        "terms": [
+          "integral_jt_error",
+          "tanh_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        1.5618032278305227,
+        2.632975995536861,
+        -1.627005317294334
+      ],
+      "metrics": {
+        "score": -4.671049803682113,
+        "episode_return": -4.610564961518771,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.016101259306591,
+        "jerk": 16.19147851382229,
+        "complexity": 3
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "Norm_Integral_Jt_Damp",
+        "terms": [
+          "jt_error",
+          "integral_jt_error",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        4.485976531572711,
+        -0.9080918915025387,
+        0.12753231205239018,
+        -0.7523872810507627
+      ],
+      "metrics": {
+        "score": -5.360605321100758,
+        "episode_return": -5.280206700882264,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.01819897629230885,
+        "jerk": 10.831522778556026,
+        "complexity": 4
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        0.41165242110029004
+      ],
+      "metrics": {
+        "score": -6.866375262641063,
+        "episode_return": -6.846326819719665,
+        "success_rate": 0.0,
+        "energy": 0.0040047740258512005,
+        "jerk": 0.419759057037227,
+        "complexity": 1
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "integral_jt_error",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        -4.97351048421392,
+        0.4566804148022952
+      ],
+      "metrics": {
+        "score": -6.405109137675599,
+        "episode_return": -6.365061689857188,
+        "success_rate": 0.0,
+        "energy": 0.0038159820413698215,
+        "jerk": 0.46439989987305275,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        0.17455648611673674,
+        -1.098335636133533
+      ],
+      "metrics": {
+        "score": -6.487457424787083,
+        "episode_return": -6.446934741889318,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.019454888014637007,
+        "jerk": 16.4067008809382,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "tanh_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        2.8264551406660283,
+        -1.7862479850426474
+      ],
+      "metrics": {
+        "score": -4.651616475684588,
+        "episode_return": -4.611072188402855,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.01667924577064393,
+        "jerk": 18.874741201321083,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "joint_velocity",
+          "integral_jt_error",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        -0.09123788084755789,
+        2.4955605043635507,
+        1.4858916797458552
+      ],
+      "metrics": {
+        "score": -5.4715535443552525,
+        "episode_return": -5.4114216192874665,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.0035998043420185197,
+        "jerk": 4.796351218336111,
+        "complexity": 3
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "joint_velocity",
+          "tanh_jt_error",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        -0.17909053012154788,
+        4.303679969897657,
+        0.16746452022715358
+      ],
+      "metrics": {
+        "score": -4.917432548391921,
+        "episode_return": -4.855506425541981,
+        "success_rate": 1.0,
+        "energy": 0.029247981951846778,
+        "jerk": 81.6821515211012,
+        "complexity": 3
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "joint_velocity",
+          "tanh_jt_error",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -0.35393090924352266,
+        1.826113546111558,
+        0.7319064216558382
+      ],
+      "metrics": {
+        "score": -5.499567392647498,
+        "episode_return": -5.438756423294998,
+        "success_rate": 0.3333333333333333,
+        "energy": 0.013118910284601952,
+        "jerk": 33.98901248275206,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "joint_velocity",
+          "tanh_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -0.09851931934633218,
+        2.753199457609888,
+        -0.44895913440611046
+      ],
+      "metrics": {
+        "score": -4.916223840580792,
+        "episode_return": -4.855763506421524,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.009754007049851956,
+        "jerk": 18.139704438490515,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "tanh_jt_error",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        0.7206812961173876,
+        0.11118300042169907,
+        -0.7439774011571653
+      ],
+      "metrics": {
+        "score": -5.200370826788491,
+        "episode_return": -5.139981166077776,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.019373889511941036,
+        "jerk": 9.79609077980391,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "tanh_jt_error",
+          "tanh_velocity",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        1.332648931064932,
+        0.03208205221240362,
+        -1.033974785817319
+      ],
+      "metrics": {
+        "score": -5.0644713269339325,
+        "episode_return": -5.004308015111895,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.008696588713527643,
+        "jerk": 3.8172967451361886,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "integral_jt_error",
+          "tanh_jt_error",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -6.76285873960836,
+        1.9704449340980068,
+        0.041664019899156565,
+        -1.469754038972352
+      ],
+      "metrics": {
+        "score": -4.60209692644839,
+        "episode_return": -4.521743988629788,
+        "success_rate": 1.0,
+        "energy": 0.01322591898364408,
+        "jerk": 11.033931438330876,
+        "complexity": 4
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "integral_jt_error",
+          "tanh_jt_error",
+          "tanh_velocity",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -2.7954015880125005,
+        2.40479671211246,
+        -0.0033890885521250316,
+        -1.7678959725125163
+      ],
+      "metrics": {
+        "score": -4.804988128982395,
+        "episode_return": -4.724611237442017,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.011118119842977116,
+        "jerk": 13.285517097437262,
+        "complexity": 4
+      },
+      "generation": 6
+    }
+  ]
+}

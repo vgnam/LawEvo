@@ -1,0 +1,538 @@
+[
+  {
+    "environment": "pendulum",
+    "generation": 1,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"Perf_NL_Swing\",\n    \"terms\": [\"angle\", \"sin_angle\", \"angular_velocity\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"Energy_Tanh_Integral\",\n    \"terms\": [\"angle\", \"tanh_velocity\", \"integral_angle\"]\n  },\n  {\n    \"name\": \"Jerk_Tanh_Integral\",\n    \"terms\": [\"tanh_angle\", \"tanh_velocity\", \"integral_angle\"]\n  },\n  {\n    \"name\": \"Balanced_Mix\",\n    \"terms\": [\"angle\", \"angular_velocity\", \"sin_angle\", \"integral_angle\"]\n  },\n  {\n    \"name\": \"Aggressive_Cubic_Swing\",\n    \"terms\": [\"cubic_angle\", \"angular_velocity\", \"sin_angle\"]\n  },\n  {\n    \"name\": \"Simple_Tanh_Stab\",\n    \"terms\": [\"tanh_angle\", \"tanh_velocity\"]\n  }\n]"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 2,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"Perf_Cubic_Tanh_Swing\",\n    \"terms\": [\n      \"cubic_angle\",\n      \"angular_velocity\",\n      \"tanh_angle\"\n    ]\n  },\n  {\n    \"name\": \"Energy_Sqrt_Integral\",\n    \"terms\": [\n      \"sqrt_angle\",\n      \"integral_angle\"\n    ]\n  },\n  {\n    \"name\": \"Jerk_TanhVel_Smooth\",\n    \"terms\": [\n      \"tanh_velocity\",\n      \"sqrt_angle\",\n      \"angular_velocity\"\n    ]\n  },\n  {\n    \"name\": \"Balanced_TermMix\",\n    \"terms\": [\n      \"angle\",\n      \"tanh_angle\",\n      \"tanh_velocity\",\n      \"integral_angle\",\n      \"sin_angle\"\n    ]\n  },\n  {\n    \"name\": \"Energy_Tanh_Sqrt\",\n    \"terms\": [\n      \"tanh_angle\",\n      \"sqrt_angle\",\n      \"integral_angle\"\n    ]\n  },\n  {\n    \"name\": \"Jerk_Sin_Cubic\",\n    \"terms\": [\n      \"sin_angle\",\n      \"cubic_angle\",\n      \"tanh_velocity\"\n    ]\n  }\n]"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 3,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"Perf_SwingAggressive\",\n    \"terms\": [\"cubic_angle\", \"sin_angle\", \"tanh_angle\", \"angular_velocity\", \"angle\"]\n  },\n  {\n    \"name\": \"Energy_Efficient_TanhSqrt\",\n    \"terms\": [\"tanh_angle\", \"tanh_velocity\", \"sqrt_angle\", \"integral_angle\"]\n  },\n  {\n    \"name\": \"Jerk_Smooth_PD_Tanh\",\n    \"terms\": [\"angle\", \"angular_velocity\", \"tanh_velocity\", \"sqrt_angle\"]\n  },\n  {\n    \"name\": \"Balanced_Pareto_Mix\",\n    \"terms\": [\"angle\", \"tanh_angle\", \"angular_velocity\", \"integral_angle\"]\n  },\n  {\n    \"name\": \"Stabilization_UprightPD\",\n    \"terms\": [\"angle\", \"angular_velocity\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"Integral_Swing_BiasCancel\",\n    \"terms\": [\"integral_angle\", \"tanh_angle\", \"sin_angle\"]\n  }\n]"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 4,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 4,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 4,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 4,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "pendulum",
+    "generation": 5,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 5,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 5,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 5,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "pendulum",
+    "generation": 6,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 6,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 6,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 6,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "pendulum",
+    "generation": 7,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 7,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 7,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 7,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "pendulum",
+    "generation": 8,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 8,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 8,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 8,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 1,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 1,
+    "attempt": 2,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"EnergyLite_PD_Tanh\",\n    \"terms\": [\"cart_position\", \"pole_angle\", \"tanh_cart_velocity\", \"tanh_pole_velocity\"]\n  },\n  {\n    \"name\": \"JerkSoft_Tanh\",\n    \"terms\": [\"tanh_cart\", \"tanh_angle\", \"tanh_cart_velocity\", \"tanh_pole_velocity\"]\n  },\n  {\n    \"name\": \"Balanced_STAB\",\n    \"terms\": [\"cart_position\", \"pole_angle\", \"cart_velocity\", \"tanh_pole_velocity\", \"integral_cart\", \"integral_angle\"]\n  },\n  {\n    \"name\": \"PerformanceMax_PID_Tanh\",\n    \"terms\": [\"cart_position\", \"pole_angle\", \"cart_velocity\", \"pole_velocity\", \"integral_cart\", \"integral_angle\", \"tanh_cart\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"IntegralBoost_Angle\",\n    \"terms\": [\"cart_position\", \"pole_angle\", \"integral_angle\", \"tanh_cart_velocity\"]\n  },\n  {\n    \"name\": \"Minimal_TanhAngle\",\n    \"terms\": [\"tanh_angle\"]\n  }\n]"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 2,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 2,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 2,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 2,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 3,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 3,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 3,
+    "attempt": 3,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"PerfBoost_TanhPD\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"cart_velocity\",\n      \"tanh_pole_velocity\",\n      \"tanh_cart\",\n      \"tanh_angle\"\n    ]\n  },\n  {\n    \"name\": \"Energy_TanhIntegral\",\n    \"terms\": [\n      \"tanh_cart\",\n      \"tanh_angle\",\n      \"integral_angle\"\n    ]\n  },\n  {\n    \"name\": \"JerkSmooth_TanhVel\",\n    \"terms\": [\n      \"tanh_cart_velocity\",\n      \"tanh_pole_velocity\",\n      \"tanh_cart\",\n      \"tanh_angle\",\n      \"cart_velocity\"\n    ]\n  },\n  {\n    \"name\": \"Balanced_PD_TanhInt\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"cart_velocity\",\n      \"tanh_pole_velocity\",\n      \"integral_angle\"\n    ]\n  },\n  {\n    \"name\": \"AngleCentric_TanhInt\",\n    \"terms\": [\n      \"pole_angle\",\n      \"integral_angle\",\n      \"tanh_angle\",\n      \"tanh_pole_velocity\"\n    ]\n  },\n  {\n    \"name\": \"CartStability_TanhVelInt\",\n    \"terms\": [\n      \"cart_position\",\n      \"integral_cart\",\n      \"tanh_cart_velocity\",\n      \"tanh_cart\"\n    ]\n  }\n]"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 4,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 4,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 4,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 4,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 5,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 5,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 5,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 5,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 6,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 6,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 6,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 6,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 7,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 7,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 7,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 7,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 8,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 8,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 8,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 8,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "reacher",
+    "generation": 1,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"Performance PD+Tanh\",\n    \"terms\": [\n      \"jt_error\",\n      \"joint_velocity\",\n      \"tanh_jt_error\"\n    ]\n  },\n  {\n    \"name\": \"Energy Efficient TanhDamp\",\n    \"terms\": [\n      \"jt_error\",\n      \"tanh_jt_error\",\n      \"task_damping\"\n    ]\n  },\n  {\n    \"name\": \"Jerk Minimal TanhDamped\",\n    \"terms\": [\n      \"tanh_jt_error\",\n      \"tanh_velocity\",\n      \"task_damping\"\n    ]\n  },\n  {\n    \"name\": \"Balanced Integral TanhDamp\",\n    \"terms\": [\n      \"jt_error\",\n      \"integral_jt_error\",\n      \"task_damping\",\n      \"tanh_jt_error\"\n    ]\n  },\n  {\n    \"name\": \"Robust Damped PD\",\n    \"terms\": [\n      \"jt_error\",\n      \"task_damping\",\n      \"joint_velocity\"\n    ]\n  },\n  {\n    \"name\": \"Direction Integral Damped\",\n    \"terms\": [\n      \"normalized_jt_error\",\n      \"integral_jt_error\",\n      \"joint_velocity\"\n    ]\n  }\n]"
+  },
+  {
+    "environment": "reacher",
+    "generation": 2,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 2,
+    "attempt": 2,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"Performance PD+Norm\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"normalized_jt_error\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"Energy Efficient Integral Damped\",\n    \"terms\": [\"integral_jt_error\", \"task_damping\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"Jerk Minimal TanhVelocity\",\n    \"terms\": [\"tanh_velocity\", \"task_damping\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"Balanced Directional Tanh\",\n    \"terms\": [\"normalized_jt_error\", \"tanh_jt_error\", \"task_damping\", \"integral_jt_error\"]\n  },\n  {\n    \"name\": \"Robust Directional Damped\",\n    \"terms\": [\"normalized_jt_error\", \"joint_velocity\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Aggressive PD+Integral+TanhV\",\n    \"terms\": [\"jt_error\", \"integral_jt_error\", \"tanh_velocity\", \"joint_velocity\"]\n  }\n]"
+  },
+  {
+    "environment": "reacher",
+    "generation": 3,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 3,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 3,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 3,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "reacher",
+    "generation": 4,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 4,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 4,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 4,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "reacher",
+    "generation": 5,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 5,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 5,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 5,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "reacher",
+    "generation": 6,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 6,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 6,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 6,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "reacher",
+    "generation": 7,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 7,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 7,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 7,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "reacher",
+    "generation": 8,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 8,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 8,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 8,
+    "fallback": true,
+    "valid_new": 6
+  }
+]

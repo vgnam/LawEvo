@@ -1,0 +1,3730 @@
+{
+  "pendulum": [
+    {
+      "structure": {
+        "name": "P",
+        "terms": [
+          "angle"
+        ]
+      },
+      "gains": [
+        -6.619873885742031
+      ],
+      "metrics": {
+        "score": -817.2630493234619,
+        "episode_return": -817.1396810638563,
+        "success_rate": 0.16666666666666666,
+        "energy": 33.29832495703111,
+        "jerk": 1838.5804845754337,
+        "complexity": 1
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PI",
+        "terms": [
+          "angle",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -9.242941896481888,
+        1.82908440927339
+      ],
+      "metrics": {
+        "score": -791.859600596333,
+        "episode_return": -791.7207570192069,
+        "success_rate": 0.16666666666666666,
+        "energy": 31.426461796290763,
+        "jerk": 1799.532676681553,
+        "complexity": 2
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PD",
+        "terms": [
+          "angle",
+          "angular_velocity"
+        ]
+      },
+      "gains": [
+        -6.279354358822636,
+        -0.9703486353545564
+      ],
+      "metrics": {
+        "score": -790.4303122578708,
+        "episode_return": -790.2965444886127,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.13175471411489,
+        "jerk": 1775.2129914997756,
+        "complexity": 2
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PID",
+        "terms": [
+          "angle",
+          "integral_angle",
+          "angular_velocity"
+        ]
+      },
+      "gains": [
+        -6.329213904477913,
+        0.011573575062432253,
+        -1.0110884495998995
+      ],
+      "metrics": {
+        "score": -790.449164978324,
+        "episode_return": -790.2954023126159,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.129580939694318,
+        "jerk": 1775.1751914363088,
+        "complexity": 3
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "Perf_NL_Swing",
+        "terms": [
+          "angle",
+          "sin_angle",
+          "angular_velocity",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -4.5776939329766995,
+        -2.3318104615749915,
+        -1.9759838660510542,
+        -2.7011517104894036
+      ],
+      "metrics": {
+        "score": -790.4623177474601,
+        "episode_return": -790.2885219732985,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.129421892398792,
+        "jerk": 1776.8465188403973,
+        "complexity": 4
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Energy_Tanh_Integral",
+        "terms": [
+          "angle",
+          "tanh_velocity",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -8.754939683987024,
+        -2.093698647665717,
+        -0.009837154373315109
+      ],
+      "metrics": {
+        "score": -790.4420039994769,
+        "episode_return": -790.2882216098978,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.12791645234161,
+        "jerk": 1776.3278337219047,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Jerk_Tanh_Integral",
+        "terms": [
+          "tanh_angle",
+          "tanh_velocity",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -7.210332350761616,
+        -1.433903001245617,
+        0.03269865381079258
+      ],
+      "metrics": {
+        "score": -790.4453601862366,
+        "episode_return": -790.2915990428223,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.126406802027972,
+        "jerk": 1775.4164905099108,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Balanced_Mix",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "sin_angle",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -5.716432452463129,
+        -2.1005122888128067,
+        -4.072284145163394,
+        -0.020247227098054592
+      ],
+      "metrics": {
+        "score": -790.4619310939279,
+        "episode_return": -790.2881380434375,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.12809697433286,
+        "jerk": 1776.8428270844609,
+        "complexity": 4
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Aggressive_Cubic_Swing",
+        "terms": [
+          "cubic_angle",
+          "angular_velocity",
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        -3.541580726194395,
+        -2.3366882162341898,
+        -10.186642992750798
+      ],
+      "metrics": {
+        "score": -790.4413794380293,
+        "episode_return": -790.2875855109656,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.12729667680854,
+        "jerk": 1776.966685510226,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Simple_Tanh_Stab",
+        "terms": [
+          "tanh_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -8.483054371874076,
+        -1.8945290851463328
+      ],
+      "metrics": {
+        "score": -790.4227484483765,
+        "episode_return": -790.2889753507025,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.126825628008973,
+        "jerk": 1775.972320906545,
+        "complexity": 2
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Perf_Cubic_Tanh_Swing",
+        "terms": [
+          "cubic_angle",
+          "angular_velocity",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -3.444143405054056,
+        -1.2388644485888556,
+        -6.776624051335611
+      ],
+      "metrics": {
+        "score": -790.4460420776215,
+        "episode_return": -790.2922815069037,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.126459102526397,
+        "jerk": 1775.3826256391476,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Energy_Sqrt_Integral",
+        "terms": [
+          "sqrt_angle",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -3.253375515447239,
+        1.2014207435729964
+      ],
+      "metrics": {
+        "score": -791.538332291783,
+        "episode_return": -791.3991273881358,
+        "success_rate": 0.3333333333333333,
+        "energy": 31.304461079017116,
+        "jerk": 1829.79907446524,
+        "complexity": 2
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Jerk_TanhVel_Smooth",
+        "terms": [
+          "tanh_velocity",
+          "sqrt_angle",
+          "angular_velocity"
+        ]
+      },
+      "gains": [
+        -1.7786074596440682,
+        -5.293308195020799,
+        -0.4504426492184612
+      ],
+      "metrics": {
+        "score": -790.4749264693336,
+        "episode_return": -790.3199358701104,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.2853354984495,
+        "jerk": 1820.9964113141302,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Balanced_TermMix",
+        "terms": [
+          "angle",
+          "tanh_angle",
+          "tanh_velocity",
+          "integral_angle",
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        -1.8214832236239862,
+        0.2931343867864702,
+        -2.137174978692992,
+        -1.1662201825050271,
+        -5.178121775545378
+      ],
+      "metrics": {
+        "score": -770.8976749259565,
+        "episode_return": -770.7086577367726,
+        "success_rate": 0.5,
+        "energy": 27.916542721232712,
+        "jerk": 1659.2051870685052,
+        "complexity": 5
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Energy_Tanh_Sqrt",
+        "terms": [
+          "tanh_angle",
+          "sqrt_angle",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -6.056198437919305,
+        -1.5031027298365456,
+        1.7512651630014444
+      ],
+      "metrics": {
+        "score": -791.9075805517989,
+        "episode_return": -791.7480474418539,
+        "success_rate": 0.16666666666666666,
+        "energy": 31.62996199316393,
+        "jerk": 1813.659297933142,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Jerk_Sin_Cubic",
+        "terms": [
+          "sin_angle",
+          "cubic_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -5.845973622737984,
+        -3.8239791337700924,
+        -1.0402606684856848
+      ],
+      "metrics": {
+        "score": -790.4487980000333,
+        "episode_return": -790.2950306301149,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.131191178258153,
+        "jerk": 1775.2493781038786,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Perf_SwingAggressive",
+        "terms": [
+          "cubic_angle",
+          "sin_angle",
+          "tanh_angle",
+          "angular_velocity",
+          "angle"
+        ]
+      },
+      "gains": [
+        -2.751512885016642,
+        -2.6638975068576745,
+        -2.413537186178413,
+        -2.820041862145628,
+        -6.993923539477533
+      ],
+      "metrics": {
+        "score": -790.4809501532062,
+        "episode_return": -790.287123130125,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.13123527383881,
+        "jerk": 1778.2276266782128,
+        "complexity": 5
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Energy_Efficient_TanhSqrt",
+        "terms": [
+          "tanh_angle",
+          "tanh_velocity",
+          "sqrt_angle",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -0.2001919776114518,
+        -1.7689396083965807,
+        -3.7612280182671736,
+        0.5053584263971143
+      ],
+      "metrics": {
+        "score": -790.3063156717385,
+        "episode_return": -790.1318792645474,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.370473432110682,
+        "jerk": 1784.773016344262,
+        "complexity": 4
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Jerk_Smooth_PD_Tanh",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "tanh_velocity",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        -1.29651731734068,
+        -1.3241099877775744,
+        -1.5510046880731088,
+        -5.631643634465256
+      ],
+      "metrics": {
+        "score": -790.4827586623759,
+        "episode_return": -790.3077186366945,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.243593723647198,
+        "jerk": 1827.6419117013456,
+        "complexity": 4
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Balanced_Pareto_Mix",
+        "terms": [
+          "angle",
+          "tanh_angle",
+          "angular_velocity",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -4.804823845780814,
+        -4.261080729946447,
+        -1.8353663477227848,
+        0.04758802023857799
+      ],
+      "metrics": {
+        "score": -790.4627446228259,
+        "episode_return": -790.2889621725188,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.12758785517033,
+        "jerk": 1776.3637298325575,
+        "complexity": 4
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Stabilization_UprightPD",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -4.573902216643984,
+        -1.4934780924515996,
+        -3.36737107706195
+      ],
+      "metrics": {
+        "score": -790.444359926933,
+        "episode_return": -790.290587666747,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.127500332418137,
+        "jerk": 1775.8629760553697,
+        "complexity": 3
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Integral_Swing_BiasCancel",
+        "terms": [
+          "integral_angle",
+          "tanh_angle",
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        2.0160940761345643,
+        -7.516045320883409,
+        -2.790107052554577
+      ],
+      "metrics": {
+        "score": -791.6747281560683,
+        "episode_return": -791.5158586887943,
+        "success_rate": 0.3333333333333333,
+        "energy": 31.348943218830854,
+        "jerk": 1808.579041819817,
+        "complexity": 3
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "angle",
+          "integral_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -7.152928919736933,
+        0.0161770655807744,
+        -1.4739048601666156
+      ],
+      "metrics": {
+        "score": -790.4441647881998,
+        "episode_return": -790.2904010025326,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.126484530322514,
+        "jerk": 1775.5408303316317,
+        "complexity": 3
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "angular_velocity",
+          "sin_angle",
+          "cubic_angle"
+        ]
+      },
+      "gains": [
+        -0.9711184278360755,
+        -5.915840227356034,
+        -3.7799054665419396
+      ],
+      "metrics": {
+        "score": -790.4487664225519,
+        "episode_return": -790.2950044699736,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.129213260566257,
+        "jerk": 1775.1763028651096,
+        "complexity": 3
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "integral_angle",
+          "tanh_angle",
+          "tanh_velocity",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        1.539510778225403,
+        -3.026290706485147,
+        -3.0213093815366916,
+        -4.801183188867056
+      ],
+      "metrics": {
+        "score": -790.4704350757813,
+        "episode_return": -790.2961404235015,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.175682471306104,
+        "jerk": 1797.1643668591362,
+        "complexity": 4
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "angle",
+          "integral_angle",
+          "sin_angle",
+          "tanh_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -3.656497346866751,
+        -0.023013505555459945,
+        -4.144594715472821,
+        -4.460084819251087,
+        -3.3124904408916973
+      ],
+      "metrics": {
+        "score": -790.4810786132584,
+        "episode_return": -790.287250474676,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.133153951779462,
+        "jerk": 1778.0915339493392,
+        "complexity": 5
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "angular_velocity"
+        ]
+      },
+      "gains": [
+        0.03096049571000499
+      ],
+      "metrics": {
+        "score": -1037.193972291197,
+        "episode_return": -1037.1735774359543,
+        "success_rate": 0.0,
+        "energy": 0.18655216753288226,
+        "jerk": 1.0875453899269927,
+        "complexity": 1
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -5.888513864246785
+      ],
+      "metrics": {
+        "score": -832.1937541523531,
+        "episode_return": -832.0698879750506,
+        "success_rate": 0.16666666666666666,
+        "energy": 33.050449516119635,
+        "jerk": 1888.2639135150885,
+        "complexity": 1
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        0.15589832103098045
+      ],
+      "metrics": {
+        "score": -995.4557721715842,
+        "episode_return": -995.4353168448721,
+        "success_rate": 0.0,
+        "energy": 0.20642114159075442,
+        "jerk": 2.1242214483401294,
+        "complexity": 1
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -5.692284905966648,
+        -0.6967311106603619
+      ],
+      "metrics": {
+        "score": -790.4857818863932,
+        "episode_return": -790.3518509772535,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.210267027668554,
+        "jerk": 1775.518754213307,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "angular_velocity",
+          "cubic_angle"
+        ]
+      },
+      "gains": [
+        0.05976319411648302,
+        -5.538261176227074
+      ],
+      "metrics": {
+        "score": -945.1807382841884,
+        "episode_return": -945.0276114041254,
+        "success_rate": 0.0,
+        "energy": 34.63731227208668,
+        "jerk": 2192.612775942707,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "angular_velocity",
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        0.06374244093448617,
+        -5.994169622661105
+      ],
+      "metrics": {
+        "score": -774.8878530835585,
+        "episode_return": -774.7732469864623,
+        "success_rate": 0.0,
+        "energy": 31.950886184845285,
+        "jerk": 535.2162363271887,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "integral_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        1.7256790534382593,
+        -0.7820613141455584
+      ],
+      "metrics": {
+        "score": -905.0647157416327,
+        "episode_return": -905.0189650078432,
+        "success_rate": 0.0,
+        "energy": 1.848925489586392,
+        "jerk": 102.64414051251906,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "sin_angle",
+          "cubic_angle"
+        ]
+      },
+      "gains": [
+        -5.6845592716800875,
+        -2.7212594626812696
+      ],
+      "metrics": {
+        "score": -814.9326711806901,
+        "episode_return": -814.7898131802889,
+        "success_rate": 0.16666666666666666,
+        "energy": 33.08255377707293,
+        "jerk": 1834.6446423555417,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        -5.777660286592515
+      ],
+      "metrics": {
+        "score": -894.9809517109026,
+        "episode_return": -894.8889177509523,
+        "success_rate": 0.16666666666666666,
+        "energy": 30.567371398630318,
+        "jerk": 544.9608576559655,
+        "complexity": 1
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "cubic_angle"
+        ]
+      },
+      "gains": [
+        -6.5573862080327645,
+        -1.2091185701572056,
+        -3.6769060630246244
+      ],
+      "metrics": {
+        "score": -790.4453234002206,
+        "episode_return": -790.291561802805,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.12657070911371,
+        "jerk": 1775.4227998694732,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -6.309892782161115,
+        -0.9695451758574144,
+        0.03708548380252847
+      ],
+      "metrics": {
+        "score": -790.4497082129146,
+        "episode_return": -790.295941092414,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.131170953864366,
+        "jerk": 1775.2389296485937,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        -5.6556089025135385,
+        -1.8886728375225355,
+        -3.5965305845026254
+      ],
+      "metrics": {
+        "score": -790.4424719578681,
+        "episode_return": -790.2886816345004,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.128831650267262,
+        "jerk": 1776.6330033593688,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        -8.049914394864185,
+        -1.8549286661088753,
+        -0.4790774437027609
+      ],
+      "metrics": {
+        "score": -790.4440854103177,
+        "episode_return": -790.2902927975641,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.130255347901066,
+        "jerk": 1776.605102890454,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "angle",
+          "angular_velocity",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -6.270508269459168,
+        0.27708941638939616,
+        -1.477707004734269
+      ],
+      "metrics": {
+        "score": -790.4472605343326,
+        "episode_return": -790.2935019726461,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.12763623920675,
+        "jerk": 1775.164460405146,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "angle",
+          "tanh_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -6.871154410832178,
+        -3.3600764621631596,
+        -2.6251192341032104
+      ],
+      "metrics": {
+        "score": -790.4414198282753,
+        "episode_return": -790.2876244030931,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.12917283118115,
+        "jerk": 1776.8539759959385,
+        "complexity": 3
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "angular_velocity",
+          "integral_angle",
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        -0.16070423795339317,
+        1.029145382949256,
+        -5.693767703448616
+      ],
+      "metrics": {
+        "score": -746.2207268190381,
+        "episode_return": -746.0836281932852,
+        "success_rate": 0.3333333333333333,
+        "energy": 32.18317947875374,
+        "jerk": 636.6133397686993,
+        "complexity": 3
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "angular_velocity",
+          "sin_angle",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        -1.1358521938620079,
+        -2.2738892330478997,
+        -4.409244011656699
+      ],
+      "metrics": {
+        "score": -790.5572357599274,
+        "episode_return": -790.4016584467842,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.554000540032472,
+        "jerk": 1823.4656031581987,
+        "complexity": 3
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "angular_velocity",
+          "sin_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -0.9290842870872084,
+        1.1446074391019219,
+        -8.065343313365915
+      ],
+      "metrics": {
+        "score": -790.461889768978,
+        "episode_return": -790.3080605473947,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.155367609208497,
+        "jerk": 1775.9243182485898,
+        "complexity": 3
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "angular_velocity",
+          "sin_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        0.22284737604040927,
+        -6.703241908524486,
+        -0.36489733192655904
+      ],
+      "metrics": {
+        "score": -681.1996096613096,
+        "episode_return": -681.0742832104069,
+        "success_rate": 0.3333333333333333,
+        "energy": 26.987237291269253,
+        "jerk": 567.5988160132414,
+        "complexity": 3
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "angular_velocity",
+          "tanh_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -0.3674100962027079,
+        -6.871016368301015,
+        -0.8496791301281763
+      ],
+      "metrics": {
+        "score": -790.4472730507764,
+        "episode_return": -790.2935090194301,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.128637905985027,
+        "jerk": 1775.337776719596,
+        "complexity": 3
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "angular_velocity",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        0.0,
+        0.0
+      ],
+      "metrics": {
+        "score": -1075.1893308356791,
+        "episode_return": -1075.1493308356792,
+        "success_rate": 0.0,
+        "energy": 0.0,
+        "jerk": 0.0,
+        "complexity": 2
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "angular_velocity",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -0.4455284875474709,
+        2.4706694113883607
+      ],
+      "metrics": {
+        "score": -897.13805591538,
+        "episode_return": -897.0710783235544,
+        "success_rate": 0.0,
+        "energy": 10.083423169353862,
+        "jerk": 340.5372743466335,
+        "complexity": 2
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "integral_angle",
+          "sin_angle"
+        ]
+      },
+      "gains": [
+        1.103095474090603,
+        1.0447673381565723
+      ],
+      "metrics": {
+        "score": -821.4600065434539,
+        "episode_return": -821.4030514691971,
+        "success_rate": 0.0,
+        "energy": 6.9647273390819935,
+        "jerk": 151.28097893617056,
+        "complexity": 2
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "sin_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        -4.0851461422913955,
+        0.2796483689115805
+      ],
+      "metrics": {
+        "score": -839.407242340782,
+        "episode_return": -839.292571643956,
+        "success_rate": 0.0,
+        "energy": 32.20042398623618,
+        "jerk": 513.4924426767569,
+        "complexity": 2
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "integral_angle",
+          "tanh_angle",
+          "sqrt_angle"
+        ]
+      },
+      "gains": [
+        1.5946607604149916,
+        -2.8515497533165357,
+        -2.5042049770586248
+      ],
+      "metrics": {
+        "score": -791.8496629324673,
+        "episode_return": -791.6898854047096,
+        "success_rate": 0.16666666666666666,
+        "energy": 31.662770336349123,
+        "jerk": 1822.599354251706,
+        "complexity": 3
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "integral_angle",
+          "tanh_angle",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        0.0032476711979542716,
+        -8.464778643007314,
+        -1.7228296256241127
+      ],
+      "metrics": {
+        "score": -790.4447161042541,
+        "episode_return": -790.2909189820957,
+        "success_rate": 0.3333333333333333,
+        "energy": 29.13442861715835,
+        "jerk": 1776.413246205866,
+        "complexity": 3
+      },
+      "generation": 8
+    }
+  ],
+  "inverted_pendulum": [
+    {
+      "structure": {
+        "name": "P",
+        "terms": [
+          "cart_position",
+          "pole_angle"
+        ]
+      },
+      "gains": [
+        0.1271561850633034,
+        4.0409106210622046
+      ],
+      "metrics": {
+        "score": 499.9598383823376,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.1430013135005472,
+        "jerk": 9.308174430101934,
+        "complexity": 2
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PI",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "integral_cart",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        0.3811385057887895,
+        3.8862969307097175,
+        -0.07023900610183863,
+        0.42401685269748307
+      ],
+      "metrics": {
+        "score": 499.9198954138278,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.09338904667395793,
+        "jerk": 5.598562744995696,
+        "complexity": 4
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PD",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity",
+          "pole_velocity"
+        ]
+      },
+      "gains": [
+        0.37481699311747824,
+        4.948181490740415,
+        0.7495315415009636,
+        1.4076513827155448
+      ],
+      "metrics": {
+        "score": 499.9199722728441,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.016313622683841077,
+        "jerk": 5.706766602945728,
+        "complexity": 4
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "PID",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity",
+          "pole_velocity",
+          "integral_cart",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        0.6360756024444535,
+        5.632807242298261,
+        1.069589874613997,
+        1.5058130023071876,
+        -0.11630265810024554,
+        1.5464041523570338
+      ],
+      "metrics": {
+        "score": 499.8799661453393,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.019885292343917033,
+        "jerk": 6.984684162624329,
+        "complexity": 6
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "EnergyLite_PD_Tanh",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "tanh_cart_velocity",
+          "tanh_pole_velocity"
+        ]
+      },
+      "gains": [
+        0.49617229799458856,
+        5.289076530959278,
+        0.5779371981402761,
+        1.2226959007747946
+      ],
+      "metrics": {
+        "score": 499.91997279171164,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.016020345245995393,
+        "jerk": 5.593971560058189,
+        "complexity": 4
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "JerkSoft_Tanh",
+        "terms": [
+          "tanh_cart",
+          "tanh_angle",
+          "tanh_cart_velocity",
+          "tanh_pole_velocity"
+        ]
+      },
+      "gains": [
+        0.570963538204962,
+        1.2296987855238735,
+        1.0929684317496464,
+        1.6656348465051298
+      ],
+      "metrics": {
+        "score": 499.9199680158033,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.017807385319443335,
+        "jerk": 7.08840569312802,
+        "complexity": 4
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Balanced_STAB",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity",
+          "tanh_pole_velocity",
+          "integral_cart",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        0.4138943723663252,
+        4.5854030922075975,
+        0.7895850191587995,
+        1.5144193232484542,
+        0.2968770797278911,
+        3.442631798175146
+      ],
+      "metrics": {
+        "score": 499.8799718233689,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.018402895137719474,
+        "jerk": 4.886867960540709,
+        "complexity": 6
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "PerformanceMax_PID_Tanh",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity",
+          "pole_velocity",
+          "integral_cart",
+          "integral_angle",
+          "tanh_cart",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        4.297421572553659,
+        -0.5323650627871577,
+        0.7463221344317982,
+        1.3181857028787067,
+        -0.7224796492512111,
+        8.092579164348919,
+        -2.0398330283793804,
+        2.425175209720296
+      ],
+      "metrics": {
+        "score": 499.8399345084665,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.028703103895286273,
+        "jerk": 18.394214765346387,
+        "complexity": 8
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "IntegralBoost_Angle",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "integral_angle",
+          "tanh_cart_velocity"
+        ]
+      },
+      "gains": [
+        0.14929646080296016,
+        3.2027023534373384,
+        2.3321638748373203,
+        -0.16335675190472881
+      ],
+      "metrics": {
+        "score": 499.9199690809432,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.02578658252795082,
+        "jerk": 2.566237151847366,
+        "complexity": 4
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Minimal_TanhAngle",
+        "terms": [
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        1.1313564896747474
+      ],
+      "metrics": {
+        "score": 210.64517413845758,
+        "episode_return": 210.66666666666666,
+        "success_rate": 0.0,
+        "energy": 1.2885808675005377,
+        "jerk": 101.97367078010363,
+        "complexity": 1
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "cart_position"
+        ]
+      },
+      "gains": [
+        -0.6741392469799287
+      ],
+      "metrics": {
+        "score": 22.813318558621337,
+        "episode_return": 22.833333333333332,
+        "success_rate": 0.0,
+        "energy": 0.01334585489743404,
+        "jerk": 0.7144285496664659,
+        "complexity": 1
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "pole_angle"
+        ]
+      },
+      "gains": [
+        5.1075531645733285
+      ],
+      "metrics": {
+        "score": 210.31215309960652,
+        "episode_return": 210.33333333333334,
+        "success_rate": 0.0,
+        "energy": 1.0179882298659573,
+        "jerk": 81.12274846328121,
+        "complexity": 1
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "cart_position",
+          "cart_velocity",
+          "pole_velocity"
+        ]
+      },
+      "gains": [
+        -0.8445725268301001,
+        1.3936648036075712,
+        2.9065961092689716
+      ],
+      "metrics": {
+        "score": 105.42371441391406,
+        "episode_return": 105.5,
+        "success_rate": 0.0,
+        "energy": 3.1050504306641407,
+        "jerk": 6590.267827638413,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "cart_position",
+          "integral_angle",
+          "tanh_cart_velocity"
+        ]
+      },
+      "gains": [
+        -1.7121967321844103,
+        4.693518334849852,
+        -2.8736223242006873
+      ],
+      "metrics": {
+        "score": 20.77325327960383,
+        "episode_return": 20.833333333333332,
+        "success_rate": 0.0,
+        "energy": 0.02436036927173423,
+        "jerk": 27.84668011751243,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "cart_position",
+          "integral_cart",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -0.699075707638329,
+        0.6316009969252709,
+        1.5856028803706441
+      ],
+      "metrics": {
+        "score": 24.939984617632962,
+        "episode_return": 25.0,
+        "success_rate": 0.0,
+        "energy": 0.01382555325214658,
+        "jerk": 0.778406892021851,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity"
+        ]
+      },
+      "gains": [
+        0.10258558937087287,
+        6.310876803362194,
+        -0.05600898253418337
+      ],
+      "metrics": {
+        "score": 320.9384499701367,
+        "episode_return": 321.0,
+        "success_rate": 0.0,
+        "energy": 1.2967949538287462,
+        "jerk": 126.6174547462859,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "PerfBoost_TanhPD",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity",
+          "tanh_pole_velocity",
+          "tanh_cart",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        -1.1325436136357159,
+        0.6109794125151542,
+        0.24377203200770897,
+        0.8181196737851137,
+        1.3159415942510029,
+        0.560233599029426
+      ],
+      "metrics": {
+        "score": 499.87998227006966,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.013423735857872458,
+        "jerk": 2.15309723339154,
+        "complexity": 6
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Energy_TanhIntegral",
+        "terms": [
+          "tanh_cart",
+          "tanh_angle",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        0.64857081597895,
+        1.039459531313613,
+        0.7224225963135248
+      ],
+      "metrics": {
+        "score": 499.939338064252,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.5874283741593096,
+        "jerk": 37.2536869044687,
+        "complexity": 3
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "JerkSmooth_TanhVel",
+        "terms": [
+          "tanh_cart_velocity",
+          "tanh_pole_velocity",
+          "tanh_cart",
+          "tanh_angle",
+          "cart_velocity"
+        ]
+      },
+      "gains": [
+        -0.6594163815601677,
+        1.6248796839638782,
+        1.3974381381792642,
+        1.70130273122404,
+        1.772646534117555
+      ],
+      "metrics": {
+        "score": 499.89995132348844,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.02782216628234091,
+        "jerk": 10.427172632862034,
+        "complexity": 5
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "Balanced_PD_TanhInt",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "cart_velocity",
+          "tanh_pole_velocity",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        0.2619291975162581,
+        4.507027212297317,
+        1.0083606840789927,
+        1.5819805405617555,
+        -0.702367519663647
+      ],
+      "metrics": {
+        "score": 499.8999695949768,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.019950584558322826,
+        "jerk": 5.227219305058482,
+        "complexity": 5
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "AngleCentric_TanhInt",
+        "terms": [
+          "pole_angle",
+          "integral_angle",
+          "tanh_angle",
+          "tanh_pole_velocity"
+        ]
+      },
+      "gains": [
+        1.1425320793418476,
+        5.991562589845018,
+        5.408207844632683,
+        1.1116206374498872
+      ],
+      "metrics": {
+        "score": 252.9143050279371,
+        "episode_return": 253.0,
+        "success_rate": 0.16666666666666666,
+        "energy": 3.4395752501841836,
+        "jerk": 1127.6984063476755,
+        "complexity": 4
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "CartStability_TanhVelInt",
+        "terms": [
+          "cart_position",
+          "integral_cart",
+          "tanh_cart_velocity",
+          "tanh_cart"
+        ]
+      },
+      "gains": [
+        -0.7622744768600527,
+        0.976026449013682,
+        -1.7365075230774314,
+        -0.7110700072497935
+      ],
+      "metrics": {
+        "score": 19.919966032852816,
+        "episode_return": 20.0,
+        "success_rate": 0.0,
+        "energy": 0.013949852921000108,
+        "jerk": 10.008647132556623,
+        "complexity": 4
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "integral_angle",
+          "tanh_cart",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        0.44149851952742586,
+        0.6233935488510168,
+        1.0124196834078973
+      ],
+      "metrics": {
+        "score": 499.93964615050146,
+        "episode_return": 500.0,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.32217730105483083,
+        "jerk": 15.8360987637583,
+        "complexity": 3
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "integral_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        1.2563598697995553,
+        0.8184035552098273
+      ],
+      "metrics": {
+        "score": 236.95925915170457,
+        "episode_return": 237.0,
+        "success_rate": 0.0,
+        "energy": 0.671598885692633,
+        "jerk": 34.62470486036606,
+        "complexity": 2
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "integral_angle",
+          "tanh_cart"
+        ]
+      },
+      "gains": [
+        2.578291443056272,
+        -0.4378515417143151
+      ],
+      "metrics": {
+        "score": 23.293311319240686,
+        "episode_return": 23.333333333333332,
+        "success_rate": 0.0,
+        "energy": 0.021265447087738965,
+        "jerk": 0.3743227788989168,
+        "complexity": 2
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "tanh_cart",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        0.2915426545548499,
+        1.0601066240200525
+      ],
+      "metrics": {
+        "score": 489.62570293399517,
+        "episode_return": 489.6666666666667,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.8421867650934592,
+        "jerk": 60.772953181603235,
+        "complexity": 2
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        0.5174100766014391,
+        4.154461498274186,
+        0.6320933036635584
+      ],
+      "metrics": {
+        "score": 499.9398218489376,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.16325734377240378,
+        "jerk": 7.446859310479148,
+        "complexity": 3
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "integral_cart"
+        ]
+      },
+      "gains": [
+        0.3824691213950322,
+        4.234011439565927,
+        -0.09507424619401114
+      ],
+      "metrics": {
+        "score": 499.9398625368849,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.1226626655636841,
+        "jerk": 7.400224787373656,
+        "complexity": 3
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "cart_position",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        -0.49609389517962765,
+        1.900087724083236
+      ],
+      "metrics": {
+        "score": 24.293305889432773,
+        "episode_return": 24.333333333333332,
+        "success_rate": 0.0,
+        "energy": 0.02648602353805472,
+        "jerk": 0.47893850982372294,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "cart_position",
+          "integral_cart"
+        ]
+      },
+      "gains": [
+        -0.8834905126530087,
+        0.8517835666536226
+      ],
+      "metrics": {
+        "score": 24.293318527649305,
+        "episode_return": 24.333333333333332,
+        "success_rate": 0.0,
+        "energy": 0.012487784936190053,
+        "jerk": 1.1589495457853334,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "pole_angle",
+          "integral_angle"
+        ]
+      },
+      "gains": [
+        3.6278676982585076,
+        1.3602346007996853
+      ],
+      "metrics": {
+        "score": 238.45923027403967,
+        "episode_return": 238.5,
+        "success_rate": 0.16666666666666666,
+        "energy": 0.7020390582521486,
+        "jerk": 33.84345105175387,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "pole_angle",
+          "integral_cart"
+        ]
+      },
+      "gains": [
+        4.442115052480886,
+        0.01659679134554601
+      ],
+      "metrics": {
+        "score": 237.45959299682747,
+        "episode_return": 237.5,
+        "success_rate": 0.0,
+        "energy": 0.35283550982618456,
+        "jerk": 27.083831360044446,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "pole_velocity"
+        ]
+      },
+      "gains": [
+        0.14103651928919575,
+        7.357013407067794,
+        0.3403089089956773
+      ],
+      "metrics": {
+        "score": 499.93992707595453,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.042205912110883446,
+        "jerk": 15.359066681962275,
+        "complexity": 3
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        0.1541111847391941,
+        -0.29765639621118234,
+        0.9734206544755362
+      ],
+      "metrics": {
+        "score": 499.93974501939107,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.22471929966623158,
+        "jerk": 15.130654647345336,
+        "complexity": 3
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "cart_position",
+          "pole_velocity"
+        ]
+      },
+      "gains": [
+        -1.197950414053609,
+        2.0843486254288854
+      ],
+      "metrics": {
+        "score": 61.1265759692316,
+        "episode_return": 61.166666666666664,
+        "success_rate": 0.0,
+        "energy": 0.036709151693764284,
+        "jerk": 26.994141685725086,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "cart_position",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        0.09387845676227013,
+        0.8810305488993828
+      ],
+      "metrics": {
+        "score": 499.95977402983453,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.19853846622758642,
+        "jerk": 13.715849594238364,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "pole_angle",
+          "pole_velocity"
+        ]
+      },
+      "gains": [
+        9.201459300924892,
+        0.18718205248268083
+      ],
+      "metrics": {
+        "score": 228.4594050077148,
+        "episode_return": 228.5,
+        "success_rate": 0.16666666666666666,
+        "energy": 0.48635869749345423,
+        "jerk": 54.31679386750455,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "pole_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        0.35331463205833646,
+        1.0644525112319583
+      ],
+      "metrics": {
+        "score": 210.7917366903428,
+        "episode_return": 210.83333333333334,
+        "success_rate": 0.0,
+        "energy": 1.3777990659660906,
+        "jerk": 109.42196228923645,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "tanh_cart"
+        ]
+      },
+      "gains": [
+        0.8379251538990667,
+        3.9921458721896994,
+        -0.7847043760706294
+      ],
+      "metrics": {
+        "score": 499.9398329107417,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.14857731313507241,
+        "jerk": 9.255972575057735,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "tanh_cart_velocity"
+        ]
+      },
+      "gains": [
+        0.34031923614433507,
+        4.961065696050244,
+        -0.16413747160141556
+      ],
+      "metrics": {
+        "score": 137.27311023019027,
+        "episode_return": 137.33333333333334,
+        "success_rate": 0.0,
+        "energy": 0.1909734730979116,
+        "jerk": 16.064834982457995,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "cart_position",
+          "tanh_cart"
+        ]
+      },
+      "gains": [
+        -0.9235685469386642,
+        0.2525745775548981
+      ],
+      "metrics": {
+        "score": 20.459985652107758,
+        "episode_return": 20.5,
+        "success_rate": 0.0,
+        "energy": 0.012888025949063528,
+        "jerk": 0.7299331470967944,
+        "complexity": 2
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "pole_angle",
+          "tanh_cart"
+        ]
+      },
+      "gains": [
+        4.388330879738174,
+        0.14766090244785968
+      ],
+      "metrics": {
+        "score": 499.9597276036411,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.23909321965780453,
+        "jerk": 16.651569617911736,
+        "complexity": 2
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "cart_position",
+          "cart_velocity",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        2.1488402025668183,
+        -0.7265461250067179,
+        4.64490158325637
+      ],
+      "metrics": {
+        "score": 193.25941590554962,
+        "episode_return": 193.33333333333334,
+        "success_rate": 0.0,
+        "energy": 7.809451203300235,
+        "jerk": 3053.988290216435,
+        "complexity": 3
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "cart_position",
+          "integral_angle",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        0.667033366370592,
+        0.798455331734322,
+        1.037026471634501
+      ],
+      "metrics": {
+        "score": 499.9393497849326,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.5779312756277153,
+        "jerk": 36.14189589922438,
+        "complexity": 3
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "cart_position",
+          "integral_cart",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        2.1633903822147262,
+        -0.7099239579998039,
+        1.5353139822513755
+      ],
+      "metrics": {
+        "score": 263.60614616130175,
+        "episode_return": 263.6666666666667,
+        "success_rate": 0.16666666666666666,
+        "energy": 0.4522235022316959,
+        "jerk": 34.14093136031525,
+        "complexity": 3
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "cart_position",
+          "pole_angle",
+          "tanh_pole_velocity"
+        ]
+      },
+      "gains": [
+        0.17175523164020787,
+        8.197685075169096,
+        0.4987191605893748
+      ],
+      "metrics": {
+        "score": 499.9399162173477,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.044789243318346585,
+        "jerk": 19.496704503335923,
+        "complexity": 3
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "tanh_cart"
+        ]
+      },
+      "gains": [
+        -0.6899822557075207
+      ],
+      "metrics": {
+        "score": 23.479985112764357,
+        "episode_return": 23.5,
+        "success_rate": 0.0,
+        "energy": 0.013530760230793628,
+        "jerk": 0.6782377065322119,
+        "complexity": 1
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "cart_position",
+          "tanh_pole_velocity"
+        ]
+      },
+      "gains": [
+        -1.2472306915779892,
+        2.2747531765093334
+      ],
+      "metrics": {
+        "score": 67.95814833839478,
+        "episode_return": 68.0,
+        "success_rate": 0.0,
+        "energy": 0.3293475564139731,
+        "jerk": 761.157024398717,
+        "complexity": 2
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "pole_angle",
+          "tanh_pole_velocity"
+        ]
+      },
+      "gains": [
+        3.087215434409319,
+        0.5393901473847496
+      ],
+      "metrics": {
+        "score": 158.45987552550542,
+        "episode_return": 158.5,
+        "success_rate": 0.0,
+        "energy": 0.10550374795197953,
+        "jerk": 9.485373310580004,
+        "complexity": 2
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "cart_position",
+          "pole_velocity",
+          "tanh_angle"
+        ]
+      },
+      "gains": [
+        1.1760275621408292,
+        1.0531560021447923,
+        4.507754642307951
+      ],
+      "metrics": {
+        "score": 499.9395077852709,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.16514547391586723,
+        "jerk": 163.53462756593296,
+        "complexity": 3
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "cart_position",
+          "tanh_angle",
+          "tanh_cart_velocity"
+        ]
+      },
+      "gains": [
+        1.7015984596614302,
+        4.543405596021244,
+        -0.9303964861755813
+      ],
+      "metrics": {
+        "score": 177.929516101825,
+        "episode_return": 178.0,
+        "success_rate": 0.0,
+        "energy": 5.975313534374855,
+        "jerk": 2254.292320316361,
+        "complexity": 3
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "cart_position",
+          "tanh_angle",
+          "tanh_pole_velocity"
+        ]
+      },
+      "gains": [
+        0.9058211833485191,
+        3.5864543034759477,
+        1.1863553963417617
+      ],
+      "metrics": {
+        "score": 499.939678556718,
+        "episode_return": 500.0,
+        "success_rate": 1.0,
+        "energy": 0.128110046501909,
+        "jerk": 96.66661775746559,
+        "complexity": 3
+      },
+      "generation": 8
+    }
+  ],
+  "reacher": [
+    {
+      "structure": {
+        "name": "Task P",
+        "terms": [
+          "jt_error"
+        ]
+      },
+      "gains": [
+        4.046701101194513
+      ],
+      "metrics": {
+        "score": -6.877105903818674,
+        "episode_return": -6.857057669658779,
+        "success_rate": 0.0,
+        "energy": 0.003982342091418995,
+        "jerk": 0.42053694909545986,
+        "complexity": 1
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "Task PI",
+        "terms": [
+          "jt_error",
+          "integral_jt_error"
+        ]
+      },
+      "gains": [
+        4.238923156170105,
+        -4.179249436217335
+      ],
+      "metrics": {
+        "score": -6.47109813864448,
+        "episode_return": -6.431056079979759,
+        "success_rate": 0.0,
+        "energy": 0.0033756446909112554,
+        "jerk": 0.4151108906243748,
+        "complexity": 2
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "Task PD",
+        "terms": [
+          "jt_error",
+          "joint_velocity"
+        ]
+      },
+      "gains": [
+        5.835114755898955,
+        -0.021950135024721373
+      ],
+      "metrics": {
+        "score": -5.94798947153214,
+        "episode_return": -5.907948058093378,
+        "success_rate": 0.3333333333333333,
+        "energy": 0.0026946155168043376,
+        "jerk": 0.7233641797111255,
+        "complexity": 2
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "Task PID",
+        "terms": [
+          "jt_error",
+          "integral_jt_error",
+          "joint_velocity"
+        ]
+      },
+      "gains": [
+        3.7266652967993714,
+        0.1830312437740024,
+        -0.006542077911238793
+      ],
+      "metrics": {
+        "score": -6.6090740352393516,
+        "episode_return": -6.549044520677089,
+        "success_rate": 0.3333333333333333,
+        "energy": 0.0023231728328812844,
+        "jerk": 0.31414169670698977,
+        "complexity": 3
+      },
+      "generation": 0
+    },
+    {
+      "structure": {
+        "name": "Performance PD+Tanh",
+        "terms": [
+          "jt_error",
+          "joint_velocity",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        0.6833946841395342,
+        -0.0877548598151877,
+        2.5569918093729225
+      ],
+      "metrics": {
+        "score": -4.802288619915265,
+        "episode_return": -4.7418319954847234,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.013711451717124774,
+        "jerk": 15.975495668511678,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Energy Efficient TanhDamp",
+        "terms": [
+          "jt_error",
+          "tanh_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -4.410885436321935,
+        3.0654751892144847,
+        -1.656392410510568
+      ],
+      "metrics": {
+        "score": -4.660010807083897,
+        "episode_return": -4.599538677667183,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.015372549869821344,
+        "jerk": 15.92019590080542,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Jerk Minimal TanhDamped",
+        "terms": [
+          "tanh_jt_error",
+          "tanh_velocity",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        2.4308956148218877,
+        -0.0006283060136178052,
+        -1.439941172239641
+      ],
+      "metrics": {
+        "score": -4.675854719153781,
+        "episode_return": -4.615427683974482,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.01546475297254953,
+        "jerk": 13.61938247870669,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Balanced Integral TanhDamp",
+        "terms": [
+          "jt_error",
+          "integral_jt_error",
+          "task_damping",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        1.853709794445248,
+        -1.5091708772178105,
+        -1.6098322469555526,
+        2.426637304540564
+      ],
+      "metrics": {
+        "score": -4.6828596795809405,
+        "episode_return": -4.602384626214633,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.015719017761134633,
+        "jerk": 15.893159434837314,
+        "complexity": 4
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Robust Damped PD",
+        "terms": [
+          "jt_error",
+          "task_damping",
+          "joint_velocity"
+        ]
+      },
+      "gains": [
+        6.349365216762202,
+        1.9553047684975957,
+        -0.12508039648167424
+      ],
+      "metrics": {
+        "score": -5.7352017713562295,
+        "episode_return": -5.675145901271589,
+        "success_rate": 0.5,
+        "energy": 0.0037320747407981916,
+        "jerk": 0.9274668616477325,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Direction Integral Damped",
+        "terms": [
+          "normalized_jt_error",
+          "integral_jt_error",
+          "joint_velocity"
+        ]
+      },
+      "gains": [
+        0.20103947231167213,
+        -0.558214799182542,
+        -0.02969925753125298
+      ],
+      "metrics": {
+        "score": -5.750993268697985,
+        "episode_return": -5.690114264326863,
+        "success_rate": 1.0,
+        "energy": 0.030223852768152332,
+        "jerk": 28.83829217202786,
+        "complexity": 3
+      },
+      "generation": 1
+    },
+    {
+      "structure": {
+        "name": "Performance PD+Norm",
+        "terms": [
+          "jt_error",
+          "joint_velocity",
+          "normalized_jt_error",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        -1.867539791170886,
+        -0.14048608455818212,
+        0.12403691355831956,
+        3.6681389580187287
+      ],
+      "metrics": {
+        "score": -4.696936731005249,
+        "episode_return": -4.615770127070781,
+        "success_rate": 1.0,
+        "energy": 0.02245232771897264,
+        "jerk": 47.1040328639257,
+        "complexity": 4
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Energy Efficient Integral Damped",
+        "terms": [
+          "integral_jt_error",
+          "task_damping",
+          "joint_velocity"
+        ]
+      },
+      "gains": [
+        7.12182501447203,
+        0.16421657277964752,
+        -0.05589612346924035
+      ],
+      "metrics": {
+        "score": -8.60691653052272,
+        "episode_return": -8.5469147038306,
+        "success_rate": 0.0,
+        "energy": 0.00017916660474156596,
+        "jerk": 0.0017513036337355806,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Jerk Minimal TanhVelocity",
+        "terms": [
+          "tanh_velocity",
+          "task_damping",
+          "joint_velocity"
+        ]
+      },
+      "gains": [
+        0.3666627447351497,
+        -1.940277331546869,
+        -0.07962310986434241
+      ],
+      "metrics": {
+        "score": -8.561874985552068,
+        "episode_return": -8.501740225568795,
+        "success_rate": 0.0,
+        "energy": 0.006879169851202532,
+        "jerk": 3.2984142380298196,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Balanced Directional Tanh",
+        "terms": [
+          "normalized_jt_error",
+          "tanh_jt_error",
+          "task_damping",
+          "integral_jt_error"
+        ]
+      },
+      "gains": [
+        0.029887059239433092,
+        2.054390047722091,
+        -1.3315476459043576,
+        0.6071463507755847
+      ],
+      "metrics": {
+        "score": -4.609478718355506,
+        "episode_return": -4.529098566321362,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.015510258346788154,
+        "jerk": 11.25247253381586,
+        "complexity": 4
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Robust Directional Damped",
+        "terms": [
+          "normalized_jt_error",
+          "joint_velocity",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        0.32938490458368735,
+        -0.15965796410957186,
+        -1.4425272769885071
+      ],
+      "metrics": {
+        "score": -7.945767462860656,
+        "episode_return": -7.883787294895391,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.018768450822802454,
+        "jerk": 89.62417285185496,
+        "complexity": 3
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "Aggressive PD+Integral+TanhV",
+        "terms": [
+          "jt_error",
+          "integral_jt_error",
+          "tanh_velocity",
+          "joint_velocity"
+        ]
+      },
+      "gains": [
+        0.7264363171708087,
+        -0.00643760488222167,
+        0.7333560286791936,
+        -0.6990849224857797
+      ],
+      "metrics": {
+        "score": -8.693612856523405,
+        "episode_return": -8.613612040485952,
+        "success_rate": 0.16666666666666666,
+        "energy": 5.739983855391983e-05,
+        "jerk": 0.012101953406683312,
+        "complexity": 4
+      },
+      "generation": 2
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "integral_jt_error",
+          "tanh_jt_error",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -2.209080355323219,
+        2.6206847470671297,
+        0.01729358968940731,
+        -1.7683207547751718
+      ],
+      "metrics": {
+        "score": -4.607277647233874,
+        "episode_return": -4.5267766764388115,
+        "success_rate": 1.0,
+        "energy": 0.015922052620920415,
+        "jerk": 17.08751344269045,
+        "complexity": 4
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "jt_error",
+          "integral_jt_error",
+          "tanh_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -1.322564784601004,
+        -0.7114309036290852,
+        2.718616593230313,
+        -1.5966107553035578
+      ],
+      "metrics": {
+        "score": -4.680512658479401,
+        "episode_return": -4.600047287497054,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.015558899686678463,
+        "jerk": 15.489099274008359,
+        "complexity": 4
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "jt_error",
+          "joint_velocity",
+          "tanh_jt_error",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        -2.6369767751946274,
+        -0.10656772199461254,
+        2.5461931177160264,
+        0.12181889388144601
+      ],
+      "metrics": {
+        "score": -4.637555719346448,
+        "episode_return": -4.5567850752038375,
+        "success_rate": 1.0,
+        "energy": 0.017177221604605768,
+        "jerk": 29.943596328228754,
+        "complexity": 4
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "joint_velocity",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        -0.08550470323931161,
+        2.594411825405131
+      ],
+      "metrics": {
+        "score": -4.7819580239178014,
+        "episode_return": -4.741508445357967,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.013825952916710585,
+        "jerk": 15.565951533371226,
+        "complexity": 2
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "jt_error",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        -2.5479701835044986,
+        0.6641364850980203
+      ],
+      "metrics": {
+        "score": -6.879979238945936,
+        "episode_return": -6.839932187371918,
+        "success_rate": 0.0,
+        "energy": 0.0038979369583057167,
+        "jerk": 0.4036102217598274,
+        "complexity": 2
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        4.645140554008893,
+        -0.27079644170682726
+      ],
+      "metrics": {
+        "score": -6.272796343642572,
+        "episode_return": -6.232764584245067,
+        "success_rate": 0.3333333333333333,
+        "energy": 0.0022584276770016014,
+        "jerk": 0.4587560367413625,
+        "complexity": 2
+      },
+      "generation": 3
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "tanh_jt_error",
+          "tanh_velocity"
+        ]
+      },
+      "gains": [
+        1.3208483987660404,
+        -0.12441496808326769
+      ],
+      "metrics": {
+        "score": -6.347492615940348,
+        "episode_return": -6.307240488697417,
+        "success_rate": 0.5,
+        "energy": 0.014553287299506628,
+        "jerk": 5.329718496818923,
+        "complexity": 2
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "tanh_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        2.615920661047235,
+        -1.6296828688709437
+      ],
+      "metrics": {
+        "score": -4.642758054915899,
+        "episode_return": -4.602282960876017,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.015654547530800186,
+        "jerk": 15.927428228693339,
+        "complexity": 2
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "tanh_velocity",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        0.12817466067913996,
+        -1.8216134660355632
+      ],
+      "metrics": {
+        "score": -9.351086051338939,
+        "episode_return": -9.310929313832434,
+        "success_rate": 0.0,
+        "energy": 0.013017036104878822,
+        "jerk": 1.328357272870184,
+        "complexity": 2
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "integral_jt_error",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        3.427775194398211,
+        0.1303253306188435,
+        -0.518632295128596
+      ],
+      "metrics": {
+        "score": -5.781147899466596,
+        "episode_return": -5.720849727114449,
+        "success_rate": 0.3333333333333333,
+        "energy": 0.012822041432373227,
+        "jerk": 8.497596891197437,
+        "complexity": 3
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "integral_jt_error",
+          "tanh_jt_error",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        -7.721032132073406,
+        0.06659410324863033,
+        0.09628636876956126
+      ],
+      "metrics": {
+        "score": -5.890924797839167,
+        "episode_return": -5.830736414604236,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.010630565195106101,
+        "jerk": 4.103879149005066,
+        "complexity": 3
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "integral_jt_error",
+          "tanh_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -0.19350556289285703,
+        2.5618849924850826,
+        -1.5877491096206136
+      ],
+      "metrics": {
+        "score": -4.662544251660417,
+        "episode_return": -4.60208587292859,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.015402528318821475,
+        "jerk": 15.217672431990975,
+        "complexity": 3
+      },
+      "generation": 4
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        0.41183087366109355
+      ],
+      "metrics": {
+        "score": -6.866374902905884,
+        "episode_return": -6.846326418912775,
+        "success_rate": 0.0,
+        "energy": 0.004008034055372617,
+        "jerk": 0.42018262776932785,
+        "complexity": 1
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "task_damping"
+        ]
+      },
+      "gains": [
+        0.7298873161199104
+      ],
+      "metrics": {
+        "score": -9.655808965088207,
+        "episode_return": -9.635804023131387,
+        "success_rate": 0.16666666666666666,
+        "energy": 0.00045926935685264785,
+        "jerk": 0.017463162642560398,
+        "complexity": 1
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "integral_jt_error",
+          "tanh_jt_error"
+        ]
+      },
+      "gains": [
+        -5.969513609290662,
+        0.4625523521278064
+      ],
+      "metrics": {
+        "score": -6.353159952025054,
+        "episode_return": -6.313113440945247,
+        "success_rate": 0.0,
+        "energy": 0.0037170516695087014,
+        "jerk": 0.46702815563200706,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "integral_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        8.200766101405875,
+        -1.0539497242868365
+      ],
+      "metrics": {
+        "score": -8.572073991091791,
+        "episode_return": -8.532072077127799,
+        "success_rate": 0.0,
+        "energy": 0.0001879896293691748,
+        "jerk": 0.0017033850297920596,
+        "complexity": 2
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "joint_velocity",
+          "tanh_jt_error",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        -0.11788372538845582,
+        3.0497850239185493,
+        0.10114802561092903
+      ],
+      "metrics": {
+        "score": -4.605069572428888,
+        "episode_return": -4.544167230935424,
+        "success_rate": 1.0,
+        "energy": 0.020173434764421308,
+        "jerk": 35.030357290933075,
+        "complexity": 3
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "joint_velocity",
+          "tanh_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -0.037401127102136555,
+        3.2997693922803526,
+        -1.324453859158019
+      ],
+      "metrics": {
+        "score": -4.598242701151427,
+        "episode_return": -4.537551780118732,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.017804013647296554,
+        "jerk": 25.644044811134417,
+        "complexity": 3
+      },
+      "generation": 5
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "joint_velocity",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        0.0,
+        0.0
+      ],
+      "metrics": {
+        "score": -9.799400583627433,
+        "episode_return": -9.759400583627434,
+        "success_rate": 0.0,
+        "energy": 0.0,
+        "jerk": 0.0,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "joint_velocity",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        0.009380878531817405,
+        0.5723538940540087
+      ],
+      "metrics": {
+        "score": -9.676842664460207,
+        "episode_return": -9.636836633287219,
+        "success_rate": 0.16666666666666666,
+        "energy": 0.0005594047669122622,
+        "jerk": 0.021856265984873762,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "tanh_jt_error",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        -0.04055710167891821,
+        0.09377551434094356
+      ],
+      "metrics": {
+        "score": -6.512864706893839,
+        "episode_return": -6.4727256223774114,
+        "success_rate": 0.5,
+        "energy": 0.007856483690751094,
+        "jerk": 3.0259839760344476,
+        "complexity": 2
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "jt_error",
+          "joint_velocity",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        -0.9480331062233635,
+        -0.050110484854427845,
+        0.196904088965681
+      ],
+      "metrics": {
+        "score": -6.1109451958864405,
+        "episode_return": -6.050250320249474,
+        "success_rate": 1.0,
+        "energy": 0.019385017571718594,
+        "jerk": 25.051273062491177,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "jt_error",
+          "tanh_jt_error",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        -2.160598625473856,
+        0.19813102848389386,
+        0.08557496803951366
+      ],
+      "metrics": {
+        "score": -6.554349877293575,
+        "episode_return": -6.494234167162575,
+        "success_rate": 0.5,
+        "energy": 0.006887534268510838,
+        "jerk": 2.34173941574966,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "tanh_jt_error",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        2.3233389788593146,
+        0.03459565125684884,
+        -1.634466068124221
+      ],
+      "metrics": {
+        "score": -4.5584661126642105,
+        "episode_return": -4.49801067199294,
+        "success_rate": 1.0,
+        "energy": 0.016215155031168254,
+        "jerk": 14.66445604797748,
+        "complexity": 3
+      },
+      "generation": 6
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        0.14595571485404535,
+        -0.39946141378651423
+      ],
+      "metrics": {
+        "score": -5.6604948215805,
+        "episode_return": -5.620093939284911,
+        "success_rate": 0.8333333333333334,
+        "energy": 0.01749086316480922,
+        "jerk": 11.298683197058665,
+        "complexity": 2
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "joint_velocity",
+          "integral_jt_error",
+          "tanh_jt_error",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        -0.22587747488809626,
+        -0.5896041120067561,
+        -0.08428820665292891,
+        0.38295030542933317
+      ],
+      "metrics": {
+        "score": -8.724514265623757,
+        "episode_return": -8.640433366120368,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.03808516583251428,
+        "jerk": 185.00239225313524,
+        "complexity": 4
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "joint_velocity",
+          "integral_jt_error",
+          "tanh_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -0.19929578113241903,
+        4.527129533943938,
+        1.1116372316240066,
+        3.0275936766169096
+      ],
+      "metrics": {
+        "score": -5.242922746258385,
+        "episode_return": -5.162794785355756,
+        "success_rate": 0.5,
+        "energy": 0.007070268067762478,
+        "jerk": 2.8629110975505374,
+        "complexity": 4
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "joint_velocity",
+          "tanh_jt_error",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -0.0480941020924103,
+        2.521151849731906,
+        0.06439500963555472,
+        -1.111753072833178
+      ],
+      "metrics": {
+        "score": -4.362847433177344,
+        "episode_return": -4.282295777820813,
+        "success_rate": 1.0,
+        "energy": 0.013745507135554365,
+        "jerk": 20.710014258811615,
+        "complexity": 4
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "joint_velocity",
+          "tanh_jt_error",
+          "tanh_velocity",
+          "normalized_jt_error"
+        ]
+      },
+      "gains": [
+        -0.3876446518025448,
+        2.4091735905771685,
+        0.6658307723545573,
+        0.1557115022307804
+      ],
+      "metrics": {
+        "score": -4.725948386878642,
+        "episode_return": -4.644538432979984,
+        "success_rate": 1.0,
+        "energy": 0.02024173094031236,
+        "jerk": 60.376829462735834,
+        "complexity": 4
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "joint_velocity",
+          "tanh_jt_error",
+          "tanh_velocity",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -0.1582349766626468,
+        2.1922168157465043,
+        0.2393988912020877,
+        -1.02008150838112
+      ],
+      "metrics": {
+        "score": -4.682633668982225,
+        "episode_return": -4.602328119883187,
+        "success_rate": 1.0,
+        "energy": 0.0065920633974075335,
+        "jerk": 11.981423253232245,
+        "complexity": 4
+      },
+      "generation": 7
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_1",
+        "terms": [
+          "joint_velocity",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -0.026788749274792134,
+        0.18544459524695744,
+        -0.2163183303314985
+      ],
+      "metrics": {
+        "score": -5.661676962441553,
+        "episode_return": -5.600974846147831,
+        "success_rate": 1.0,
+        "energy": 0.022978675106811963,
+        "jerk": 23.616477132717833,
+        "complexity": 3
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_2",
+        "terms": [
+          "jt_error",
+          "joint_velocity",
+          "tanh_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        0.616361470319045,
+        -0.062249584271615505,
+        3.2024134492709893,
+        -0.5861113308848238
+      ],
+      "metrics": {
+        "score": -4.8146285716151755,
+        "episode_return": -4.733910991174929,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.021044792869801935,
+        "jerk": 25.356625577444678,
+        "complexity": 4
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_3",
+        "terms": [
+          "jt_error",
+          "tanh_jt_error",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -4.992849531283111,
+        3.1275375732663413,
+        0.030520599952333236,
+        -1.754046131722034
+      ],
+      "metrics": {
+        "score": -4.59135799666397,
+        "episode_return": -4.510808937626796,
+        "success_rate": 1.0,
+        "energy": 0.018470511929475224,
+        "jerk": 18.217695894014323,
+        "complexity": 4
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_4",
+        "terms": [
+          "tanh_jt_error",
+          "tanh_velocity",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        1.8038926290981097,
+        -0.05669139226520655,
+        0.11822990244125431,
+        -1.4821052391578258
+      ],
+      "metrics": {
+        "score": -4.726052698355697,
+        "episode_return": -4.645379050397582,
+        "success_rate": 1.0,
+        "energy": 0.019294685119821225,
+        "jerk": 24.03505534579413,
+        "complexity": 4
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_5",
+        "terms": [
+          "integral_jt_error",
+          "tanh_jt_error",
+          "tanh_velocity",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        2.9926452981299514,
+        2.0503154890398965,
+        -0.04526803958503073,
+        0.0772126222305315,
+        -1.3810728770605214
+      ],
+      "metrics": {
+        "score": -4.560096296053137,
+        "episode_return": -4.459595050617149,
+        "success_rate": 1.0,
+        "energy": 0.01682288772981944,
+        "jerk": 16.650827934520926,
+        "complexity": 5
+      },
+      "generation": 8
+    },
+    {
+      "structure": {
+        "name": "fallback_mutation_6",
+        "terms": [
+          "joint_velocity",
+          "integral_jt_error",
+          "tanh_jt_error",
+          "normalized_jt_error",
+          "task_damping"
+        ]
+      },
+      "gains": [
+        -0.23367835749250976,
+        -0.7616827396612504,
+        2.487966283605191,
+        0.09814099801440733,
+        2.510292725835754
+      ],
+      "metrics": {
+        "score": -4.95041323184831,
+        "episode_return": -4.849682885309216,
+        "success_rate": 0.6666666666666666,
+        "energy": 0.018323715927061432,
+        "jerk": 27.355468991188406,
+        "complexity": 5
+      },
+      "generation": 8
+    }
+  ]
+}

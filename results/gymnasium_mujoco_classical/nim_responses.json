@@ -1,0 +1,38 @@
+[
+  {
+    "environment": "pendulum",
+    "generation": 1,
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"PD_TanhVel\",\n    \"terms\": [\"angle\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"PID_Sin\",\n    \"terms\": [\"angle\", \"integral_angle\", \"sin_angle\"]\n  },\n  {\n    \"name\": \"PI_Tanh\",\n    \"terms\": [\"tanh_angle\", \"integral_angle\"]\n  },\n  {\n    \"name\": \"P_CubicSqrt\",\n    \"terms\": [\"cubic_angle\", \"sqrt_angle\"]\n  }\n]"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 2,
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"PD_I\",\n    \"terms\": [\"angle\", \"angular_velocity\", \"integral_angle\"]\n  },\n  {\n    \"name\": \"PD_Tanh\",\n    \"terms\": [\"angle\", \"angular_velocity\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"PID_Sin_Tanh\",\n    \"terms\": [\"angle\", \"integral_angle\", \"sin_angle\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"Cubic_Sqrt_Tanh\",\n    \"terms\": [\"cubic_angle\", \"sqrt_angle\", \"tanh_angle\"]\n  }\n]"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 1,
+    "valid": 4,
+    "response": "```json\n[\n  {\n    \"name\": \"PD_Tanh\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"cart_velocity\",\n      \"tanh_angle\"\n    ]\n  },\n  {\n    \"name\": \"PI_Tanh\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"integral_cart\",\n      \"tanh_cart\"\n    ]\n  },\n  {\n    \"name\": \"PID_Tanh\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"cart_velocity\",\n      \"pole_velocity\",\n      \"integral_cart\",\n      \"tanh_pole_velocity\"\n    ]\n  },\n  {\n    \"name\": \"CompactHybrid\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"tanh_cart\",\n      \"tanh_angle\",\n      \"integral_angle\"\n    ]\n  }\n]\n```"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 2,
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"PD_Tanh\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"tanh_cart\",\n      \"tanh_angle\"\n    ]\n  },\n  {\n    \"name\": \"PI_Tanh\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"integral_cart\",\n      \"tanh_pole_velocity\"\n    ]\n  },\n  {\n    \"name\": \"CompactPID\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"cart_velocity\",\n      \"integral_angle\"\n    ]\n  },\n  {\n    \"name\": \"HybridSmall\",\n    \"terms\": [\n      \"cart_position\",\n      \"tanh_cart_velocity\",\n      \"integral_angle\"\n    ]\n  }\n]"
+  },
+  {
+    "environment": "reacher",
+    "generation": 1,
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"Hybrid PDPI\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"integral_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Tanh PD\",\n    \"terms\": [\"tanh_jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"Normalized PID\",\n    \"terms\": [\"normalized_jt_error\", \"integral_jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"Task Damping Only\",\n    \"terms\": [\"task_damping\"]\n  }\n]"
+  },
+  {
+    "environment": "reacher",
+    "generation": 2,
+    "valid": 4,
+    "response": "```json\n[\n  {\n    \"name\": \"Tanh PD+\",\n    \"terms\": [\"tanh_jt_error\", \"joint_velocity\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Normalized PD\",\n    \"terms\": [\"normalized_jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"Tanh PI\",\n    \"terms\": [\"tanh_jt_error\", \"integral_jt_error\"]\n  },\n  {\n    \"name\": \"Hybrid D\",\n    \"terms\": [\"jt_error\", \"task_damping\", \"tanh_velocity\"]\n  }\n]\n```"
+  }
+]

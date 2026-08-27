@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lawevo"
+version = "0.1.0"
+description = "Verified evolution of nominal robot controllers and CBF safety barriers"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "ruff>=0.5"]
+benchmarks = [
+    "gymnasium[mujoco]>=1.2,<2",
+    "matplotlib>=3.8",
+    "scipy>=1.11",
+]
+
+[tool.setuptools.packages.find]
+include = ["lawevo*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100

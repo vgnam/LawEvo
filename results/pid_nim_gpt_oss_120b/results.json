@@ -1,0 +1,176 @@
+{
+  "model": "openai/gpt-oss-120b",
+  "train_scenarios": 16,
+  "test_scenarios": 30,
+  "objective": "120*success - 10*final_distance - 1.2*settling_time - 0.08*energy - 0.0003*jerk - 2*heading_error",
+  "baselines": {
+    "P": {
+      "kp_distance": 1.2,
+      "ki_distance": 0.0,
+      "kd_distance": 0.0,
+      "kp_heading": 2.5,
+      "ki_heading": 0.0,
+      "kd_heading": 0.0
+    },
+    "PI": {
+      "kp_distance": 1.0,
+      "ki_distance": 0.06,
+      "kd_distance": 0.0,
+      "kp_heading": 2.2,
+      "ki_heading": 0.04,
+      "kd_heading": 0.0
+    },
+    "PD": {
+      "kp_distance": 1.3,
+      "ki_distance": 0.0,
+      "kd_distance": 0.12,
+      "kp_heading": 2.8,
+      "ki_heading": 0.0,
+      "kd_heading": 0.18
+    },
+    "PID (manual)": {
+      "kp_distance": 1.1,
+      "ki_distance": 0.05,
+      "kd_distance": 0.1,
+      "kp_heading": 2.5,
+      "ki_heading": 0.03,
+      "kd_heading": 0.15
+    },
+    "PID (grid-tuned)": {
+      "kp_distance": 1.6,
+      "ki_distance": 0.1,
+      "kd_distance": 0.0,
+      "kp_heading": 3.4,
+      "ki_heading": 0.04,
+      "kd_heading": 0.0
+    },
+    "PID (NIM GPT-OSS)": {
+      "kp_distance": 1.95,
+      "ki_distance": 0.39,
+      "kd_distance": 0.21,
+      "kp_heading": 4.8,
+      "ki_heading": 0.13,
+      "kd_heading": 0.66
+    }
+  },
+  "grid_train_metrics": {
+    "score": 114.22921849622806,
+    "success_rate": 1.0,
+    "mean_final_distance": 0.07414439937532347,
+    "mean_settling_time": 3.121875,
+    "mean_energy": 8.637541495498613,
+    "mean_jerk": 16.114298497382322,
+    "mean_heading_error": 0.2936249504148037
+  },
+  "nim_best_train_metrics": {
+    "score": 114.81463289963047,
+    "success_rate": 1.0,
+    "mean_final_distance": 0.02397150962559235,
+    "mean_settling_time": 2.975,
+    "mean_energy": 9.029378609956112,
+    "mean_jerk": 38.40901074756745,
+    "mean_heading_error": 0.32088950604642785
+  },
+  "test_metrics": {
+    "P": {
+      "score": 112.63863423616465,
+      "success_rate": 1.0,
+      "mean_final_distance": 0.10963706246148641,
+      "mean_settling_time": 4.295000000000001,
+      "mean_energy": 8.185615456175055,
+      "mean_jerk": 10.582912436726566,
+      "mean_heading_error": 0.22648551449774157
+    },
+    "PI": {
+      "score": 113.36192151497245,
+      "success_rate": 1.0,
+      "mean_final_distance": 0.09073634640069267,
+      "mean_settling_time": 3.7683333333333335,
+      "mean_energy": 8.25215436745665,
+      "mean_jerk": 9.081681280213527,
+      "mean_heading_error": 0.27290908362001526
+    },
+    "PD": {
+      "score": 112.54429020298987,
+      "success_rate": 1.0,
+      "mean_final_distance": 0.10966822483234367,
+      "mean_settling_time": 4.378333333333333,
+      "mean_energy": 8.14970144517073,
+      "mean_jerk": 11.328236245490134,
+      "mean_heading_error": 0.22482648109969297
+    },
+    "PID (manual)": {
+      "score": 113.17787516209563,
+      "success_rate": 1.0,
+      "mean_final_distance": 0.09608765195861987,
+      "mean_settling_time": 3.9016666666666664,
+      "mean_energy": 8.186185664380558,
+      "mean_jerk": 9.912593052973948,
+      "mean_heading_error": 0.26068984362591535
+    },
+    "PID (grid-tuned)": {
+      "score": 114.02650733746795,
+      "success_rate": 1.0,
+      "mean_final_distance": 0.07519687939671786,
+      "mean_settling_time": 3.306666666666667,
+      "mean_energy": 8.956062637559974,
+      "mean_jerk": 14.119146581588458,
+      "mean_heading_error": 0.2664015567928021
+    },
+    "PID (NIM GPT-OSS)": {
+      "score": 114.60247467914486,
+      "success_rate": 1.0,
+      "mean_final_distance": 0.027519497115604204,
+      "mean_settling_time": 3.148333333333334,
+      "mean_energy": 9.354787839359746,
+      "mean_jerk": 31.94317660384083,
+      "mean_heading_error": 0.2931821847845814
+    }
+  },
+  "evolution_history": [
+    {
+      "generation": 0,
+      "best_score": 114.77980547590266,
+      "population_mean": 112.85760337029616
+    },
+    {
+      "generation": 1,
+      "best_score": 114.77980547590266,
+      "population_mean": 111.80811641993758
+    },
+    {
+      "generation": 2,
+      "best_score": 114.77980547590266,
+      "population_mean": 112.37712061358936
+    },
+    {
+      "generation": 3,
+      "best_score": 114.80465238935052,
+      "population_mean": 113.60887472806219
+    },
+    {
+      "generation": 4,
+      "best_score": 114.80465238935052,
+      "population_mean": 100.50716097574616
+    },
+    {
+      "generation": 5,
+      "best_score": 114.80465238935052,
+      "population_mean": 114.00236439828358
+    },
+    {
+      "generation": 6,
+      "best_score": 114.81463289963047,
+      "population_mean": 100.51017937337899
+    }
+  ],
+  "api_calls": 6,
+  "valid_proposals_per_call": [
+    10,
+    10,
+    10,
+    10,
+    10,
+    10
+  ]
+}

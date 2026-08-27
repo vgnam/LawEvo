@@ -1,0 +1,282 @@
+[
+  {
+    "environment": "pendulum",
+    "generation": 1,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"P_sin\",\n    \"terms\": [\"angle\", \"sin_angle\"]\n  },\n  {\n    \"name\": \"PD_tanh_angle\",\n    \"terms\": [\"angle\", \"angular_velocity\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"PID_tanh_velocity\",\n    \"terms\": [\"angle\", \"integral_angle\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"PD_sqrt_angle\",\n    \"terms\": [\"angle\", \"angular_velocity\", \"sqrt_angle\"]\n  },\n  {\n    \"name\": \"PI_cubic_angle\",\n    \"terms\": [\"angle\", \"integral_angle\", \"cubic_angle\"]\n  },\n  {\n    \"name\": \"Sin_Tanh_Combined\",\n    \"terms\": [\"sin_angle\", \"tanh_angle\", \"tanh_velocity\"]\n  }\n]"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 2,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"Angle_Cubic_TanhV\",\n    \"terms\": [\"angle\", \"cubic_angle\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"PD_Integral_Sin\",\n    \"terms\": [\"angle\", \"angular_velocity\", \"integral_angle\", \"sin_angle\"]\n  },\n  {\n    \"name\": \"Angle_Sqrt_TanhAngle_TanhVel\",\n    \"terms\": [\"angle\", \"sqrt_angle\", \"tanh_angle\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"Full_Nonlinear\",\n    \"terms\": [\"angle\", \"angular_velocity\", \"integral_angle\", \"cubic_angle\", \"sin_angle\", \"tanh_angle\", \"tanh_velocity\", \"sqrt_angle\"]\n  },\n  {\n    \"name\": \"Integral_Sin_TanhAngle\",\n    \"terms\": [\"integral_angle\", \"sin_angle\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"Angle_Cubic_Sqrt\",\n    \"terms\": [\"angle\", \"cubic_angle\", \"sqrt_angle\"]\n  }\n]"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 3,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"Angle_Sin_TanhVelocity\",\n    \"terms\": [\"angle\", \"sin_angle\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"Integral_TanhAngle_TanhVelocity\",\n    \"terms\": [\"integral_angle\", \"tanh_angle\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"Cubic_Sqrt_TanhAngle\",\n    \"terms\": [\"cubic_angle\", \"sqrt_angle\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"Angle_Integral_Sqrt\",\n    \"terms\": [\"angle\", \"integral_angle\", \"sqrt_angle\"]\n  },\n  {\n    \"name\": \"Angle_TanhAngle_TanhVelocity_Sin\",\n    \"terms\": [\"angle\", \"tanh_angle\", \"tanh_velocity\", \"sin_angle\"]\n  },\n  {\n    \"name\": \"Angle_Integral_Cubic_TanhVelocity\",\n    \"terms\": [\"angle\", \"integral_angle\", \"cubic_angle\", \"tanh_velocity\"]\n  }\n]"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 4,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 4,
+    "attempt": 2,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"PID_TanhAngle\",\n    \"terms\": [\"angle\", \"integral_angle\", \"angular_velocity\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"PD_Sin_TanhAngle\",\n    \"terms\": [\"angle\", \"angular_velocity\", \"sin_angle\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"Integral_Cubic_TanhAngle\",\n    \"terms\": [\"integral_angle\", \"cubic_angle\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"Angle_Sin_Cubic_TanhVel\",\n    \"terms\": [\"angle\", \"sin_angle\", \"cubic_angle\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"Velocity_Sqrt_TanhAngle\",\n    \"terms\": [\"angular_velocity\", \"sqrt_angle\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"Angle_Integral_Sin_Sqrt\",\n    \"terms\": [\"angle\", \"integral_angle\", \"sin_angle\", \"sqrt_angle\"]\n  }\n]"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 5,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 5,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 5,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 5,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "pendulum",
+    "generation": 6,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 6,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 6,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "pendulum",
+    "generation": 6,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 1,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"PD_TanhVelocity\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"tanh_cart_velocity\",\n      \"tanh_pole_velocity\"\n    ]\n  },\n  {\n    \"name\": \"PI_TanhAngle\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"integral_cart\",\n      \"tanh_angle\"\n    ]\n  },\n  {\n    \"name\": \"P_Tanh\",\n    \"terms\": [\n      \"cart_position\",\n      \"tanh_angle\"\n    ]\n  },\n  {\n    \"name\": \"PD_IntegralAngle\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"cart_velocity\",\n      \"pole_velocity\",\n      \"integral_angle\"\n    ]\n  },\n  {\n    \"name\": \"TanhOnly\",\n    \"terms\": [\n      \"tanh_cart\",\n      \"tanh_angle\",\n      \"tanh_cart_velocity\",\n      \"tanh_pole_velocity\"\n    ]\n  },\n  {\n    \"name\": \"IntegralOnly\",\n    \"terms\": [\n      \"integral_cart\",\n      \"integral_angle\"\n    ]\n  }\n]"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 2,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"P_TanhAngle_IntegralAngle\",\n    \"terms\": [\"cart_position\", \"tanh_angle\", \"integral_angle\"]\n  },\n  {\n    \"name\": \"PD_TanhCart\",\n    \"terms\": [\"cart_position\", \"pole_angle\", \"cart_velocity\", \"tanh_cart\"]\n  },\n  {\n    \"name\": \"PI_TanhVelocity\",\n    \"terms\": [\"cart_position\", \"pole_angle\", \"integral_cart\", \"tanh_cart_velocity\", \"tanh_pole_velocity\"]\n  },\n  {\n    \"name\": \"PID_TanhAngle\",\n    \"terms\": [\"cart_position\", \"pole_angle\", \"cart_velocity\", \"pole_velocity\", \"integral_cart\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"FullTanhInt\",\n    \"terms\": [\"tanh_cart\", \"tanh_angle\", \"tanh_cart_velocity\", \"tanh_pole_velocity\", \"integral_cart\", \"integral_angle\"]\n  },\n  {\n    \"name\": \"P_IntegralCart\",\n    \"terms\": [\"cart_position\", \"pole_angle\", \"integral_cart\"]\n  }\n]"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 3,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"P_CartPoleVel\",\n    \"terms\": [\"cart_position\", \"pole_velocity\"]\n  },\n  {\n    \"name\": \"Angle_TanhCart\",\n    \"terms\": [\"pole_angle\", \"tanh_cart\"]\n  },\n  {\n    \"name\": \"Vel_TanhAngle\",\n    \"terms\": [\"cart_velocity\", \"tanh_angle\"]\n  },\n  {\n    \"name\": \"IntCart_TanhCartVel\",\n    \"terms\": [\"integral_cart\", \"tanh_cart_velocity\"]\n  },\n  {\n    \"name\": \"IntAngle_TanhPoleVel\",\n    \"terms\": [\"integral_angle\", \"tanh_pole_velocity\"]\n  },\n  {\n    \"name\": \"CartPos_IntCart_TanhAngle_TanhCartVel\",\n    \"terms\": [\"cart_position\", \"integral_cart\", \"tanh_angle\", \"tanh_cart_velocity\"]\n  }\n]"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 4,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 4,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 4,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 4,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 5,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 5,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 5,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 5,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 6,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "inverted_pendulum",
+    "generation": 6,
+    "attempt": 2,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"Angle_TanhVelocity\",\n    \"terms\": [\n      \"pole_angle\",\n      \"tanh_pole_velocity\"\n    ]\n  },\n  {\n    \"name\": \"CartVel_IntegralAngle\",\n    \"terms\": [\n      \"cart_velocity\",\n      \"integral_angle\"\n    ]\n  },\n  {\n    \"name\": \"PoleAngle_IntegralCart_TanhAngle\",\n    \"terms\": [\n      \"pole_angle\",\n      \"integral_cart\",\n      \"tanh_angle\"\n    ]\n  },\n  {\n    \"name\": \"CartPos_TanhCart_TanhAngle\",\n    \"terms\": [\n      \"cart_position\",\n      \"tanh_cart\",\n      \"tanh_angle\"\n    ]\n  },\n  {\n    \"name\": \"PoleVel_IntegralCart\",\n    \"terms\": [\n      \"pole_velocity\",\n      \"integral_cart\"\n    ]\n  },\n  {\n    \"name\": \"FullPD_TanhAngle\",\n    \"terms\": [\n      \"cart_position\",\n      \"pole_angle\",\n      \"cart_velocity\",\n      \"pole_velocity\",\n      \"tanh_angle\"\n    ]\n  }\n]"
+  },
+  {
+    "environment": "reacher",
+    "generation": 1,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"Task PD+Tanh\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"Task Damped\",\n    \"terms\": [\"jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Task Norm+Tanh\",\n    \"terms\": [\"jt_error\", \"normalized_jt_error\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"Integral TanhV\",\n    \"terms\": [\"integral_jt_error\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"Task PD+Norm+Damp\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"normalized_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Task P+TanhV+Norm\",\n    \"terms\": [\"jt_error\", \"tanh_velocity\", \"normalized_jt_error\"]\n  }\n]"
+  },
+  {
+    "environment": "reacher",
+    "generation": 2,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"Task PD+Tanh+Damp\",\n    \"terms\": [\"jt_error\", \"task_damping\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"Task PD+Norm\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"normalized_jt_error\"]\n  },\n  {\n    \"name\": \"Task PI+Tanh\",\n    \"terms\": [\"jt_error\", \"integral_jt_error\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"Task Norm+Damp\",\n    \"terms\": [\"jt_error\", \"normalized_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Task TanhV+Damp\",\n    \"terms\": [\"jt_error\", \"tanh_velocity\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Task PD+TanhV+Norm\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"tanh_velocity\", \"normalized_jt_error\"]\n  }\n]"
+  },
+  {
+    "environment": "reacher",
+    "generation": 3,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 3,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 3,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 3,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "reacher",
+    "generation": 4,
+    "attempt": 1,
+    "valid_new": 6,
+    "response": "[\n  {\n    \"name\": \"Full_Signal_Plus\",\n    \"terms\": [\n      \"jt_error\",\n      \"joint_velocity\",\n      \"integral_jt_error\",\n      \"tanh_jt_error\",\n      \"tanh_velocity\",\n      \"normalized_jt_error\",\n      \"task_damping\"\n    ]\n  },\n  {\n    \"name\": \"Integral_Damping\",\n    \"terms\": [\n      \"integral_jt_error\",\n      \"task_damping\"\n    ]\n  },\n  {\n    \"name\": \"TanhV_Norm\",\n    \"terms\": [\n      \"tanh_velocity\",\n      \"normalized_jt_error\"\n    ]\n  },\n  {\n    \"name\": \"PD_TanhV_TanhJ\",\n    \"terms\": [\n      \"jt_error\",\n      \"joint_velocity\",\n      \"tanh_jt_error\",\n      \"tanh_velocity\"\n    ]\n  },\n  {\n    \"name\": \"Integral_TanhJ_Damp\",\n    \"terms\": [\n      \"integral_jt_error\",\n      \"tanh_jt_error\",\n      \"task_damping\"\n    ]\n  },\n  {\n    \"name\": \"Norm_Integral_Jt_Damp\",\n    \"terms\": [\n      \"jt_error\",\n      \"integral_jt_error\",\n      \"normalized_jt_error\",\n      \"task_damping\"\n    ]\n  }\n]"
+  },
+  {
+    "environment": "reacher",
+    "generation": 5,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 5,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 5,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "[\n  {\n    \"name\": \"IntegralDampTanhV\",\n    \"terms\": [\"integral_jt_error\", \"task_damping\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"JointNormTanhJ\",\n    \"terms\": [\"joint_velocity\", \"normalized_jt_error\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"JtIntTanhV\",\n    \"terms\": [\"jt_error\", \"integral_jt_error\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"NormDamp\",\n    \"terms\": [\"normalized_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"JointTanhVTanhJ\",\n    \"terms\": [\"joint_velocity\", \"tanh_velocity\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"IntJointTanhJ_Damp\",\n    \"terms\": [\"integral_jt_error\", \""
+  },
+  {
+    "environment": "reacher",
+    "generation": 5,
+    "fallback": true,
+    "valid_new": 6
+  },
+  {
+    "environment": "reacher",
+    "generation": 6,
+    "attempt": 1,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 6,
+    "attempt": 2,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 6,
+    "attempt": 3,
+    "valid_new": 0,
+    "response": "None"
+  },
+  {
+    "environment": "reacher",
+    "generation": 6,
+    "fallback": true,
+    "valid_new": 6
+  }
+]

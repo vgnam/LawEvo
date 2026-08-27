@@ -1,0 +1,11 @@
+.env
+*.egg-info/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Interrupted/resumable run; regenerate with the README command.
+results/mujoco_locomotion_goal_energy_jerk/
