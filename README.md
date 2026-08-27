@@ -78,7 +78,6 @@ held-out rollouts**:
 ```powershell
 py -m experiments.gymnasium_classical_benchmarks `
   --suite all `
-  --output results/all_gymnasium_10_rollouts `
   --generations 8 `
   --proposals 6 `
   --proposal-attempts 3 `
@@ -89,18 +88,48 @@ py -m experiments.gymnasium_classical_benchmarks `
 ```
 
 The reported return, success rate, energy, and jerk are means over those 10 held-out
-rollouts. The output directory contains:
+rollouts. No output path is required. Every invocation creates a timestamped run with one
+folder per environment:
 
-- `metrics_summary.csv`: one aggregate row per environment/controller.
-- `rollout_metrics.csv`: return, success, energy, and jerk for every seed and rollout.
-- `results.json`: protocol, optimized gains, aggregate metrics, and full episode arrays.
-- `<environment>_comparison.png` and `.pdf`: return/success/energy/jerk comparison plots.
-- `nim_responses.json`: raw structure-generation responses and fallback events.
-- `evaluation_cache.json` and `generation_plans.json`: resumable evolution state.
+```text
+results/<YYYYMMDD_HHMMSS>/<environment>/
+  classical/
+    controllers.json
+  lawevo/
+    best_controller.json
+    generation_plans.json
+    nim_responses.json
+    generations/
+      generation_000.json
+      generation_001.json
+      ...
+  plot/
+    <environment>_comparison.png
+    <environment>_comparison.pdf
+  summary/
+    metrics_summary.csv
+    rollout_metrics.csv
+    results.json
+```
 
-The same metrics are also printed to the console when the run finishes. Re-run the exact
-command to resume an interrupted run. Use `--fresh` only to intentionally discard the
-cache and start a new evolution trajectory.
+Every generation JSON stores all individuals evaluated in that generation, their optimized
+gains and metrics, the full ranking so far, and the best-so-far individual. The timestamp
+root also contains `run_manifest.json` and a `state/` directory for checkpoints.
+
+The same metrics are printed to the console when the run finishes. To resume a timestamped
+run, provide its directory name:
+
+```powershell
+py -m experiments.gymnasium_classical_benchmarks `
+  --suite all `
+  --resume-run 20260827_231500 `
+  --generations 8 `
+  --proposals 6 `
+  --cem-iterations 10 `
+  --cem-population 32 `
+  --train-episodes 6 `
+  --test-episodes 10
+```
 
 ### Supported Gymnasium environments
 
@@ -127,7 +156,6 @@ Task-specific classical-control and MuJoCo manipulation benchmarks:
 ```powershell
 py -m experiments.gymnasium_classical_benchmarks `
   --suite classical `
-  --output results/gymnasium_task_specific `
   --generations 8 `
   --proposals 6 `
   --cem-iterations 10 `
@@ -142,7 +170,6 @@ CPG, and CPG+PD baselines:
 ```powershell
 py -m experiments.gymnasium_classical_benchmarks `
   --suite locomotion `
-  --output results/mujoco_locomotion_goal_energy_jerk `
   --generations 8 `
   --proposals 6 `
   --proposal-attempts 3 `
@@ -152,9 +179,8 @@ py -m experiments.gymnasium_classical_benchmarks `
   --test-episodes 10
 ```
 
-Runs checkpoint every evaluated structure and save complete generation plans. Re-run the
-same command to resume; add `--fresh` only when intentionally starting over and ignoring
-the existing cache.
+Runs checkpoint every evaluated structure and save complete generation plans. Use the
+printed run ID with `--resume-run` to resume that exact timestamped run.
 
 The original unicycle PID-structure experiment is available with:
 

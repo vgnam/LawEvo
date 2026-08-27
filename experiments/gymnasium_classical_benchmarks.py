@@ -8,6 +8,7 @@ import json
 import os
 import re
 import time
+from datetime import datetime
 from pathlib import Path
 
 import matplotlib as mpl
@@ -420,7 +421,6 @@ def plot_environment(env_name: str, test_results: dict[str, dict], output: Path)
 def main() -> None:
     load_env_file()
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, default=Path("results/gymnasium_benchmarks"))
     parser.add_argument(
         "--suite", choices=("classical", "locomotion", "all"), default="classical"
     )
@@ -435,30 +435,49 @@ def main() -> None:
     parser.add_argument("--cem-population", type=int, default=24)
     parser.add_argument("--train-episodes", type=int, default=6)
     parser.add_argument("--test-episodes", type=int, default=30)
-    parser.add_argument("--fresh", action="store_true", help="ignore an existing run cache")
+    parser.add_argument(
+        "--resume-run",
+        help="resume a timestamped run directory under results, for example 20260827_231500",
+    )
     args = parser.parse_args()
-    args.output.mkdir(parents=True, exist_ok=True)
+    started_at = datetime.now().astimezone()
+    run_id = args.resume_run or started_at.strftime("%Y%m%d_%H%M%S")
+    run_root = Path("results") / run_id
+    state_dir = run_root / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path = run_root / "run_manifest.json"
+    manifest = {
+        "run_id": run_id,
+        "started_at": started_at.isoformat(),
+        "status": "running",
+        "requested_suite": args.suite,
+    }
+    if args.resume_run and manifest_path.exists():
+        manifest.update(json.loads(manifest_path.read_text(encoding="utf-8")))
+        manifest["status"] = "running"
+        manifest["resumed_at"] = started_at.isoformat()
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     api_key = os.environ.get("NVIDIA_API_KEY") or getpass.getpass("NVIDIA API key: ")
     if not api_key:
         raise SystemExit("NVIDIA_API_KEY is required")
     client = NVIDIAChatClient(api_key, model=args.model, endpoint=args.base_url)
     all_results: dict[str, object] = {}
-    responses_path = args.output / "nim_responses.json"
-    cache_path = args.output / "evaluation_cache.json"
-    plans_path = args.output / "generation_plans.json"
+    responses_path = state_dir / "nim_responses.json"
+    cache_path = state_dir / "evaluation_cache.json"
+    plans_path = state_dir / "generation_plans.json"
     raw_responses: list[dict] = (
         json.loads(responses_path.read_text(encoding="utf-8"))
-        if responses_path.exists() and not args.fresh
+        if responses_path.exists()
         else []
     )
     evaluation_cache: dict[str, list[dict]] = (
         json.loads(cache_path.read_text(encoding="utf-8"))
-        if cache_path.exists() and not args.fresh
+        if cache_path.exists()
         else {}
     )
     generation_plans: dict[str, dict[str, list[dict]]] = (
         json.loads(plans_path.read_text(encoding="utf-8"))
-        if plans_path.exists() and not args.fresh
+        if plans_path.exists()
         else {}
     )
 
@@ -467,7 +486,13 @@ def main() -> None:
         "locomotion": LOCOMOTION_ADAPTERS,
         "all": {**ADAPTERS, **LOCOMOTION_ADAPTERS},
     }[args.suite]
+    manifest["environment_folders"] = [adapter.env_id for adapter in adapters.values()]
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     for env_index, (env_name, adapter) in enumerate(adapters.items()):
+        suite_name = "classical" if env_name in ADAPTERS else "locomotion"
+        environment_output = run_root / adapter.env_id
+        for child in ("classical", "lawevo", "plot", "summary"):
+            (environment_output / child).mkdir(parents=True, exist_ok=True)
         train_seeds = [
             10_000 * (env_index + 1) + index for index in range(args.train_episodes)
         ]
@@ -550,6 +575,42 @@ def main() -> None:
                 )
             ranked = sorted(
                 evaluated.values(), key=lambda item: item["metrics"].score, reverse=True
+            )
+            generation_output = environment_output / "lawevo" / "generations"
+            generation_output.mkdir(parents=True, exist_ok=True)
+            (generation_output / f"generation_{generation:03d}.json").write_text(
+                json.dumps(
+                    {
+                        "suite": suite_name,
+                        "environment": adapter.env_id,
+                        "generation": generation,
+                        "best_so_far": {
+                            "structure": ranked[0]["structure"].to_dict(),
+                            "gains": ranked[0]["gains"].tolist(),
+                            "metrics": ranked[0]["metrics"].to_dict(),
+                        },
+                        "evaluated_this_generation": [
+                            {
+                                "structure": item["structure"].to_dict(),
+                                "gains": item["gains"].tolist(),
+                                "metrics": item["metrics"].to_dict(),
+                            }
+                            for item in ranked
+                            if item["generation"] == generation
+                        ],
+                        "ranking_so_far": [
+                            {
+                                "structure": item["structure"].to_dict(),
+                                "gains": item["gains"].tolist(),
+                                "metrics": item["metrics"].to_dict(),
+                                "generation": item["generation"],
+                            }
+                            for item in ranked
+                        ],
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
             )
             if generation == args.generations:
                 break
@@ -666,8 +727,9 @@ def main() -> None:
             }
         )
         test_results = evaluate_test(adapter, comparison_records, test_seeds)
-        plot_environment(adapter.env_id, test_results, args.output)
+        plot_environment(adapter.env_id, test_results, environment_output / "plot")
         all_results[env_name] = {
+            "suite": suite_name,
             "environment": adapter.env_id,
             "train_seeds": train_seeds,
             "test_seeds": test_seeds,
@@ -675,7 +737,18 @@ def main() -> None:
                 "structure": best_evolved["structure"].to_dict(),
                 "gains": best_evolved["gains"].tolist(),
                 "train_metrics": best_evolved["metrics"].to_dict(),
+                "test": test_results["Evolved Structure"],
             },
+            "classical_controllers": [
+                {
+                    "label": record["label"],
+                    "structure": record["structure"].to_dict(),
+                    "gains": np.asarray(record["gains"]).tolist(),
+                    "test": test_results[record["label"]],
+                }
+                for record in comparison_records
+                if record["label"] != "Evolved Structure"
+            ],
             "test": test_results,
             "all_structures": [
                 {
@@ -687,26 +760,51 @@ def main() -> None:
                 for item in ranked
             ],
         }
-    payload = {
-        "model": args.model,
-        "protocol": {
-            "generations": args.generations,
-            "proposals": args.proposals,
-            "proposal_attempts": args.proposal_attempts,
-            "cem_iterations": args.cem_iterations,
-            "cem_population": args.cem_population,
-            "train_episodes": args.train_episodes,
-            "test_episodes": args.test_episodes,
-            "suite": args.suite,
-            "prompt_context": "task-specific environment description and control goal",
-        },
-        "environments": all_results,
+    protocol = {
+        "generations": args.generations,
+        "proposals": args.proposals,
+        "proposal_attempts": args.proposal_attempts,
+        "cem_iterations": args.cem_iterations,
+        "cem_population": args.cem_population,
+        "train_episodes": args.train_episodes,
+        "test_episodes": args.test_episodes,
+        "requested_suite": args.suite,
+        "prompt_context": "task-specific environment description and control goal",
     }
-    (args.output / "results.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    (args.output / "nim_responses.json").write_text(
-        json.dumps(raw_responses, indent=2), encoding="utf-8"
-    )
-    write_metric_logs(all_results, args.output)
+    for env_name, result in all_results.items():
+        environment_output = run_root / result["environment"]
+        (environment_output / "classical" / "controllers.json").write_text(
+            json.dumps(result["classical_controllers"], indent=2), encoding="utf-8"
+        )
+        (environment_output / "lawevo" / "best_controller.json").write_text(
+            json.dumps(result["best_evolved"], indent=2), encoding="utf-8"
+        )
+        (environment_output / "lawevo" / "generation_plans.json").write_text(
+            json.dumps(generation_plans.get(env_name, {}), indent=2), encoding="utf-8"
+        )
+        (environment_output / "lawevo" / "nim_responses.json").write_text(
+            json.dumps(
+                [item for item in raw_responses if item.get("environment") == env_name],
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        (environment_output / "summary" / "results.json").write_text(
+            json.dumps(
+                {
+                    "model": args.model,
+                    "protocol": {**protocol, "suite": result["suite"]},
+                    "result": result,
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        write_metric_logs({env_name: result}, environment_output / "summary")
+    responses_path.write_text(json.dumps(raw_responses, indent=2), encoding="utf-8")
+    manifest["status"] = "complete"
+    manifest["finished_at"] = datetime.now().astimezone().isoformat()
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     print("\nHeld-out controller comparison:", flush=True)
     for result in all_results.values():
         for controller, values in result["test"].items():
@@ -721,6 +819,7 @@ def main() -> None:
     print(
         json.dumps({name: result["best_evolved"] for name, result in all_results.items()}, indent=2)
     )
+    print(f"Results saved under {run_root}", flush=True)
 
 
 if __name__ == "__main__":
