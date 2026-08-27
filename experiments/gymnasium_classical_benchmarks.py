@@ -80,6 +80,27 @@ body pitch and height, target forward-speed error, and an anti-phase periodic CP
 masses are randomized by +/-10%. A useful structure must create a propulsive cyclic gait,
 coordinate front and rear limbs, and limit high-frequency torque without merely holding a
 static posture.""",
+    "ant": """Task: make an eight-actuator quadruped Ant move forward for 300 steps while
+remaining healthy. Actions control four hip/ankle pairs. Features are read from MuJoCo's
+free-root state and include eight joint posture/velocity signals, diagonal-leg CPG phases,
+torso roll/pitch and height feedback, and forward-speed error. Native reward combines
+forward velocity, healthy survival, control cost, and contact cost. Body masses are
+randomized by +/-10%. Useful structures coordinate diagonal legs while correcting body
+attitude; large discontinuous torques can flip the torso or exploit impacts.""",
+    "humanoid": """Task: make a 17-actuator Humanoid move forward for 300 steps without
+falling. Actions control abdomen, hips, knees, shoulders, and elbows. Signals use the
+MuJoCo free-root state, reordered into actuator order, with joint posture/velocity,
+alternating leg-and-arm CPG phases, torso roll/pitch, height, and forward-speed feedback.
+Native reward emphasizes forward velocity and healthy survival while penalizing control
+and impact. Body masses are randomized by +/-10%. Stable whole-body coordination and
+balance are more important than a fast but fragile initial lunge.""",
+    "pusher": """Task: use a seven-joint arm to contact an object and push it to a target
+within 100 steps. Features are seven-dimensional Jacobian-transpose signals for fingertip
+to object error, object to goal error, and their combined push direction, plus joint
+velocity, integral, saturation, normalization, task-space damping, and posture feedback.
+Native reward penalizes object-goal distance, fingertip-object distance, and control cost.
+Arm/object body masses are randomized by +/-10%. A useful structure must first establish
+contact, then maintain a controlled push instead of merely reaching the object.""",
 }
 
 CONTROL_GOALS = {
@@ -120,6 +141,22 @@ above 1.5 m/s. Develop a stable cyclic gait rather than a static posture or a si
 kick. Secondary goals are lower squared torque energy, lower torque-rate jerk, and fewer
 signals, but they must not materially reduce forward return. Robustness to +/-10% body-mass
 variation is part of the goal.""",
+    "ant": """Primary goal: move forward quickly, stay healthy for all 300 steps, and end
+above 0.75 m/s. Maintain torso height near 0.65 m and control roll/pitch using coordinated
+diagonal-leg cycles. Among equally successful gaits, minimize squared torque energy and
+torque-rate jerk. Do not trade robustness for impact-heavy hopping that fails under the
++/-10% body-mass variations.""",
+    "humanoid": """Primary goal: remain upright for all 300 steps and move forward, ending
+above 0.5 m/s. Keep torso height near 1.4 m, limit roll/pitch, and coordinate legs, arms,
+and abdomen into a repeatable gait. Survival and forward return dominate; among comparable
+gaits prefer lower actuator energy, smoother commands, and fewer signals. Reject solutions
+that obtain return from one unstable launch and then fall.""",
+    "pusher": """Primary goal: bring the object to within 0.1 m of the goal by the end of
+100 steps. Approach the object quickly, establish contact, and continue applying force in
+the goal direction without losing contact. Among controllers with comparable final
+object-goal accuracy and return, minimize squared torque energy and torque-rate jerk and
+prefer fewer signals. Low-energy behavior that never contacts or moves the object is not
+successful.""",
 }
 
 

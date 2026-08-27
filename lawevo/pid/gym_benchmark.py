@@ -346,9 +346,7 @@ class LocomotionAdapter(BenchmarkAdapter):
         joint_position = np.asarray(observation[self.joint_position_slice], dtype=float)
         joint_velocity = np.asarray(observation[self.joint_velocity_slice], dtype=float)
         posture_error = -joint_position
-        memory["integral"] = np.clip(
-            memory["integral"] + posture_error * dt, -2.0, 2.0
-        )
+        memory["integral"] = np.clip(memory["integral"] + posture_error * dt, -2.0, 2.0)
         phase = 2 * np.pi * self.phase_frequency * float(memory["step"]) * dt
         memory["step"] += 1
         angle = float(observation[self.angle_index])
@@ -421,16 +419,193 @@ class HalfCheetahAdapter(LocomotionAdapter):
     speed_pattern = np.array([1.0, -0.5, 0.5, 1.0, -0.5, 0.5])
 
 
+class FreeJointLocomotionAdapter(LocomotionAdapter):
+    """Locomotion features read from MuJoCo state for free-root robots."""
+
+    joint_order: np.ndarray
+    roll_pattern: np.ndarray
+    pitch_pattern: np.ndarray
+
+    def features(self, env, observation, memory, dt):
+        del observation
+        data = env.unwrapped.data
+        joint_position = np.asarray(data.qpos[7:], dtype=float)[self.joint_order]
+        joint_velocity = np.asarray(data.qvel[6:], dtype=float)[self.joint_order]
+        posture_error = -joint_position
+        memory["integral"] = np.clip(memory["integral"] + posture_error * dt, -2.0, 2.0)
+        phase = 2 * np.pi * self.phase_frequency * float(memory["step"]) * dt
+        memory["step"] += 1
+        w, x, y, z = map(float, data.qpos[3:7])
+        roll = float(np.arctan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)))
+        pitch = float(np.arcsin(np.clip(2 * (w * y - z * x), -1.0, 1.0)))
+        height_error = self.target_height - float(data.qpos[2])
+        speed_error = self.target_speed - float(data.qvel[0])
+        return {
+            "phase_sin": np.sin(phase + self.phase_offsets),
+            "phase_cos": np.cos(phase + self.phase_offsets),
+            "posture_error": posture_error,
+            "joint_velocity": joint_velocity,
+            "integral_posture": memory["integral"],
+            "tanh_posture": np.tanh(2 * posture_error),
+            "tanh_velocity": np.tanh(joint_velocity),
+            "body_angle": roll * self.roll_pattern + pitch * self.pitch_pattern,
+            "height_error": height_error * self.height_pattern,
+            "forward_speed_error": speed_error * self.speed_pattern,
+        }
+
+    def success(self, env, observation, steps, terminated):
+        del observation
+        return (
+            not terminated
+            and steps == self.horizon
+            and float(env.unwrapped.data.qvel[0]) > 0.5 * self.target_speed
+        )
+
+
+class AntAdapter(FreeJointLocomotionAdapter):
+    env_id = "Ant-v5"
+    action_dim = 8
+    joint_order = np.arange(8)
+    target_height = 0.65
+    target_speed = 1.5
+    phase_frequency = 1.5
+    phase_offsets = np.array([0.0, 0.0, np.pi, np.pi, np.pi, np.pi, 0.0, 0.0])
+    roll_pattern = np.array([1.0, 0.4, -1.0, -0.4, 1.0, 0.4, -1.0, -0.4])
+    pitch_pattern = np.array([1.0, 0.4, 1.0, 0.4, -1.0, -0.4, -1.0, -0.4])
+    balance_pattern = np.zeros(8)
+    height_pattern = np.array([1.0, 0.5, 1.0, 0.5, 1.0, 0.5, 1.0, 0.5])
+    speed_pattern = np.array([1.0, 0.5, -1.0, -0.5, -1.0, -0.5, 1.0, 0.5])
+
+
+class HumanoidAdapter(FreeJointLocomotionAdapter):
+    env_id = "Humanoid-v5"
+    action_dim = 17
+    joint_order = np.array([1, 0, 2, *range(3, 17)])
+    target_height = 1.4
+    target_speed = 1.0
+    phase_frequency = 1.2
+    phase_offsets = np.array(
+        [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            np.pi / 2,
+            np.pi,
+            np.pi,
+            np.pi,
+            3 * np.pi / 2,
+            np.pi,
+            np.pi,
+            np.pi,
+            0.0,
+            0.0,
+            0.0,
+        ]
+    )
+    roll_pattern = np.array(
+        [1.0, 0.5, 1.0, 1.0, 0.5, 0.5, 0.3, -1.0, -0.5, -0.5, -0.3, 0.5, 0.3, 0.2, -0.5, -0.3, -0.2]
+    )
+    pitch_pattern = np.array(
+        [0.5, 1.0, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0, 0.5, -0.5, -0.3, -0.2, -0.5, -0.3, -0.2]
+    )
+    balance_pattern = np.zeros(17)
+    height_pattern = np.array(
+        [1.0, 1.0, 1.0, 0.8, 0.6, 0.6, 0.8, 0.8, 0.6, 0.6, 0.8, 0.2, 0.2, 0.1, 0.2, 0.2, 0.1]
+    )
+    speed_pattern = np.array(
+        [0.2, 0.2, 0.2, 1.0, 0.6, 0.8, 1.0, -1.0, -0.6, -0.8, -1.0, -0.5, -0.3, -0.2, 0.5, 0.3, 0.2]
+    )
+
+
+class PusherAdapter(BenchmarkAdapter):
+    env_id = "Pusher-v5"
+    horizon = 100
+    allowed_terms = (
+        "jt_object_error",
+        "jt_goal_error",
+        "jt_push_error",
+        "joint_velocity",
+        "integral_jt_push",
+        "tanh_jt_push",
+        "normalized_jt_push",
+        "task_damping",
+        "posture_error",
+    )
+    classical = (
+        GymStructure("Task P", ("jt_push_error",)),
+        GymStructure("Task PI", ("jt_push_error", "integral_jt_push")),
+        GymStructure("Task PD", ("jt_push_error", "joint_velocity")),
+        GymStructure("Task PID", ("jt_push_error", "integral_jt_push", "joint_velocity")),
+    )
+    energy_weight, jerk_weight = 0.01, 0.000001
+
+    def prepare_reset(self, env, observation, seed):
+        rng = np.random.default_rng(seed + 4701)
+        unwrapped = env.unwrapped
+        if not hasattr(unwrapped, "_lawevo_base_body_mass"):
+            unwrapped._lawevo_base_body_mass = unwrapped.model.body_mass.copy()
+        unwrapped.model.body_mass[:] = unwrapped._lawevo_base_body_mass
+        unwrapped.model.body_mass[1:] *= rng.uniform(
+            0.9, 1.1, size=len(unwrapped.model.body_mass) - 1
+        )
+        mujoco.mj_forward(unwrapped.model, unwrapped.data)
+        return unwrapped._get_obs()
+
+    def features(self, env, observation, memory, dt):
+        del observation
+        unwrapped = env.unwrapped
+        tip_id = unwrapped.model.body("tips_arm").id
+        jacobian = np.zeros((3, unwrapped.model.nv))
+        mujoco.mj_jacBody(unwrapped.model, unwrapped.data, jacobian, None, tip_id)
+        jxy = jacobian[:2, :7]
+        tip = np.asarray(unwrapped.data.body("tips_arm").xpos[:2], dtype=float)
+        obj = np.asarray(unwrapped.data.body("object").xpos[:2], dtype=float)
+        goal = np.asarray(unwrapped.data.body("goal").xpos[:2], dtype=float)
+        qvel = np.asarray(unwrapped.data.qvel[:7], dtype=float)
+        object_error = obj - tip
+        goal_error = goal - obj
+        push_error = object_error + 0.5 * goal_error
+        jt_object = jxy.T @ object_error
+        jt_goal = jxy.T @ goal_error
+        jt_push = jxy.T @ push_error
+        memory["integral"] = np.clip(memory["integral"] + jt_push * dt, -0.5, 0.5)
+        norm = float(np.linalg.norm(jt_push))
+        return {
+            "jt_object_error": jt_object,
+            "jt_goal_error": jt_goal,
+            "jt_push_error": jt_push,
+            "joint_velocity": qvel,
+            "integral_jt_push": memory["integral"],
+            "tanh_jt_push": np.tanh(10 * jt_push),
+            "normalized_jt_push": jt_push / max(norm, 1e-6),
+            "task_damping": jxy.T @ (jxy @ qvel),
+            "posture_error": -np.asarray(unwrapped.data.qpos[:7], dtype=float),
+        }
+
+    def success(self, env, observation, steps, terminated):
+        del observation, steps, terminated
+        data = env.unwrapped.data
+        obj = np.asarray(data.body("object").xpos[:2], dtype=float)
+        goal = np.asarray(data.body("goal").xpos[:2], dtype=float)
+        return float(np.linalg.norm(goal - obj)) < 0.1
+
+
 ADAPTERS = {
     "pendulum": PendulumAdapter(),
     "inverted_pendulum": InvertedPendulumAdapter(),
     "reacher": ReacherAdapter(),
+    "pusher": PusherAdapter(),
 }
 
 LOCOMOTION_ADAPTERS = {
     "hopper": HopperAdapter(),
     "walker2d": Walker2dAdapter(),
     "half_cheetah": HalfCheetahAdapter(),
+    "ant": AntAdapter(),
+    "humanoid": HumanoidAdapter(),
 }
 
 
@@ -545,20 +720,14 @@ def tune_gym_cem(
     envs = [adapter.make_env() for _ in seeds]
     try:
         best_gains = mean.copy()
-        best_metrics, _ = evaluate_gym_structure(
-            adapter, structure, best_gains, seeds, envs=envs
-        )
+        best_metrics, _ = evaluate_gym_structure(adapter, structure, best_gains, seeds, envs=envs)
         elite_count = max(2, round(0.2 * population_size))
         for _ in range(iterations):
-            samples = np.clip(
-                rng.normal(mean, sigma, size=(population_size, dimension)), -20, 20
-            )
+            samples = np.clip(rng.normal(mean, sigma, size=(population_size, dimension)), -20, 20)
             scored = [
                 (
                     sample,
-                    evaluate_gym_structure(
-                        adapter, structure, sample, seeds, envs=envs
-                    )[0],
+                    evaluate_gym_structure(adapter, structure, sample, seeds, envs=envs)[0],
                 )
                 for sample in samples
             ]

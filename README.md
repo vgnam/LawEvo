@@ -109,9 +109,12 @@ cache and start a new evolution trajectory.
 | `classical` | `Pendulum-v1` | P, PI, PD, PID |
 | `classical` | `InvertedPendulum-v5` | P, PI, PD, PID, LQR |
 | `classical` | `Reacher-v5` | task-space P, PI, PD, PID |
+| `classical` | `Pusher-v5` | task-space P, PI, PD, PID |
 | `locomotion` | `Hopper-v5` | Posture P, Posture PD, CPG, CPG+PD |
 | `locomotion` | `Walker2d-v5` | Posture P, Posture PD, CPG, CPG+PD |
 | `locomotion` | `HalfCheetah-v5` | Posture P, Posture PD, CPG, CPG+PD |
+| `locomotion` | `Ant-v5` | Posture P, Posture PD, CPG, CPG+PD |
+| `locomotion` | `Humanoid-v5` | Posture P, Posture PD, CPG, CPG+PD |
 
 These are the environments currently implemented by LawEvo adapters. Other Gymnasium
 environments can be added, but require an adapter defining observation-to-signal mapping,
@@ -132,8 +135,9 @@ py -m experiments.gymnasium_classical_benchmarks `
   --test-episodes 10
 ```
 
-Additional MuJoCo locomotion baselines (`Hopper-v5`, `Walker2d-v5`, and
-`HalfCheetah-v5`) use tuned Posture P, Posture PD, CPG, and CPG+PD baselines:
+Additional MuJoCo locomotion baselines (`Hopper-v5`, `Walker2d-v5`,
+`HalfCheetah-v5`, `Ant-v5`, and `Humanoid-v5`) use tuned Posture P, Posture PD,
+CPG, and CPG+PD baselines:
 
 ```powershell
 py -m experiments.gymnasium_classical_benchmarks `
