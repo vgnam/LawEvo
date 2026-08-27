@@ -428,7 +428,7 @@ def main() -> None:
     parser.add_argument(
         "--base-url", default=os.environ.get("NVIDIA_BASE_URL", DEFAULT_NVIDIA_BASE_URL)
     )
-    parser.add_argument("--generations", type=int, default=6)
+    parser.add_argument("--generations", type=int, default=20)
     parser.add_argument("--proposals", type=int, default=6)
     parser.add_argument("--proposal-attempts", type=int, default=3)
     parser.add_argument("--cem-iterations", type=int, default=5)

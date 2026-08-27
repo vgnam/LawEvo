@@ -69,26 +69,65 @@ settings. Never commit a real API key.
 
 ## Running the experiments
 
-### Evolve and compare every supported benchmark
+### Benchmark protocol
 
-The following single command evolves task-specific structures, tunes every evolved and
-classical gain with the same CEM budget, and reports each controller over exactly **10
-held-out rollouts**:
+The standard benchmark evolves structures for **20 generations**, tunes every evolved and
+classical gain with the same CEM budget using **6 training episodes**, and reports each
+controller over exactly **30 held-out test episodes**. The CLI defaults use this 20/6/30
+protocol.
+
+### Suite: `classical`
+
+Runs task-specific classical-control and MuJoCo manipulation environments: `Pendulum-v1`,
+`InvertedPendulum-v5`, `Reacher-v5`, and `Pusher-v5`.
 
 ```powershell
 py -m experiments.gymnasium_classical_benchmarks `
-  --suite all `
-  --generations 8 `
+  --suite classical `
+  --generations 20 `
   --proposals 6 `
   --proposal-attempts 3 `
   --cem-iterations 10 `
   --cem-population 32 `
   --train-episodes 6 `
-  --test-episodes 10
+  --test-episodes 30
 ```
 
-The reported return, success rate, energy, and jerk are means over those 10 held-out
-rollouts. No output path is required. Every invocation creates a timestamped run with one
+### Suite: `locomotion`
+
+Runs the MuJoCo locomotion environments `Hopper-v5`, `Walker2d-v5`, `HalfCheetah-v5`,
+`Ant-v5`, and `Humanoid-v5` against tuned Posture P, Posture PD, CPG, and CPG+PD baselines.
+
+```powershell
+py -m experiments.gymnasium_classical_benchmarks `
+  --suite locomotion `
+  --generations 20 `
+  --proposals 6 `
+  --proposal-attempts 3 `
+  --cem-iterations 10 `
+  --cem-population 32 `
+  --train-episodes 6 `
+  --test-episodes 30
+```
+
+### Suite: `all`
+
+Runs both suites in one timestamped benchmark:
+
+```powershell
+py -m experiments.gymnasium_classical_benchmarks `
+  --suite all `
+  --generations 20 `
+  --proposals 6 `
+  --proposal-attempts 3 `
+  --cem-iterations 10 `
+  --cem-population 32 `
+  --train-episodes 6 `
+  --test-episodes 30
+```
+
+The reported return, success rate, energy, and jerk are means over the 30 held-out test
+episodes. No output path is required. Every invocation creates a timestamped run with one
 folder per environment:
 
 ```text
@@ -123,12 +162,12 @@ run, provide its directory name:
 py -m experiments.gymnasium_classical_benchmarks `
   --suite all `
   --resume-run 20260827_231500 `
-  --generations 8 `
+  --generations 20 `
   --proposals 6 `
   --cem-iterations 10 `
   --cem-population 32 `
   --train-episodes 6 `
-  --test-episodes 10
+  --test-episodes 30
 ```
 
 ### Supported Gymnasium environments
@@ -148,36 +187,6 @@ py -m experiments.gymnasium_classical_benchmarks `
 These are the environments currently implemented by LawEvo adapters. Other Gymnasium
 environments can be added, but require an adapter defining observation-to-signal mapping,
 action semantics, classical structures, success criteria, and task-specific prompt goals.
-
-### Run one suite only
-
-Task-specific classical-control and MuJoCo manipulation benchmarks:
-
-```powershell
-py -m experiments.gymnasium_classical_benchmarks `
-  --suite classical `
-  --generations 8 `
-  --proposals 6 `
-  --cem-iterations 10 `
-  --cem-population 32 `
-  --test-episodes 10
-```
-
-Additional MuJoCo locomotion baselines (`Hopper-v5`, `Walker2d-v5`,
-`HalfCheetah-v5`, `Ant-v5`, and `Humanoid-v5`) use tuned Posture P, Posture PD,
-CPG, and CPG+PD baselines:
-
-```powershell
-py -m experiments.gymnasium_classical_benchmarks `
-  --suite locomotion `
-  --generations 8 `
-  --proposals 6 `
-  --proposal-attempts 3 `
-  --cem-iterations 10 `
-  --cem-population 32 `
-  --train-episodes 4 `
-  --test-episodes 10
-```
 
 Runs checkpoint every evaluated structure and save complete generation plans. Use the
 printed run ID with `--resume-run` to resume that exact timestamped run.
