@@ -15,14 +15,23 @@ The central idea is to separate **structure discovery** from **parameter optimiz
 2. The LLM selects signal structures only; it never chooses numeric gains.
 3. Cross-Entropy Method (CEM) optimizes every gain `K` for both evolved structures and
    classical baselines using the same simulation budget.
-4. An archive prevents duplicate structures, while retry, deterministic local mutation,
+4. EoH-inspired `E1`/`E2` exploration and crossover plus `M1`/`M2`/`M3` mutation prompts
+   generate structurally diverse, failure-directed, and generalization-oriented offspring.
+5. An archive prevents duplicate structures, while retry, deterministic local mutation,
    and per-generation checkpoints make long runs resumable when the model endpoint fails.
-5. Controllers are compared on held-out initial states and physical-parameter variations,
+6. Controllers are compared on held-out initial states and physical-parameter variations,
    reporting task return, success, control energy, command jerk, and complexity.
 
 This makes it possible to test a precise question: can task-aware symbolic evolution find
 controller structures that outperform tuned P/PI/PD/PID, LQR, posture-feedback, or CPG
 baselines without hiding the cost in actuator effort or nonsmooth commands?
+
+The variation prompts adapt the five strategies from [Evolution of Heuristics
+(EoH)](https://arxiv.org/abs/2401.02051): `E1` explores forms unlike multiple parents,
+`E2` recombines their common backbone, `M1` changes structural terms, `M2` targets an
+observed metric failure, and `M3` simplifies for generalization. LawEvo deliberately does
+not use EoH-style parameter mutation for gains: all numeric `K` values remain under the
+equal-budget CEM optimizer.
 
 ## Included
 

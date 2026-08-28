@@ -161,6 +161,62 @@ successful.""",
 }
 
 
+EOH_OPERATOR_GUIDANCE = (
+    (
+        "E1",
+        (
+            "Exploration crossover: inspect at least two structurally different elite "
+            "parents, then create a controller with a clearly different form rather than "
+            "copying their union or making a cosmetic edit."
+        ),
+    ),
+    (
+        "E2",
+        (
+            "Backbone crossover: identify the common control mechanism shared by at least "
+            "two elite parents, preserve that useful backbone, and recombine it with "
+            "complementary signals that address a measured weakness."
+        ),
+    ),
+    (
+        "M1",
+        (
+            "Structural mutation: choose one elite parent and make a meaningful small "
+            "mutation by adding, removing, or replacing one to three terms."
+        ),
+    ),
+    (
+        "M2",
+        (
+            "Goal-directed mutation: choose one elite parent, identify its most important "
+            "return, success, energy, or jerk failure, and minimally change its terms to "
+            "target that failure. Never mutate numeric gains because CEM tunes them "
+            "separately."
+        ),
+    ),
+    (
+        "M3",
+        (
+            "Generalization mutation: choose one elite parent and prune redundant, fragile, "
+            "or over-specialized terms while retaining the mechanism needed for robustness "
+            "under randomized initial states and physical parameters."
+        ),
+    ),
+)
+
+
+def eoh_operator_plan(count: int) -> list[dict[str, object]]:
+    """Assign EoH-inspired exploration and modification operators to proposal slots."""
+    return [
+        {
+            "slot": index + 1,
+            "operator": EOH_OPERATOR_GUIDANCE[index % len(EOH_OPERATOR_GUIDANCE)][0],
+            "instruction": EOH_OPERATOR_GUIDANCE[index % len(EOH_OPERATOR_GUIDANCE)][1],
+        }
+        for index in range(count)
+    ]
+
+
 def efficiency_goal(elites: list[dict]) -> str:
     """Create quantitative energy/jerk targets from the strongest-success cohort."""
     if not elites:
@@ -267,6 +323,15 @@ vector-valued terms are combined componentwise.
 Allowed terms: {json.dumps(allowed)}
 Best current classical and evolved structures after CEM tuning:
 {json.dumps(elites, indent=2)}
+
+EoH-inspired variation plan:
+{json.dumps(eoh_operator_plan(count), indent=2)}
+
+Apply the operator assigned to each output slot. E1 and E2 must use multiple named elite
+parents when at least two are available; M1, M2, and M3 must each use one named elite
+parent. The evolvable genome is only the selected terms list, never the numeric gains.
+Prefix every candidate name with its operator code (for example E2_backbone_damping) so
+the variation provenance remains visible in generation logs.
 
 Exact scalar fitness is environment return - {energy_weight}*energy
 - {jerk_weight}*jerk - 0.02*term_count. Success is reported as a diagnostic, while the

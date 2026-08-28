@@ -5,6 +5,26 @@ import sys
 from lawevo.evolve.nvidia_nim import NVIDIAChatClient
 
 
+def test_prompt_assigns_all_eoh_variation_operators() -> None:
+    import experiments.gymnasium_classical_benchmarks as benchmark
+
+    text = benchmark.prompt(
+        "pendulum",
+        ("angle", "angular_velocity", "tanh_angle"),
+        [],
+        [],
+        count=5,
+        generation=1,
+        energy_weight=0.01,
+        jerk_weight=0.001,
+    )
+
+    for operator in ("E1", "E2", "M1", "M2", "M3"):
+        assert f'"operator": "{operator}"' in text
+    assert "never the numeric gains" in text
+    assert "Prefix every candidate name with its operator code" in text
+
+
 def test_timestamped_environment_artifact_layout(tmp_path, monkeypatch) -> None:
     import experiments.gymnasium_classical_benchmarks as benchmark
 
