@@ -97,6 +97,9 @@ py -m experiments.gymnasium_classical_benchmarks --environment Pendulum-v1 --gen
 # InvertedPendulum-v5
 py -m experiments.gymnasium_classical_benchmarks --environment InvertedPendulum-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
+# InvertedDoublePendulum-v5
+py -m experiments.gymnasium_classical_benchmarks --environment InvertedDoublePendulum-v5 --generations 20 --train-episodes 6 --test-episodes 30
+
 # Reacher-v5
 py -m experiments.gymnasium_classical_benchmarks --environment Reacher-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
@@ -112,11 +115,20 @@ py -m experiments.gymnasium_classical_benchmarks --environment Walker2d-v5 --gen
 # HalfCheetah-v5
 py -m experiments.gymnasium_classical_benchmarks --environment HalfCheetah-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
+# Swimmer-v5
+py -m experiments.gymnasium_classical_benchmarks --environment Swimmer-v5 --generations 20 --train-episodes 6 --test-episodes 30
+
 # Ant-v5
 py -m experiments.gymnasium_classical_benchmarks --environment Ant-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
 # Humanoid-v5
 py -m experiments.gymnasium_classical_benchmarks --environment Humanoid-v5 --generations 20 --train-episodes 6 --test-episodes 30
+
+# HumanoidStandup-v5
+py -m experiments.gymnasium_classical_benchmarks --environment HumanoidStandup-v5 --generations 20 --train-episodes 6 --test-episodes 30
+
+# BipedalWalker-v3
+py -m experiments.gymnasium_classical_benchmarks --environment BipedalWalker-v3 --generations 20 --train-episodes 6 --test-episodes 30
 ```
 
 The reported return, success rate, energy, and jerk are means over the 30 held-out test
@@ -169,13 +181,17 @@ py -m experiments.gymnasium_classical_benchmarks `
 |---|---|
 | `Pendulum-v1` | P, PI, PD, PID |
 | `InvertedPendulum-v5` | P, PI, PD, PID, LQR |
+| `InvertedDoublePendulum-v5` | P, PI, PD, PID |
 | `Reacher-v5` | task-space P, PI, PD, PID |
 | `Pusher-v5` | task-space P, PI, PD, PID |
 | `Hopper-v5` | Posture P, Posture PD, CPG, CPG+PD |
 | `Walker2d-v5` | Posture P, Posture PD, CPG, CPG+PD |
 | `HalfCheetah-v5` | Posture P, Posture PD, CPG, CPG+PD |
+| `Swimmer-v5` | Posture P, Posture PD, CPG, CPG+PD |
 | `Ant-v5` | Posture P, Posture PD, CPG, CPG+PD |
 | `Humanoid-v5` | Posture P, Posture PD, CPG, CPG+PD |
+| `HumanoidStandup-v5` | Stand Posture P/PD, Height+Posture PD, Full Balance PD |
+| `BipedalWalker-v3` | Posture P, Posture PD, CPG, CPG+PD |
 
 These are the environments currently implemented by LawEvo adapters. Other Gymnasium
 environments can be added, but require an adapter defining observation-to-signal mapping,

@@ -50,6 +50,14 @@ leaves the environment's safe range. Success requires surviving the full horizon
 are randomized by +/-15%. Pole stabilization is primary, cart centering prevents eventual
 termination, velocity terms add damping, saturated tanh terms can limit aggressive force,
 and clipped integrals can correct persistent offsets but may reduce transient robustness.""",
+    "inverted_double_pendulum": """Task: balance two serial pendulum links above a
+translating cart for 500 steps using one horizontal force. Controller state is read from
+MuJoCo as cart position, both hinge angles, their relative angle, and all three velocities.
+The system terminates when the upper tip falls below the healthy height. Initial cart,
+angle, and velocity perturbations are broadened and moving-body masses vary by +/-15%.
+Both links must be stabilized together: correcting only the first pole can amplify the
+second, relative-angle feedback can damp inter-link motion, and cart centering prevents
+the controller from solving balance by unbounded track drift.""",
     "reacher": """Task: drive a two-link planar arm's fingertip to a randomized target in
 50 steps. The action is a vector of two joint torques, clipped per actuator. Native reward
 penalizes fingertip-target distance and control magnitude; success means final distance
@@ -81,6 +89,12 @@ body pitch and height, target forward-speed error, and an anti-phase periodic CP
 masses are randomized by +/-10%. A useful structure must create a propulsive cyclic gait,
 coordinate front and rear limbs, and limit high-frequency torque without merely holding a
 static posture.""",
+    "swimmer": """Task: propel a three-link planar Swimmer forward through viscous fluid
+for 300 steps using two bounded joint torques. Signals include anti-phase periodic CPG,
+the two actuated joint angles and velocities, body orientation, lateral velocity, and
+forward-speed error. Body masses vary by +/-10%. Propulsion requires a coordinated
+non-reciprocal body wave; static posture feedback cannot move the swimmer, while overly
+fast or discontinuous oscillation wastes energy and produces command jerk.""",
     "ant": """Task: make an eight-actuator quadruped Ant move forward for 300 steps while
 remaining healthy. Actions control four hip/ankle pairs. Features are read from MuJoCo's
 free-root state and include eight joint posture/velocity signals, diagonal-leg CPG phases,
@@ -95,6 +109,19 @@ alternating leg-and-arm CPG phases, torso roll/pitch, height, and forward-speed 
 Native reward emphasizes forward velocity and healthy survival while penalizing control
 and impact. Body masses are randomized by +/-10%. Stable whole-body coordination and
 balance are more important than a fast but fragile initial lunge.""",
+    "humanoid_standup": """Task: make a 17-actuator Humanoid rise from a prone initial
+state and remain upright for 300 steps. Signals use actuator-ordered joint posture and
+velocity, torso roll/pitch, root angular velocity, torso-height error, and vertical
+velocity. Body masses vary by +/-10%. The controller must generate a strong coordinated
+transient to lift the torso, then transition to damped standing feedback; a single violent
+launch or permanently high torque is not a successful solution.""",
+    "bipedal_walker": """Task: move a four-actuator planar BipedalWalker forward over
+slightly uneven terrain for 600 steps without the hull touching the ground. Observations
+provide hull attitude and velocity, hip/knee angles and velocities, foot contacts, and ten
+terrain lidar rays. Signals include an alternating CPG, posture feedback, contact phase,
+forward/vertical speed, hull balance, and terrain clearance. Body densities vary by
++/-10%. A useful structure must alternate support legs, absorb contacts smoothly, and
+adapt to terrain instead of applying a fixed symmetric pose.""",
     "pusher": """Task: use a seven-joint arm to contact an object and push it to a target
 within 100 steps. Features are seven-dimensional Jacobian-transpose signals for fingertip
 to object error, object to goal error, and their combined push direction, plus joint
@@ -119,6 +146,12 @@ horizon and finish with |pole_angle| < 0.1 rad across randomized initial conditi
 body masses. Among equally reliable stabilizers, prefer lower force energy, smoother force
 changes, faster damping of velocities, and fewer terms. Never trade survival for a small
 energy or complexity improvement.""",
+    "inverted_double_pendulum": """Primary goal: keep both serial poles upright and survive
+all 500 steps while keeping the cart near the center. Operational success requires both
+final hinge angles below 0.2 rad in magnitude across broadened initial conditions and
+randomized masses. Survival and return dominate; among equally reliable controllers,
+prefer lower force energy, smoother force changes, fast damping of relative pole motion,
+and fewer signals.""",
     "reacher": """Primary goal: move the fingertip to the target quickly and keep it there,
 maximizing cumulative return over 50 steps. Operational success target: final Cartesian
 fingertip-target distance < 0.05 across randomized targets, initial states, and link masses.
@@ -142,6 +175,11 @@ above 1.5 m/s. Develop a stable cyclic gait rather than a static posture or a si
 kick. Secondary goals are lower squared torque energy, lower torque-rate jerk, and fewer
 signals, but they must not materially reduce forward return. Robustness to +/-10% body-mass
 variation is part of the goal.""",
+    "swimmer": """Primary goal: generate sustained forward propulsion for 300 steps and
+move at least 1.0 m from the randomized start. Discover a repeatable traveling body wave
+rather than a static pose or one initial impulse. Among structures with comparable forward
+return and displacement, minimize squared torque energy and torque-rate jerk, lateral
+drift, and unnecessary terms while remaining robust to +/-10% body-mass variation.""",
     "ant": """Primary goal: move forward quickly, stay healthy for all 300 steps, and end
 above 0.75 m/s. Maintain torso height near 0.65 m and control roll/pitch using coordinated
 diagonal-leg cycles. Among equally successful gaits, minimize squared torque energy and
@@ -152,6 +190,17 @@ above 0.5 m/s. Keep torso height near 1.4 m, limit roll/pitch, and coordinate le
 and abdomen into a repeatable gait. Survival and forward return dominate; among comparable
 gaits prefer lower actuator energy, smoother commands, and fewer signals. Reject solutions
 that obtain return from one unstable launch and then fall.""",
+    "humanoid_standup": """Primary goal: raise the torso from the ground, finish above
+1.2 m, and remain balanced with roll and pitch below 0.5 rad through all 300 steps. The
+controller should transition from high-authority rising motion to stable low-velocity
+standing. Return and successful standing dominate; among comparable solutions prefer
+lower actuator energy, lower torque-rate jerk, gentler impacts, and fewer signals.""",
+    "bipedal_walker": """Primary goal: survive 600 steps and advance at least 2 m over
+uneven terrain without hull contact. Produce an alternating gait with useful forward speed,
+stable hull attitude, and appropriate foot-contact timing. Among equally successful
+walkers, reduce motor-command energy and jerk and prefer compact structures. Do not obtain
+short-term speed from impacts that cause later falls or sensitivity to +/-10% body-density
+variation.""",
     "pusher": """Primary goal: bring the object to within 0.1 m of the goal by the end of
 100 steps. Approach the object quickly, establish contact, and continue applying force in
 the goal direction without losing contact. Among controllers with comparable final
