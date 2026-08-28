@@ -996,7 +996,15 @@ def inverted_pendulum_lqr() -> tuple[GymStructure, np.ndarray]:
         mujoco.mj_forward(unwrapped.model, unwrapped.data)
         a = np.zeros((4, 4))
         b = np.zeros((4, 1))
-        mujoco.mjd_transitionFD(unwrapped.model, unwrapped.data, 1e-6, 1, a, b, None, None)
+        original_integrator = unwrapped.model.opt.integrator
+        try:
+            # MuJoCo 3.3 rejects transition finite differences with RK4.
+            unwrapped.model.opt.integrator = mujoco.mjtIntegrator.mjINT_EULER
+            mujoco.mjd_transitionFD(
+                unwrapped.model, unwrapped.data, 1e-6, 1, a, b, None, None
+            )
+        finally:
+            unwrapped.model.opt.integrator = original_integrator
         q = np.diag([1.0, 20.0, 0.1, 0.5])
         r = np.array([[0.1]])
         p = solve_discrete_are(a, b, q, r)

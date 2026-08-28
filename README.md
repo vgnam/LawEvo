@@ -129,6 +129,18 @@ py -m experiments.gymnasium_classical_benchmarks --environment HumanoidStandup-v
 
 # BipedalWalker-v3
 py -m experiments.gymnasium_classical_benchmarks --environment BipedalWalker-v3 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Robosuite Lift with Panda OSC
+py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteLift-v0 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Robosuite Stack with Panda OSC
+py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteStack-v0 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Robosuite square-nut assembly with Panda OSC
+py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteNutAssemblySquare-v0 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Robosuite Door with Panda OSC
+py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteDoor-v0 --generations 20 --train-episodes 6 --test-episodes 30
 ```
 
 The reported return, success rate, energy, and jerk are means over the 30 held-out test
@@ -175,7 +187,7 @@ py -m experiments.gymnasium_classical_benchmarks `
   --test-episodes 30
 ```
 
-### Supported Gymnasium environments
+### Supported benchmark environments
 
 | Environment | Tuned classical baselines |
 |---|---|
@@ -192,10 +204,20 @@ py -m experiments.gymnasium_classical_benchmarks `
 | `Humanoid-v5` | Posture P, Posture PD, CPG, CPG+PD |
 | `HumanoidStandup-v5` | Stand Posture P/PD, Height+Posture PD, Full Balance PD |
 | `BipedalWalker-v3` | Posture P, Posture PD, CPG, CPG+PD |
+| `RobosuiteLift-v0` | Reach P/PD, Pick+Lift, Pick+Lift PD |
+| `RobosuiteStack-v0` | Reach P/PD, Pick+Stack, Pick+Stack PD |
+| `RobosuiteNutAssemblySquare-v0` | Reach P/PD, Pick+Insert, Pick+Insert PD |
+| `RobosuiteDoor-v0` | Reach P/PD, Door P/PD |
 
 These are the environments currently implemented by LawEvo adapters. Other Gymnasium
 environments can be added, but require an adapter defining observation-to-signal mapping,
 action semantics, classical structures, success criteria, and task-specific prompt goals.
+
+The robosuite tasks use a Panda robot with the `BASIC` operational-space controller. Their
+seven-dimensional action is normalized `[delta_xyz, delta_axis_angle, gripper]`; therefore,
+reported energy and jerk are OSC command-space metrics, not raw joint-torque metrics.
+Robosuite 1.5.2 is pinned with MuJoCo 3.3.x because later MuJoCo releases remove an API that
+this robosuite release still uses.
 
 Runs checkpoint every evaluated structure and save complete generation plans. Use the
 printed run ID with `--resume-run` to resume that exact timestamped run.

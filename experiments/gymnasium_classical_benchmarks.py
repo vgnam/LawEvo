@@ -24,6 +24,7 @@ from lawevo.evolve.nvidia_nim import (
 from lawevo.pid import (
     ADAPTERS,
     LOCOMOTION_ADAPTERS,
+    ROBOSUITE_ADAPTERS,
     GymMetrics,
     GymStructure,
     evaluate_gym_structure,
@@ -129,6 +130,29 @@ velocity, integral, saturation, normalization, task-space damping, and posture f
 Native reward penalizes object-goal distance, fingertip-object distance, and control cost.
 Arm/object body masses are randomized by +/-10%. A useful structure must first establish
 contact, then maintain a controlled push instead of merely reaching the object.""",
+    "robosuite_lift": """Task: control a Panda arm with a normalized seven-dimensional
+operational-space command [delta_xyz, delta_axis_angle, gripper] to lift a cube within 200
+steps. The cube position is randomized at reset and its mass varies by +/-10%. Signals
+encode end-effector-to-cube reach error, damping, integral reach, gripper closure, lift
+height, and grasp-gated lifting. Reaching without closing the gripper, closing too early,
+or lifting before contact are distinct failure modes. Energy and jerk measure normalized
+OSC command effort rather than raw joint torque.""",
+    "robosuite_stack": """Task: use a Panda OSC pose controller to pick up cube A and stack
+it stably on cube B within 200 steps. Both cube placements are randomized and both masses
+vary by +/-10%. Signals cover reaching cube A, damping, grasp closure, vertical clearance,
+alignment above cube B, and conditional release. The task is sequential: a controller must
+reach, grasp, lift, transport, align, and release without knocking cube B away.""",
+    "robosuite_nut_assembly_square": """Task: use a Panda OSC pose controller to grasp a
+square nut and insert it onto its matching square peg within 200 steps. Nut placement is
+randomized and peg mass is varied by +/-10%. Signals encode nut reach, damping, grasping,
+lifting, horizontal peg alignment, and downward insertion. Success needs both coarse
+transport and precise terminal alignment; aggressive commands can bounce the nut away or
+jam it against the peg.""",
+    "robosuite_door": """Task: use a Panda OSC pose controller to reach a randomized door
+handle, grasp it, turn the latch, and swing the door open within 200 steps. Signals include
+handle reach, damping, integral correction, gripper closure, handle rotation, and a
+geometry-derived tangential opening direction. The controller must coordinate rotation and
+translation after contact; merely touching or pulling an unturned handle is insufficient.""",
 }
 
 CONTROL_GOALS = {
@@ -207,6 +231,26 @@ the goal direction without losing contact. Among controllers with comparable fin
 object-goal accuracy and return, minimize squared torque energy and torque-rate jerk and
 prefer fewer signals. Low-energy behavior that never contacts or moves the object is not
 successful.""",
+    "robosuite_lift": """Primary goal: complete robosuite Lift within 200 steps across
+randomized cube positions and +/-10% cube mass. Approach without overshoot, close the Panda
+gripper around the cube, and raise it above the task success height while maintaining the
+grasp. Success and shaped return dominate; among comparable controllers prefer lower OSC
+command energy, smoother command changes, faster completion, and fewer terms.""",
+    "robosuite_stack": """Primary goal: complete robosuite Stack within 200 steps across
+randomized cube placements and masses. Pick cube A without disturbing cube B, lift it with
+clearance, align it over cube B, lower it, and release into a stable stack. Task success and
+return dominate; then minimize normalized OSC command energy, jerk, unnecessary regrasping,
+and structural complexity.""",
+    "robosuite_nut_assembly_square": """Primary goal: place the square nut onto its square
+peg within 200 steps across randomized starts and +/-10% mass variation. Reach and grasp
+reliably, lift above the peg, align horizontally, and insert with controlled downward motion.
+Prioritize insertion success and shaped return over energy; among equally successful
+controllers reduce OSC command energy, jerk, impacts, and unnecessary signals.""",
+    "robosuite_door": """Primary goal: open the latched robosuite Door within 200 steps
+across randomized door poses. Reach and grasp the handle, rotate the latch sufficiently,
+then move tangentially about the hinge while retaining contact. Success and shaped return
+dominate; among comparable controllers reduce normalized OSC command energy, command jerk,
+oscillation at the handle, and term count.""",
 }
 
 
@@ -536,14 +580,18 @@ def main() -> None:
     load_env_file()
     available_adapters = {
         adapter.env_id: (name, adapter)
-        for name, adapter in {**ADAPTERS, **LOCOMOTION_ADAPTERS}.items()
+        for name, adapter in {
+            **ADAPTERS,
+            **LOCOMOTION_ADAPTERS,
+            **ROBOSUITE_ADAPTERS,
+        }.items()
     }
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--environment",
         choices=tuple(sorted(available_adapters)),
         required=True,
-        help="run one supported Gymnasium environment",
+        help="run one supported Gymnasium or robosuite environment",
     )
     parser.add_argument("--model", default=os.environ.get("NVIDIA_MODEL", DEFAULT_NVIDIA_MODEL))
     parser.add_argument(
