@@ -85,61 +85,61 @@ classical gain with the same CEM budget using **6 training episodes**, and repor
 controller over exactly **30 held-out test episodes**. The CLI defaults use this 20/6/30
 protocol.
 
-### Commands for each environment
+### Commands for all 17 environments
 
-Run exactly one environment per command. These commands explicitly use the standard
-20-generation, 6-training-episode, 30-test-episode protocol:
+The 17 copy-paste commands below each run exactly one environment. They explicitly use
+the standard 20-generation, 6-training-episode, 30-test-episode protocol:
 
 ```powershell
-# Pendulum-v1
+# 1. Pendulum-v1
 py -m experiments.gymnasium_classical_benchmarks --environment Pendulum-v1 --generations 20 --train-episodes 6 --test-episodes 30
 
-# InvertedPendulum-v5
+# 2. InvertedPendulum-v5
 py -m experiments.gymnasium_classical_benchmarks --environment InvertedPendulum-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-# InvertedDoublePendulum-v5
+# 3. InvertedDoublePendulum-v5
 py -m experiments.gymnasium_classical_benchmarks --environment InvertedDoublePendulum-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-# Reacher-v5
+# 4. Reacher-v5
 py -m experiments.gymnasium_classical_benchmarks --environment Reacher-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-# Pusher-v5
+# 5. Pusher-v5
 py -m experiments.gymnasium_classical_benchmarks --environment Pusher-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-# Hopper-v5
+# 6. Hopper-v5
 py -m experiments.gymnasium_classical_benchmarks --environment Hopper-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-# Walker2d-v5
+# 7. Walker2d-v5
 py -m experiments.gymnasium_classical_benchmarks --environment Walker2d-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-# HalfCheetah-v5
+# 8. HalfCheetah-v5
 py -m experiments.gymnasium_classical_benchmarks --environment HalfCheetah-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-# Swimmer-v5
+# 9. Swimmer-v5
 py -m experiments.gymnasium_classical_benchmarks --environment Swimmer-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-# Ant-v5
+# 10. Ant-v5
 py -m experiments.gymnasium_classical_benchmarks --environment Ant-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-# Humanoid-v5
+# 11. Humanoid-v5
 py -m experiments.gymnasium_classical_benchmarks --environment Humanoid-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-# HumanoidStandup-v5
+# 12. HumanoidStandup-v5
 py -m experiments.gymnasium_classical_benchmarks --environment HumanoidStandup-v5 --generations 20 --train-episodes 6 --test-episodes 30
 
-# BipedalWalker-v3
+# 13. BipedalWalker-v3
 py -m experiments.gymnasium_classical_benchmarks --environment BipedalWalker-v3 --generations 20 --train-episodes 6 --test-episodes 30
 
-# Robosuite Lift with Panda OSC
+# 14. Robosuite Lift with Panda OSC
 py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteLift-v0 --generations 20 --train-episodes 6 --test-episodes 30
 
-# Robosuite Stack with Panda OSC
+# 15. Robosuite Stack with Panda OSC
 py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteStack-v0 --generations 20 --train-episodes 6 --test-episodes 30
 
-# Robosuite square-nut assembly with Panda OSC
+# 16. Robosuite square-nut assembly with Panda OSC
 py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteNutAssemblySquare-v0 --generations 20 --train-episodes 6 --test-episodes 30
 
-# Robosuite Door with Panda OSC
+# 17. Robosuite Door with Panda OSC
 py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteDoor-v0 --generations 20 --train-episodes 6 --test-episodes 30
 ```
 
