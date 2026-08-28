@@ -38,7 +38,7 @@ class NVIDIAChatClient:
     api_key: str
     model: str = DEFAULT_NVIDIA_MODEL
     endpoint: str = DEFAULT_NVIDIA_BASE_URL
-    timeout: float = 120.0
+    timeout: float = 600.0
 
     def complete(
         self,
@@ -79,6 +79,7 @@ class NVIDIAChatClient:
                     payload = json.loads(response.read().decode("utf-8"))
                 return str(payload["choices"][0]["message"]["content"])
             except (
+                TimeoutError,
                 urllib.error.URLError,
                 urllib.error.HTTPError,
                 KeyError,

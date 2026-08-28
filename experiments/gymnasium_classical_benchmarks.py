@@ -18,6 +18,7 @@ import numpy as np
 from lawevo.evolve.nvidia_nim import (
     DEFAULT_NVIDIA_BASE_URL,
     DEFAULT_NVIDIA_MODEL,
+    NIMError,
     NVIDIAChatClient,
     load_env_file,
 )
@@ -597,6 +598,7 @@ def main() -> None:
     parser.add_argument(
         "--base-url", default=os.environ.get("NVIDIA_BASE_URL", DEFAULT_NVIDIA_BASE_URL)
     )
+    parser.add_argument("--request-timeout", type=float, default=600.0)
     parser.add_argument("--generations", type=int, default=20)
     parser.add_argument("--proposals", type=int, default=6)
     parser.add_argument("--proposal-attempts", type=int, default=3)
@@ -629,7 +631,12 @@ def main() -> None:
     api_key = os.environ.get("NVIDIA_API_KEY") or getpass.getpass("NVIDIA API key: ")
     if not api_key:
         raise SystemExit("NVIDIA_API_KEY is required")
-    client = NVIDIAChatClient(api_key, model=args.model, endpoint=args.base_url)
+    client = NVIDIAChatClient(
+        api_key,
+        model=args.model,
+        endpoint=args.base_url,
+        timeout=args.request_timeout,
+    )
     all_results: dict[str, object] = {}
     responses_path = state_dir / "nim_responses.json"
     cache_path = state_dir / "evaluation_cache.json"
@@ -799,22 +806,43 @@ def main() -> None:
                 archive = [item["structure"].to_dict() for item in ranked] + [
                     proposal.to_dict() for proposal in proposals
                 ]
-                response = client.complete(
-                    "You are a control researcher evolving interpretable feedback structures "
-                    "for one explicitly described environment. Return strict JSON only.",
-                    prompt(
-                        env_name,
-                        adapter.allowed_terms,
-                        elites,
-                        archive,
-                        args.proposals - len(proposals),
-                        generation + 1,
-                        adapter.energy_weight,
-                        adapter.jerk_weight,
-                    ),
-                    temperature=0.8,
-                    reasoning_effort="high",
-                )
+                try:
+                    response = client.complete(
+                        "You are a control researcher evolving interpretable feedback structures "
+                        "for one explicitly described environment. Return strict JSON only.",
+                        prompt(
+                            env_name,
+                            adapter.allowed_terms,
+                            elites,
+                            archive,
+                            args.proposals - len(proposals),
+                            generation + 1,
+                            adapter.energy_weight,
+                            adapter.jerk_weight,
+                        ),
+                        temperature=0.8,
+                        reasoning_effort="high",
+                    )
+                except NIMError as exc:
+                    raw_responses.append(
+                        {
+                            "environment": env_name,
+                            "generation": generation + 1,
+                            "attempt": attempt,
+                            "valid_new": 0,
+                            "error": str(exc),
+                        }
+                    )
+                    responses_path.write_text(
+                        json.dumps(raw_responses, indent=2), encoding="utf-8"
+                    )
+                    print(
+                        f"env={env_name} gen={generation + 1} "
+                        f"proposal_attempt={attempt} llm_error={exc}; continuing",
+                        flush=True,
+                    )
+                    time.sleep(5 * attempt)
+                    continue
                 known_keys = set(evaluated) | {proposal.key() for proposal in proposals}
                 fresh = [
                     proposal

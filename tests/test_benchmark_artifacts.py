@@ -2,7 +2,7 @@ import json
 import re
 import sys
 
-from lawevo.evolve.nvidia_nim import NVIDIAChatClient
+from lawevo.evolve.nvidia_nim import NIMError, NVIDIAChatClient
 
 
 def test_prompt_assigns_all_eoh_variation_operators() -> None:
@@ -78,3 +78,48 @@ def test_timestamped_environment_artifact_layout(tmp_path, monkeypatch) -> None:
     assert (environment / "summary" / "metrics_summary.csv").is_file()
     assert (environment / "summary" / "rollout_metrics.csv").is_file()
     assert (environment / "summary" / "results.json").is_file()
+
+
+def test_llm_failure_falls_back_without_stopping_run(tmp_path, monkeypatch) -> None:
+    import experiments.gymnasium_classical_benchmarks as benchmark
+
+    def fail_complete(self, system, prompt, **kwargs):
+        del self, system, prompt, kwargs
+        raise NIMError("temporary timeout")
+
+    monkeypatch.setattr(NVIDIAChatClient, "complete", fail_complete)
+    monkeypatch.setattr(benchmark.time, "sleep", lambda delay: None)
+    monkeypatch.setattr(benchmark, "plot_environment", lambda *args: None)
+    monkeypatch.setenv("NVIDIA_API_KEY", "smoke-only")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "gymnasium_classical_benchmarks",
+            "--environment",
+            "InvertedPendulum-v5",
+            "--generations",
+            "1",
+            "--proposals",
+            "1",
+            "--proposal-attempts",
+            "1",
+            "--cem-iterations",
+            "0",
+            "--cem-population",
+            "2",
+            "--train-episodes",
+            "1",
+            "--test-episodes",
+            "2",
+        ],
+    )
+
+    benchmark.main()
+
+    run_root = next((tmp_path / "results").glob("????????_??????"))
+    manifest = json.loads((run_root / "run_manifest.json").read_text(encoding="utf-8"))
+    plan = json.loads((run_root / "state" / "generation_plans.json").read_text())
+    assert manifest["status"] == "complete"
+    assert plan["inverted_pendulum"]["1"][0]["name"] == "fallback_mutation_1"
