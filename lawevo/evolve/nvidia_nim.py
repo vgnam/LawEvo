@@ -46,7 +46,6 @@ class NVIDIAChatClient:
         prompt: str,
         *,
         temperature: float = 0.7,
-        max_tokens: int = 3000,
         reasoning_effort: str = "medium",
         retries: int = 3,
     ) -> str:
@@ -58,7 +57,6 @@ class NVIDIAChatClient:
                     {"role": "user", "content": prompt},
                 ],
                 "temperature": temperature,
-                "max_tokens": max_tokens,
                 "reasoning_effort": reasoning_effort,
                 "stream": False,
             }
