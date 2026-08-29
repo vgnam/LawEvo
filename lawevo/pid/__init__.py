@@ -18,6 +18,7 @@ from lawevo.pid.gym_benchmark import (
     run_episode,
     tune_gym_cem,
 )
+from lawevo.pid.panda_gym_benchmark import PANDA_GYM_ADAPTERS
 from lawevo.pid.robosuite_benchmark import ROBOSUITE_ADAPTERS
 from lawevo.pid.structure import (
     DISTANCE_TERMS,
@@ -34,6 +35,7 @@ __all__ = [
     "DISTANCE_TERMS",
     "HEADING_TERMS",
     "LOCOMOTION_ADAPTERS",
+    "PANDA_GYM_ADAPTERS",
     "ROBOSUITE_ADAPTERS",
     "VELOCITY_GATES",
     "ControllerStructure",

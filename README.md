@@ -85,9 +85,9 @@ classical gain with the same CEM budget using **6 training episodes**, and repor
 controller over exactly **30 held-out test episodes**. The CLI defaults use this 20/6/30
 protocol.
 
-### Commands for all 17 environments
+### Commands for all 22 environments
 
-The 17 copy-paste commands below each run exactly one environment. They explicitly use
+The 22 copy-paste commands below each run exactly one environment. They explicitly use
 the standard 20-generation, 6-training-episode, 30-test-episode protocol:
 
 ```powershell
@@ -130,16 +130,31 @@ py -m experiments.gymnasium_classical_benchmarks --environment HumanoidStandup-v
 # 13. BipedalWalker-v3
 py -m experiments.gymnasium_classical_benchmarks --environment BipedalWalker-v3 --generations 20 --train-episodes 6 --test-episodes 30
 
-# 14. Robosuite Lift with Panda OSC
+# 14. Panda-Gym Reach (dense reward)
+py -m experiments.gymnasium_classical_benchmarks --environment PandaReachDense-v3 --generations 20 --train-episodes 6 --test-episodes 30
+
+# 15. Panda-Gym Push (dense reward)
+py -m experiments.gymnasium_classical_benchmarks --environment PandaPushDense-v3 --generations 20 --train-episodes 6 --test-episodes 30
+
+# 16. Panda-Gym Slide (dense reward)
+py -m experiments.gymnasium_classical_benchmarks --environment PandaSlideDense-v3 --generations 20 --train-episodes 6 --test-episodes 30
+
+# 17. Panda-Gym Pick and Place (dense reward)
+py -m experiments.gymnasium_classical_benchmarks --environment PandaPickAndPlaceDense-v3 --generations 20 --train-episodes 6 --test-episodes 30
+
+# 18. Panda-Gym Stack (dense reward)
+py -m experiments.gymnasium_classical_benchmarks --environment PandaStackDense-v3 --generations 20 --train-episodes 6 --test-episodes 30
+
+# 19. Robosuite Lift with Panda OSC
 py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteLift-v0 --generations 20 --train-episodes 6 --test-episodes 30
 
-# 15. Robosuite Stack with Panda OSC
+# 20. Robosuite Stack with Panda OSC
 py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteStack-v0 --generations 20 --train-episodes 6 --test-episodes 30
 
-# 16. Robosuite square-nut assembly with Panda OSC
+# 21. Robosuite square-nut assembly with Panda OSC
 py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteNutAssemblySquare-v0 --generations 20 --train-episodes 6 --test-episodes 30
 
-# 17. Robosuite Door with Panda OSC
+# 22. Robosuite Door with Panda OSC
 py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteDoor-v0 --generations 20 --train-episodes 6 --test-episodes 30
 ```
 
@@ -204,6 +219,11 @@ py -m experiments.gymnasium_classical_benchmarks `
 | `Humanoid-v5` | Posture P, Posture PD, CPG, CPG+PD |
 | `HumanoidStandup-v5` | Stand Posture P/PD, Height+Posture PD, Full Balance PD |
 | `BipedalWalker-v3` | Posture P, Posture PD, CPG, CPG+PD |
+| `PandaReachDense-v3` | Task P, PI, PD, PID |
+| `PandaPushDense-v3` | Reach P/PD, Object Goal P, Contact+Goal PD |
+| `PandaSlideDense-v3` | Reach P/PD, Object Goal P, Contact+Goal PD |
+| `PandaPickAndPlaceDense-v3` | Reach P/PD, Pick+Place, Pick+Place PD |
+| `PandaStackDense-v3` | Reach P/PD, Pick+Stack, Pick+Stack PD |
 | `RobosuiteLift-v0` | Reach P/PD, Pick+Lift, Pick+Lift PD |
 | `RobosuiteStack-v0` | Reach P/PD, Pick+Stack, Pick+Stack PD |
 | `RobosuiteNutAssemblySquare-v0` | Reach P/PD, Pick+Insert, Pick+Insert PD |
@@ -212,6 +232,37 @@ py -m experiments.gymnasium_classical_benchmarks `
 These are the environments currently implemented by LawEvo adapters. Other Gymnasium
 environments can be added, but require an adapter defining observation-to-signal mapping,
 action semantics, classical structures, success criteria, and task-specific prompt goals.
+
+The Panda-Gym tasks use PyBullet and dense-reward `v3` environments with normalized
+end-effector displacement control. Install all benchmark dependencies, including
+`panda-gym==3.0.7`, with `py -m pip install -e ".[benchmarks]"`.
+
+### Panda-Gym commands
+
+Install the benchmark dependencies once:
+
+```powershell
+py -m pip install -e ".[benchmarks]"
+```
+
+Run each supported Panda-Gym task with the standard 20/6/30 protocol:
+
+```powershell
+# Reach
+py -m experiments.gymnasium_classical_benchmarks --environment PandaReachDense-v3 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Push
+py -m experiments.gymnasium_classical_benchmarks --environment PandaPushDense-v3 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Slide
+py -m experiments.gymnasium_classical_benchmarks --environment PandaSlideDense-v3 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Pick and Place
+py -m experiments.gymnasium_classical_benchmarks --environment PandaPickAndPlaceDense-v3 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Stack
+py -m experiments.gymnasium_classical_benchmarks --environment PandaStackDense-v3 --generations 20 --train-episodes 6 --test-episodes 30
+```
 
 The robosuite tasks use a Panda robot with the `BASIC` operational-space controller. Their
 seven-dimensional action is normalized `[delta_xyz, delta_axis_angle, gripper]`; therefore,

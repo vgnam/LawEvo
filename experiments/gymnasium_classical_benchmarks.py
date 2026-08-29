@@ -25,6 +25,7 @@ from lawevo.evolve.nvidia_nim import (
 from lawevo.pid import (
     ADAPTERS,
     LOCOMOTION_ADAPTERS,
+    PANDA_GYM_ADAPTERS,
     ROBOSUITE_ADAPTERS,
     GymMetrics,
     GymStructure,
@@ -154,6 +155,31 @@ handle, grasp it, turn the latch, and swing the door open within 200 steps. Sign
 handle reach, damping, integral correction, gripper closure, handle rotation, and a
 geometry-derived tangential opening direction. The controller must coordinate rotation and
 translation after contact; merely touching or pulling an unturned handle is insufficient.""",
+    "panda_reach": """Task: move the Franka Panda end-effector to a randomized Cartesian
+goal within 50 PyBullet control steps. The dense reward is negative end-effector-to-goal
+distance and success requires distance below 0.05 m. The normalized three-dimensional
+action commands bounded end-effector displacement. Signals include Cartesian error,
+normalized and saturated error, clipped integral correction, and end-effector damping.""",
+    "panda_push": """Task: use the Franka Panda end-effector to push a cube across a table
+to a randomized Cartesian goal within 50 PyBullet control steps. Dense reward is negative
+cube-to-goal distance and success requires distance below 0.05 m. The gripper is blocked;
+the three-dimensional action commands end-effector displacement. Signals distinguish
+reaching the cube, maintaining contact, moving toward the goal, and damping motion.""",
+    "panda_slide": """Task: strike and slide a puck to a randomized target beyond the
+Panda arm's direct reach within 50 PyBullet control steps. Dense reward is negative
+puck-to-goal distance and success requires distance below 0.05 m. The blocked-gripper
+three-dimensional action commands end-effector displacement. Useful structures must first
+reach the puck, then create a directed impulse while avoiding wasteful oscillation.""",
+    "panda_pick_and_place": """Task: pick up a cube with the Franka Panda gripper and move
+it to a randomized three-dimensional target within 50 PyBullet control steps. Dense reward
+is negative cube-to-goal distance and success requires distance below 0.05 m. The action is
+bounded end-effector xyz displacement plus gripper displacement. Signals encode reaching,
+closing, lifting, transporting, releasing, and end-effector damping.""",
+    "panda_stack": """Task: grasp the first of two cubes and stack it at the goal directly
+above the second cube within 100 PyBullet control steps. Dense reward combines the two
+cube-goal distances and success requires both to be within 0.05 m. The four-dimensional
+action commands end-effector xyz and gripper displacement. Signals implement reaching,
+grasping, lifting, alignment, release, and a gated sequential stack motion.""",
 }
 
 CONTROL_GOALS = {
@@ -252,6 +278,31 @@ across randomized door poses. Reach and grasp the handle, rotate the latch suffi
 then move tangentially about the hinge while retaining contact. Success and shaped return
 dominate; among comparable controllers reduce normalized OSC command energy, command jerk,
 oscillation at the handle, and term count.""",
+    "panda_reach": """Primary goal: reach the randomized Cartesian target quickly and
+terminate successfully inside the 0.05 m tolerance. Maximize dense return by reducing
+distance early, then settle without overshoot. Across comparable successful controllers,
+prefer lower normalized command energy, smoother command changes, limited integral windup,
+and fewer terms; low-energy controllers that remain far from the target are unacceptable.""",
+    "panda_push": """Primary goal: bring the cube inside the 0.05 m goal tolerance within
+50 steps. Approach the cube efficiently, establish contact on the useful side, and preserve
+contact while pushing in the cube-to-goal direction. Dense return and task success dominate;
+then prefer low command energy, smooth changes, little oscillation around the cube, and a
+compact structure. Reaching without moving the cube is not success.""",
+    "panda_slide": """Primary goal: slide the puck inside the 0.05 m target tolerance
+within 50 steps even though the target lies beyond direct arm reach. Reach an effective
+contact point and deliver a well-directed impulse of sufficient magnitude. Dense return and
+success dominate; among comparable shots prefer lower command energy and jerk, fewer
+repeated impacts, and fewer terms. Merely following the puck without target progress fails.""",
+    "panda_pick_and_place": """Primary goal: place the cube inside the randomized 0.05 m
+goal tolerance within 50 steps. Execute the full sequence of reach, close, lift, transport,
+align, and release while maintaining the grasp during motion. Dense return and success
+dominate; among comparable controllers prefer lower normalized command energy, smoother
+commands, fewer failed grasps or premature releases, and fewer structural terms.""",
+    "panda_stack": """Primary goal: complete the two-cube stack within 100 steps, with both
+achieved cube positions inside their 0.05 m goal tolerances. Reach and grasp the movable
+cube, lift with clearance, align above the fixed cube, lower, and release into a stable
+stack. Success and dense return dominate; then minimize command energy, jerk, collisions,
+regrasping, and unnecessary structural complexity.""",
 }
 
 
@@ -584,6 +635,7 @@ def main() -> None:
         for name, adapter in {
             **ADAPTERS,
             **LOCOMOTION_ADAPTERS,
+            **PANDA_GYM_ADAPTERS,
             **ROBOSUITE_ADAPTERS,
         }.items()
     }
@@ -592,7 +644,7 @@ def main() -> None:
         "--environment",
         choices=tuple(sorted(available_adapters)),
         required=True,
-        help="run one supported Gymnasium or robosuite environment",
+        help="run one supported Gymnasium, Panda-Gym, or robosuite environment",
     )
     parser.add_argument("--model", default=os.environ.get("NVIDIA_MODEL", DEFAULT_NVIDIA_MODEL))
     parser.add_argument(
