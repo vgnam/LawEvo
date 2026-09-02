@@ -368,18 +368,41 @@ strength.
 
 ### Bidirectional experience
 
-Each generation proposes laws (on the incumbent body) and body variants (under the
-incumbent law). The one-sided cross evaluations isolate each side's contribution, and
-their results feed two context-tagged belief channels:
+MorpLaw treats directed design knowledge as a first-class search object. Every proposal
+contains an executable body or law plus a falsifiable hypothesis with an applicable
+condition, recommendation, predicted metric effects, and mechanistic rationale. Evaluation
+produces an immutable parent-to-offspring evidence record and updates one of two channels:
 
-- `morph_to_law` — **measured facts**: how law variants behave on the current body.
-- `law_to_morph` — **hypotheses**: what the current law's failures imply about body
-  bottlenecks (gear, mass, limb length). Hypotheses must survive the next generation's
-  cross evaluation to stay in the belief space.
+- `morph_to_law`: body mechanics and body-conditioned results guide controller motifs.
+- `law_to_morph`: controller behavior and failure modes guide physical body changes.
 
-`cross_direction` gates the channels for ablation: `both`, `m_to_l`, `l_to_m`, `none`.
-`morphology_frozen` reproduces the law-only LawEvo baseline; `law_frozen` reproduces the
-RoboMoRe-style sequential baseline (fixed law, evolve morphology only).
+Each channel has separate positive-insight and negative-pitfall banks. Retrieval uses soft
+similarity over task, numeric body parameters, law terms, and metrics rather than requiring
+an exact body/law JSON match. Retrieved knowledge receives downstream utility credit;
+hypotheses progress through proposed, tested, supported, or refuted states.
+
+A state-aware Navigator monitors stagnation, morphology/law diversity, operator validity,
+operator improvement rates, and observed interactions. It issues explore, exploit, balance,
+or joint-confirm directives while preserving the same proposal and evaluation protocol in
+every ablation.
+
+After the primary one-sided probes, MorpLaw asks for responsive laws specialized to the best
+new body and responsive bodies specialized to the best new law. Counterfactual evaluations
+complete the factorial quartet `(M,L)`, `(M',L)`, `(M,L')`, `(M',L')`, yielding the explicit
+interaction term `I = F11 - F10 - F01 + F00`. Positive interaction indicates co-adaptation;
+negative interaction exposes an incompatibility hidden by one-sided rankings.
+
+Only four knowledge ablations are supported. All four retain the same Navigator,
+counterfactuals, CEM budget, and LLM-call protocol:
+
+- `no_knowledge`: record evidence but retrieve or accumulate neither channel.
+- `m_to_l`: enable only morphology-to-law knowledge.
+- `l_to_m`: enable only law-to-morphology knowledge.
+- `full`: enable both directed channels and both positive/pitfall banks.
+
+The on-disk evaluation cache is shared only to avoid recomputing an identical pair. Each
+variant has an isolated search archive, elite set, knowledge base, and Navigator state, so a
+later ablation cannot see candidates or guidance discovered by an earlier one.
 
 ### Morphology representation
 
@@ -405,15 +428,19 @@ py -m experiments.evolve_morplaw --environment swimmer_topology
 py -m experiments.evolve_morplaw --environment ant_topology
 ```
 
-Defaults: 5 generations, 4 proposals per side, CEM 5 iterations × 24 population, 6
-training and 30 held-out episodes. One invocation runs the classical, `law_only`,
-`morph_only`, `none`, `m_to_l`, `l_to_m`, and `both` variants, writes
-`results/morplaw_<environment>/` with the comparison plot, `results.json`,
-`nim_responses.json`, and a resumable `records.jsonl` pair cache:
+Defaults: 5 generations, 4 primary proposals per side, 1 responsive proposal per side,
+2 independently ranked joint probes, CEM 5 iterations × 24 population, 6 training episodes,
+30 held-out episodes, 24 items per knowledge bank, and top-3 retrieval from each polarity.
+One invocation runs `no_knowledge`, `m_to_l`, `l_to_m`, and `full`, and writes
+`results/morplaw_<environment>/` with the comparison plot,
+`results.json`, `nim_responses.json`, and a resumable `records.jsonl` pair cache.
+`results.json` includes the evidence ledger, four knowledge banks, hypothesis lifecycle,
+factorial interactions, Navigator decisions, operator statistics, actual episodes computed,
+and the cache-independent requested episode budget:
 
 ```powershell
 py -m experiments.evolve_morplaw --environment walker2d --resume
-py -m experiments.evolve_morplaw --environment reacher --variants classical  # no API key needed
+py -m experiments.evolve_morplaw --environment reacher --variants no_knowledge full
 ```
 
 MorpLaw tests require the benchmarks extras; they are skipped automatically on a

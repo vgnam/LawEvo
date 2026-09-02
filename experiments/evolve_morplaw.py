@@ -24,31 +24,30 @@ from lawevo.morplaw import (
     PairMetrics,
     PairRecord,
     evaluate_pair,
-    extract_morphologies,
-    extract_structures,
+    extract_law_proposals,
+    extract_morphology_proposals,
+    law_knowledge_query,
     law_mutation_prompt,
+    morphology_knowledge_query,
     morphology_mutation_prompt,
     pair_formula,
-    tune_pair_cem,
 )
 from lawevo.morplaw.morphology import MorphologySpec, MorphologyTemplate
 from lawevo.pid.gym_benchmark import ADAPTERS, LOCOMOTION_ADAPTERS
 
 SYSTEM_PROMPT = (
     "You are an expert control researcher co-designing robot morphologies and compact "
-    "symbolic feedback laws. Return JSON only."
+    "symbolic feedback laws. State a falsifiable directed design hypothesis, then ground "
+    "it as the requested executable artifact. Return JSON only."
 )
 
 ENV_ADAPTERS = {**ADAPTERS, **LOCOMOTION_ADAPTERS}
 
 VARIANT_NAMES = (
-    "classical",
-    "law_only",
-    "morph_only",
-    "none",
+    "no_knowledge",
     "m_to_l",
     "l_to_m",
-    "both",
+    "full",
 )
 
 
@@ -60,18 +59,41 @@ def make_law_generator(
     log: list[dict[str, object]],
     variant: str,
 ):
-    def law_generator(incumbent, belief, count, generation):
+    def law_generator(incumbent, knowledge, count, generation, directive, responsive):
         elites = sorted(cache.values(), key=lambda item: item.metrics.score, reverse=True)[:6]
+        retrieved = knowledge.retrieve(
+            "morph_to_law",
+            law_knowledge_query(adapter.env_id, incumbent),
+            generation=generation,
+        )
         prompt = law_mutation_prompt(
-            task_key, adapter, incumbent, belief, elites, count, generation
+            task_key,
+            adapter,
+            incumbent,
+            knowledge,
+            retrieved,
+            directive,
+            elites,
+            count,
+            generation,
+            responsive=responsive,
         )
         response = client.complete(SYSTEM_PROMPT, prompt, temperature=0.8, reasoning_effort="medium")
-        proposed = extract_structures(response, adapter.allowed_terms)
+        operator = "responsive_law" if responsive else "law_mutation"
+        proposed = extract_law_proposals(
+            response,
+            adapter.allowed_terms,
+            retrieved_ids=[item.id for item in retrieved],
+            operator=operator,
+        )
         log.append(
             {
                 "variant": variant,
                 "generation": generation,
                 "side": "law",
+                "phase": "responsive" if responsive else "primary",
+                "navigator": directive.to_dict(),
+                "retrieved_knowledge": [item.id for item in retrieved],
                 "valid": len(proposed),
                 "response": response,
             }
@@ -91,18 +113,41 @@ def make_morph_generator(
     log: list[dict[str, object]],
     variant: str,
 ):
-    def morph_generator(incumbent, belief, count, generation):
+    def morph_generator(incumbent, knowledge, count, generation, directive, responsive):
         elites = sorted(cache.values(), key=lambda item: item.metrics.score, reverse=True)[:6]
+        retrieved = knowledge.retrieve(
+            "law_to_morph",
+            morphology_knowledge_query(template.env_id, incumbent),
+            generation=generation,
+        )
         prompt = morphology_mutation_prompt(
-            task_key, template, incumbent, belief, elites, count, generation
+            task_key,
+            template,
+            incumbent,
+            knowledge,
+            retrieved,
+            directive,
+            elites,
+            count,
+            generation,
+            responsive=responsive,
         )
         response = client.complete(SYSTEM_PROMPT, prompt, temperature=0.8, reasoning_effort="medium")
-        proposed = extract_morphologies(response, template)
+        operator = "responsive_morph" if responsive else "morph_mutation"
+        proposed = extract_morphology_proposals(
+            response,
+            template,
+            retrieved_ids=[item.id for item in retrieved],
+            operator=operator,
+        )
         log.append(
             {
                 "variant": variant,
                 "generation": generation,
                 "side": "morphology",
+                "phase": "responsive" if responsive else "primary",
+                "navigator": directive.to_dict(),
+                "retrieved_knowledge": [item.id for item in retrieved],
                 "valid": len(proposed),
                 "response": response,
             }
@@ -228,9 +273,12 @@ def main() -> None:
     )
     parser.add_argument("--generations", type=int, default=5)
     parser.add_argument("--proposals-per-side", type=int, default=4)
+    parser.add_argument("--responsive-per-side", type=int, default=1)
     parser.add_argument("--joint-top-k", type=int, default=2)
     parser.add_argument("--cem-iterations", type=int, default=5)
     parser.add_argument("--cem-population", type=int, default=24)
+    parser.add_argument("--knowledge-capacity", type=int, default=24)
+    parser.add_argument("--knowledge-top-k", type=int, default=3)
     parser.add_argument("--train-episodes", type=int, default=6)
     parser.add_argument("--test-episodes", type=int, default=30)
     parser.add_argument("--variants", nargs="+", choices=VARIANT_NAMES, default=list(VARIANT_NAMES))
@@ -238,12 +286,9 @@ def main() -> None:
     args = parser.parse_args()
     output = args.output or Path(f"results/morplaw_{args.environment}")
     output.mkdir(parents=True, exist_ok=True)
-    needs_llm = any(name != "classical" for name in args.variants)
-    api_key = ""
-    if needs_llm:
-        api_key = os.environ.get("NVIDIA_API_KEY") or getpass.getpass("NVIDIA API key: ")
-        if not api_key:
-            raise SystemExit("NVIDIA_API_KEY is required for LLM variants")
+    api_key = os.environ.get("NVIDIA_API_KEY") or getpass.getpass("NVIDIA API key: ")
+    if not api_key:
+        raise SystemExit("NVIDIA_API_KEY is required for MorpLaw ablations")
 
     adapter = ENV_ADAPTERS[TEMPLATE_ADAPTERS[args.environment]]
     template = TEMPLATES[args.environment]
@@ -254,90 +299,51 @@ def main() -> None:
     cache = load_cache(cache_path, adapter.env_id) if args.resume else {}
     responses: list[dict[str, object]] = []
 
-    client = (
-        NVIDIAChatClient(api_key, model=args.model, endpoint=args.base_url)
-        if needs_llm
-        else None
-    )
+    client = NVIDIAChatClient(api_key, model=args.model, endpoint=args.base_url)
     config_kwargs = {
         "generations": args.generations,
         "proposals_per_side": args.proposals_per_side,
+        "responsive_per_side": args.responsive_per_side,
         "joint_top_k": args.joint_top_k,
         "cem_iterations": args.cem_iterations,
         "cem_population": args.cem_population,
+        "knowledge_capacity": args.knowledge_capacity,
+        "retrieve_per_polarity": args.knowledge_top_k,
     }
 
     initial_pairs = [(default_spec, structure) for structure in adapter.classical]
     results: dict[str, dict[str, object]] = {}
     for name in args.variants:
         print(f"=== variant {name} ===", flush=True)
-        if name == "classical":
-            for spec, structure in initial_pairs:
-                key = (structure.key(), spec.key())
-                if key in cache:
-                    continue
-                gains, metrics, budget = tune_pair_cem(
-                    adapter,
-                    template,
-                    spec,
-                    structure,
-                    train_seeds,
-                    iterations=args.cem_iterations,
-                    population_size=args.cem_population,
-                )
-                cache[key] = PairRecord(spec, structure, gains, metrics, 0, "seed", budget)
-            classical = [
-                cache[(structure.key(), default_spec.key())] for structure in adapter.classical
-            ]
-            best = max(classical, key=lambda item: (item.metrics.score, str(item.key())))
-            results[name] = {
-                "best": record_to_json(best, adapter.env_id),
-                "reports": [],
-                "api_calls": 0,
-                "episodes_spent": sum(item.episode_budget for item in classical),
-            }
-        else:
-            direction_flags = {
-                "law_only": {"morphology_frozen": True},
-                "morph_only": {"law_frozen": True},
-                "none": {"cross_direction": "none"},
-                "m_to_l": {"cross_direction": "m_to_l"},
-                "l_to_m": {"cross_direction": "l_to_m"},
-                "both": {"cross_direction": "both"},
-            }
-            config = MorpLawConfig(**config_kwargs, **direction_flags[name])
-            law_gen = make_law_generator(
-                client, args.environment, adapter, cache, responses, name
-            )
-            morph_gen = make_morph_generator(
-                client, args.environment, template, cache, responses, name
-            )
-            runner = MorpLawRunner(
-                adapter,
-                template,
-                train_seeds,
-                law_gen,
-                morph_gen,
-                config,
-                archive=cache,
-            )
-            best, reports = runner.run(initial_pairs)
-            results[name] = {
-                "best": record_to_json(best, adapter.env_id),
-                "reports": [report.to_dict() for report in reports],
-                "api_calls": len([entry for entry in responses if entry["variant"] == name]),
-                "episodes_spent": runner.episodes_spent,
-                "belief": {
-                    "morph_to_law": [
-                        {"statement": item.statement, "context": item.context}
-                        for item in runner.belief.morph_to_law
-                    ],
-                    "law_to_morph": [
-                        {"statement": item.statement, "context": item.context}
-                        for item in runner.belief.law_to_morph
-                    ],
-                },
-            }
+        config = MorpLawConfig(**config_kwargs, knowledge_mode=name)
+        variant_archive: dict[tuple, PairRecord] = {}
+        law_gen = make_law_generator(
+            client, args.environment, adapter, variant_archive, responses, name
+        )
+        morph_gen = make_morph_generator(
+            client, args.environment, template, variant_archive, responses, name
+        )
+        runner = MorpLawRunner(
+            adapter,
+            template,
+            train_seeds,
+            law_gen,
+            morph_gen,
+            config,
+            archive=variant_archive,
+            evaluation_cache=cache,
+        )
+        best, reports = runner.run(initial_pairs)
+        results[name] = {
+            "best": record_to_json(best, adapter.env_id),
+            "reports": [report.to_dict() for report in reports],
+            "api_calls": len([entry for entry in responses if entry["variant"] == name]),
+            "episodes_spent": runner.episodes_spent,
+            "episodes_requested": runner.episodes_requested,
+            "knowledge": runner.knowledge.to_dict(),
+            "operator_stats": runner.navigator.stats_dict(),
+            "failures": runner.failures.failure,
+        }
         save_cache(cache_path, cache, adapter.env_id)
         best_payload = record_from_json(results[name]["best"])
         print(
@@ -345,7 +351,8 @@ def main() -> None:
             f"@{best_payload.spec.describe()} "
             f"score={best_payload.metrics.score:.4g} "
             f"api_calls={results[name]['api_calls']} "
-            f"episodes_spent={results[name]['episodes_spent']}",
+            f"episodes_spent={results[name]['episodes_spent']} "
+            f"episodes_requested={results[name]['episodes_requested']}",
             flush=True,
         )
 

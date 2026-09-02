@@ -228,9 +228,11 @@ class MorphologyTemplate:
             path.write_text(self.render(spec), encoding="utf-8")
         return path
 
-    def field_deltas(self, spec: MorphologySpec) -> str:
-        """Change of each field against its default, for LLM statements."""
-        defaults = self.defaults()
+    def field_deltas(
+        self, spec: MorphologySpec, baseline: MorphologySpec | None = None
+    ) -> str:
+        """Change of each field against the actual parent (or default if omitted)."""
+        defaults = baseline.to_dict() if baseline is not None else self.defaults()
         kinds = self.field_kinds()
         parts = []
         for name, value in spec.values:

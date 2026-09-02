@@ -1,3 +1,4 @@
+
 import json
 
 import numpy as np
@@ -13,8 +14,11 @@ from lawevo.evolve.belief import BeliefSpace, Experience
 from lawevo.morplaw import (
     AntTemplate,
     AntTopologyTemplate,
+    DirectedKnowledgeBase,
+    EvidenceRecord,
     HalfCheetahTemplate,
     HopperTemplate,
+    KnowledgeHypothesis,
     MorpLawConfig,
     MorpLawRunner,
     ReacherTemplate,
@@ -22,6 +26,8 @@ from lawevo.morplaw import (
     SwimmerTopologyTemplate,
     Walker2dTemplate,
     evaluate_pair,
+    extract_law_proposals,
+    extract_morphology_proposals,
     make_morph_env,
     morph_cost,
     tune_pair_cem,
@@ -62,6 +68,7 @@ def _small_config(**overrides) -> MorpLawConfig:
     base = {
         "generations": 2,
         "proposals_per_side": 2,
+        "responsive_per_side": 0,
         "joint_top_k": 1,
         "cem_iterations": 1,
         "cem_population": 4,
@@ -173,7 +180,7 @@ def test_equal_cem_budget_across_pairs() -> None:
 
 def test_runner_elitism_determinism_and_archive_dedup() -> None:
     template = ReacherTemplate()
-    config = _small_config(cross_direction="both")
+    config = _small_config(knowledge_mode="full")
     runner_a, (best_a, reports_a) = _run_reacher(config, template)
     scores_a = [report.best_score for report in reports_a]
     assert scores_a == sorted(scores_a)  # elitism: never worsens
@@ -188,25 +195,30 @@ def test_runner_elitism_determinism_and_archive_dedup() -> None:
     assert episodes_gen_1 == runner_b.episodes_spent
 
 
-def test_direction_gating_and_channel_contexts() -> None:
+def test_direction_gating_and_evidence_is_ablation_invariant() -> None:
     template = ReacherTemplate()
+    evidence_counts = []
     for direction, morph_nonempty, law_nonempty in [
-        ("none", False, False),
+        ("no_knowledge", False, False),
         ("m_to_l", True, False),
         ("l_to_m", False, True),
-        ("both", True, True),
+        ("full", True, True),
     ]:
-        runner, _ = _run_reacher(_small_config(cross_direction=direction), template)
-        assert bool(runner.belief.morph_to_law) == morph_nonempty, direction
-        assert bool(runner.belief.law_to_morph) == law_nonempty, direction
-        for item in runner.belief.morph_to_law:
-            assert item.context is not None and set(item.context) == {"morphology"}
-            assert isinstance(json.loads(item.context["morphology"]), dict)
-            assert not item.hypothesis
-        for item in runner.belief.law_to_morph:
-            assert item.context is not None and set(item.context) == {"structure"}
-            assert isinstance(json.loads(item.context["structure"]), list)
-            assert item.hypothesis
+        runner, _ = _run_reacher(_small_config(knowledge_mode=direction), template)
+        morph_items = [
+            item
+            for item in runner.knowledge.items.values()
+            if item.hypothesis.direction == "morph_to_law"
+        ]
+        law_items = [
+            item
+            for item in runner.knowledge.items.values()
+            if item.hypothesis.direction == "law_to_morph"
+        ]
+        assert bool(morph_items) == morph_nonempty, direction
+        assert bool(law_items) == law_nonempty, direction
+        evidence_counts.append(len(runner.knowledge.evidence))
+    assert len(set(evidence_counts)) == 1
 
 
 def test_archive_dedup_skips_reevaluation() -> None:
@@ -219,7 +231,7 @@ def test_archive_dedup_skips_reevaluation() -> None:
     def constant_morph(incumbent, belief, count, generation):
         return [template.default_spec() for _ in range(count)]
 
-    config = _small_config(cross_direction="none")
+    config = _small_config(knowledge_mode="no_knowledge")
     runner = MorpLawRunner(
         REACHER, template, [0, 1], constant_law, constant_morph, config
     )
@@ -236,24 +248,79 @@ def test_archive_dedup_skips_reevaluation() -> None:
     assert runner2.episodes_spent == 0
 
 
+def test_shared_evaluation_cache_does_not_leak_search_archive() -> None:
+    template = ReacherTemplate()
+    initial = [
+        (template.default_spec(), structure) for structure in REACHER.classical[:2]
+    ]
+    evaluation_cache = {}
+    first_archive = {}
+    first = MorpLawRunner(
+        REACHER,
+        template,
+        [0, 1],
+        _reacher_stub_law(),
+        _reacher_stub_morph(template),
+        _small_config(generations=1),
+        archive=first_archive,
+        evaluation_cache=evaluation_cache,
+    )
+    first.run(initial)
+    evolved_keys = set(evaluation_cache) - {
+        (structure.key(), template.default_spec().key()) for _, structure in initial
+    }
+    assert evolved_keys
+
+    second_archive = {}
+    second = MorpLawRunner(
+        REACHER,
+        template,
+        [0, 1],
+        _reacher_stub_law(),
+        _reacher_stub_morph(template),
+        _small_config(generations=0),
+        archive=second_archive,
+        evaluation_cache=evaluation_cache,
+    )
+    second.run(initial)
+    assert not (set(second.archive) & evolved_keys)
+    assert second.episodes_spent == 0
+
+
 def test_frozen_flags_produce_single_side_runs() -> None:
     template = ReacherTemplate()
     runner, (best, _) = _run_reacher(_small_config(morphology_frozen=True), template)
     assert all(record.spec.key() == template.default_spec().key() for record in runner.archive.values())
-    assert not runner.belief.law_to_morph
+    assert not any(
+        item.hypothesis.direction == "law_to_morph"
+        for item in runner.knowledge.items.values()
+    )
     assert runner.calls == {"law": 2, "morph": 0}
     assert best.spec.key() == template.default_spec().key()
 
     runner, _ = _run_reacher(_small_config(law_frozen=True), template)
-    assert not runner.belief.morph_to_law
+    assert not any(
+        item.hypothesis.direction == "morph_to_law"
+        for item in runner.knowledge.items.values()
+    )
     assert runner.calls == {"law": 0, "morph": 2}
 
 
-def test_llm_call_parity_across_direction_variants() -> None:
+def test_llm_call_and_requested_episode_parity_across_ablations() -> None:
     template = ReacherTemplate()
-    for direction in ("both", "m_to_l", "l_to_m", "none"):
-        runner, _ = _run_reacher(_small_config(cross_direction=direction), template)
+    requested = []
+    for direction in ("full", "m_to_l", "l_to_m", "no_knowledge"):
+        runner, _ = _run_reacher(
+            _small_config(
+                generations=1,
+                responsive_per_side=1,
+                knowledge_mode=direction,
+            ),
+            template,
+        )
         assert runner.calls == {"law": 2, "morph": 2}, direction
+        requested.append(runner.episodes_requested)
+    assert len(set(requested)) == 1
 
 
 # --- belief -------------------------------------------------------------------
@@ -284,6 +351,136 @@ def test_belief_legacy_channels_unchanged() -> None:
     summary = belief.summary(("failure", "primitive"))
     assert "boom" in summary and "p" in summary
     assert belief.failure == ["boom"]
+
+
+def test_directed_knowledge_keeps_positive_and_negative_with_soft_retrieval() -> None:
+    knowledge = DirectedKnowledgeBase("full", capacity_per_bank=4)
+    positive = KnowledgeHypothesis(
+        "morph_to_law",
+        "Higher gear supports bounded error feedback.",
+        "use tanh error with task damping",
+        "gear is high relative to link mass",
+        {"score": "increase"},
+        "add task damping",
+    )
+    negative = KnowledgeHypothesis(
+        "morph_to_law",
+        "Integral action oscillates on this body family.",
+        "add integral error",
+        "links are light and actuator gear is high",
+        {"jerk": "increase"},
+        "add integral error",
+    )
+    context = {
+        "task": "Reacher-v5",
+        "morphology": {"gear": 200.0, "l0": 0.1},
+        "law_terms": ["jt_error", "task_damping"],
+    }
+    knowledge.observe(
+        positive,
+        EvidenceRecord(
+            "morph_to_law",
+            1,
+            "parent",
+            "positive-child",
+            "add task damping",
+            0.5,
+            {"score": 0.5},
+            context,
+            positive.id,
+        ),
+    )
+    knowledge.observe(
+        negative,
+        EvidenceRecord(
+            "morph_to_law",
+            1,
+            "parent",
+            "negative-child",
+            "add integral error",
+            -0.4,
+            {"score": -0.4},
+            context,
+            negative.id,
+        ),
+    )
+    retrieved = knowledge.retrieve(
+        "morph_to_law",
+        {
+            "task": "Reacher-v5",
+            "morphology": {"gear": 210.0, "l0": 0.095},
+            "law_terms": ["jt_error", "task_damping"],
+        },
+        generation=2,
+    )
+    assert {item.polarity for item in retrieved} == {"positive", "negative"}
+    assert "insights_to_follow" in knowledge.summary(retrieved)
+    assert "pitfalls_to_avoid" in knowledge.summary(retrieved)
+
+
+def test_knowledge_first_proposal_parsers_preserve_hypotheses() -> None:
+    laws = extract_law_proposals(
+        """[{"name":"bounded_pd","terms":["tanh_jt_error","task_damping"],
+        "knowledge":{"summary":"bounded error needs damping",
+        "recommendation":"pair bounded error with task damping",
+        "condition":"light high-gear links",
+        "prediction":{"score":"increase","jerk":"decrease"}}}]""",
+        REACHER.allowed_terms,
+        retrieved_ids=("kh-old:positive",),
+    )
+    assert laws[0].hypothesis.direction == "morph_to_law"
+    assert laws[0].hypothesis.prediction["jerk"] == "decrease"
+    assert laws[0].retrieved_ids == ("kh-old:positive",)
+
+    template = ReacherTemplate()
+    values = template.defaults()
+    values["gear"] = 240.0
+    response = (
+        "[{\"values\":"
+        + json.dumps(values)
+        + ",\"knowledge\":{\"summary\":\"more torque margin\","
+        '"recommendation":"raise gear","condition":"action saturation",'
+        '"prediction":{"score":"increase"}}}]'
+    )
+    morphs = extract_morphology_proposals(response, template)
+    assert morphs[0].spec.get("gear") == 240.0
+    assert morphs[0].hypothesis.direction == "law_to_morph"
+
+
+def test_morphology_delta_is_parent_relative() -> None:
+    template = ReacherTemplate()
+    parent_values = template.defaults()
+    parent_values["gear"] = 240.0
+    child_values = dict(parent_values)
+    child_values["gear"] = 260.0
+    delta = template.field_deltas(
+        MorphologySpec.of(child_values), MorphologySpec.of(parent_values)
+    )
+    assert "gear 240->260" in delta
+    assert "gear 200->260" not in delta
+
+
+def test_responsive_factorial_interactions_and_call_budget() -> None:
+    template = ReacherTemplate()
+    runner, (_, reports) = _run_reacher(
+        _small_config(
+            generations=1,
+            responsive_per_side=1,
+            knowledge_mode="full",
+        ),
+        template,
+    )
+    assert runner.calls == {"law": 2, "morph": 2}
+    assert len(reports[0].interactions) == 3
+    assert reports[0].cross_table["responsive"] == 4
+    for item in reports[0].interactions:
+        expected = (
+            item.joint_score
+            - item.morph_score
+            - item.law_score
+            + item.baseline_score
+        )
+        assert item.interaction == pytest.approx(expected)
 
 
 # --- pair evaluation -----------------------------------------------------------
@@ -484,13 +681,17 @@ def test_topology_runner_smoke() -> None:
     config = MorpLawConfig(
         generations=2,
         proposals_per_side=2,
+        responsive_per_side=0,
         joint_top_k=1,
         cem_iterations=1,
         cem_population=4,
-        cross_direction="both",
+        knowledge_mode="full",
     )
     runner = MorpLawRunner(adapter, swimmer, [0, 1], law_generator, morph_generator, config)
     best, reports = runner.run([(swimmer.default_spec(), adapter.classical[2])])
     assert len(reports) == 2
     assert np.isfinite(best.metrics.score)
-    assert runner.belief.law_to_morph
+    assert any(
+        item.hypothesis.direction == "law_to_morph"
+        for item in runner.knowledge.items.values()
+    )

@@ -1,5 +1,6 @@
 from lawevo.morplaw import topology
 from lawevo.morplaw.engine import (
+    InteractionRecord,
     MorpLawConfig,
     MorpLawGenerationReport,
     MorpLawRunner,
@@ -12,6 +13,13 @@ from lawevo.morplaw.evaluate import (
     morph_cost,
     pair_formula,
     tune_pair_cem,
+)
+from lawevo.morplaw.knowledge import (
+    KNOWLEDGE_MODES,
+    DirectedKnowledgeBase,
+    EvidenceRecord,
+    KnowledgeHypothesis,
+    KnowledgeItem,
 )
 from lawevo.morplaw.morphology import (
     ASSET_DIR,
@@ -32,11 +40,16 @@ from lawevo.morplaw.morphology import (
     Walker2dTemplate,
 )
 from lawevo.morplaw.prompts import (
+    extract_law_proposals,
     extract_morphologies,
+    extract_morphology_proposals,
     extract_structures,
+    law_knowledge_query,
     law_mutation_prompt,
+    morphology_knowledge_query,
     morphology_mutation_prompt,
 )
+from lawevo.morplaw.proposals import LawProposal, MorphologyProposal
 from lawevo.morplaw.topology import AntTopologyTemplate, SwimmerTopologyTemplate
 
 TEMPLATES: dict[str, MorphologyTemplate] = {
@@ -68,17 +81,25 @@ __all__ = [
     "KIND_LENGTH",
     "KIND_MASS",
     "KIND_RADIUS",
+    "KNOWLEDGE_MODES",
     "TEMPLATES",
     "TEMPLATE_ADAPTERS",
     "AntTemplate",
     "AntTopologyTemplate",
+    "DirectedKnowledgeBase",
+    "EvidenceRecord",
     "HalfCheetahTemplate",
     "HopperTemplate",
+    "InteractionRecord",
+    "KnowledgeHypothesis",
+    "KnowledgeItem",
+    "LawProposal",
     "MorpLawConfig",
     "MorpLawGenerationReport",
     "MorpLawRunner",
     "MorphologyError",
     "MorphologyField",
+    "MorphologyProposal",
     "MorphologySpec",
     "MorphologyTemplate",
     "PairMetrics",
@@ -88,11 +109,15 @@ __all__ = [
     "SwimmerTopologyTemplate",
     "Walker2dTemplate",
     "evaluate_pair",
+    "extract_law_proposals",
     "extract_morphologies",
+    "extract_morphology_proposals",
     "extract_structures",
+    "law_knowledge_query",
     "law_mutation_prompt",
     "make_morph_env",
     "morph_cost",
+    "morphology_knowledge_query",
     "morphology_mutation_prompt",
     "pair_formula",
     "tune_pair_cem",
