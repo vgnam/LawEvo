@@ -17,6 +17,8 @@ from lawevo.evolve.nvidia_nim import (
     load_env_file,
 )
 from lawevo.morplaw import (
+    ARM_ADAPTERS,
+    ROBOMORPH_ADAPTER,
     TEMPLATE_ADAPTERS,
     TEMPLATES,
     MorpLawConfig,
@@ -41,7 +43,12 @@ SYSTEM_PROMPT = (
     "it as the requested executable artifact. Return JSON only."
 )
 
-ENV_ADAPTERS = {**ADAPTERS, **LOCOMOTION_ADAPTERS}
+ENV_ADAPTERS = {
+    **ADAPTERS,
+    **LOCOMOTION_ADAPTERS,
+    **ARM_ADAPTERS,
+    "robomorph": ROBOMORPH_ADAPTER,
+}
 
 VARIANT_NAMES = (
     "no_knowledge",
@@ -49,6 +56,24 @@ VARIANT_NAMES = (
     "l_to_m",
     "full",
 )
+
+
+def _best_shot_elites(
+    cache: dict[tuple, PairRecord], *, side: str, limit: int = 6
+) -> list[PairRecord]:
+    """Top pairs with unique artifacts, mirroring RoboMorph's best-shot context."""
+    ranked = sorted(cache.values(), key=lambda item: item.metrics.score, reverse=True)
+    output: list[PairRecord] = []
+    seen: set[object] = set()
+    for record in ranked:
+        key = record.spec.key() if side == "morphology" else record.structure.key()
+        if key in seen:
+            continue
+        seen.add(key)
+        output.append(record)
+        if len(output) == limit:
+            break
+    return output
 
 
 def make_law_generator(
@@ -60,10 +85,10 @@ def make_law_generator(
     variant: str,
 ):
     def law_generator(incumbent, knowledge, count, generation, directive, responsive):
-        elites = sorted(cache.values(), key=lambda item: item.metrics.score, reverse=True)[:6]
+        elites = _best_shot_elites(cache, side="law")
         retrieved = knowledge.retrieve(
             "morph_to_law",
-            law_knowledge_query(adapter.env_id, incumbent),
+            law_knowledge_query(task_key, incumbent),
             generation=generation,
         )
         prompt = law_mutation_prompt(
@@ -78,7 +103,9 @@ def make_law_generator(
             generation,
             responsive=responsive,
         )
-        response = client.complete(SYSTEM_PROMPT, prompt, temperature=0.8, reasoning_effort="medium")
+        response = client.complete(
+            SYSTEM_PROMPT, prompt, temperature=0.8, reasoning_effort="medium"
+        )
         operator = "responsive_law" if responsive else "law_mutation"
         proposed = extract_law_proposals(
             response,
@@ -114,10 +141,10 @@ def make_morph_generator(
     variant: str,
 ):
     def morph_generator(incumbent, knowledge, count, generation, directive, responsive):
-        elites = sorted(cache.values(), key=lambda item: item.metrics.score, reverse=True)[:6]
+        elites = _best_shot_elites(cache, side="morphology")
         retrieved = knowledge.retrieve(
             "law_to_morph",
-            morphology_knowledge_query(template.env_id, incumbent),
+            morphology_knowledge_query(task_key, incumbent),
             generation=generation,
         )
         prompt = morphology_mutation_prompt(
@@ -132,7 +159,9 @@ def make_morph_generator(
             generation,
             responsive=responsive,
         )
-        response = client.complete(SYSTEM_PROMPT, prompt, temperature=0.8, reasoning_effort="medium")
+        response = client.complete(
+            SYSTEM_PROMPT, prompt, temperature=0.8, reasoning_effort="medium"
+        )
         operator = "responsive_morph" if responsive else "morph_mutation"
         proposed = extract_morphology_proposals(
             response,
@@ -161,19 +190,29 @@ def make_morph_generator(
     return morph_generator
 
 
-def record_to_json(record: PairRecord, env_id: str) -> dict[str, object]:
+def record_to_json(
+    record: PairRecord, task_key: str, env_id: str | None = None
+) -> dict[str, object]:
     payload = record.to_dict()
-    payload["env"] = env_id
+    payload["task"] = task_key
+    payload["env"] = env_id or task_key
     return payload
 
 
 def record_from_json(payload: dict[str, object]) -> PairRecord:
+    from lawevo.morplaw.grammar import RobotGraphSpec
     from lawevo.pid.gym_benchmark import GymStructure
 
     structure_payload = payload["structure"]
     structure = GymStructure(structure_payload["name"], tuple(structure_payload["terms"]))
+    spec_payload = payload["spec"]
+    spec = (
+        RobotGraphSpec.from_dict(spec_payload)
+        if payload.get("spec_type") == RobotGraphSpec.spec_type
+        else MorphologySpec.of(spec_payload)
+    )
     return PairRecord(
-        spec=MorphologySpec.of(payload["spec"]),
+        spec=spec,
         structure=structure,
         gains=np.asarray(payload["gains"], dtype=float),
         metrics=PairMetrics(**payload["metrics"]),
@@ -183,7 +222,7 @@ def record_from_json(payload: dict[str, object]) -> PairRecord:
     )
 
 
-def load_cache(path: Path, env_id: str) -> dict[tuple, PairRecord]:
+def load_cache(path: Path, task_key: str, env_id: str) -> dict[tuple, PairRecord]:
     cache: dict[tuple, PairRecord] = {}
     if not path.exists():
         return cache
@@ -191,16 +230,17 @@ def load_cache(path: Path, env_id: str) -> dict[tuple, PairRecord]:
         if not line.strip():
             continue
         payload = json.loads(line)
-        if payload.get("env") != env_id:
+        cached_task = payload.get("task")
+        if cached_task != task_key and not (cached_task is None and payload.get("env") == env_id):
             continue
         record = record_from_json(payload)
         cache[record.key()] = record
     return cache
 
 
-def save_cache(path: Path, cache: dict[tuple, PairRecord], env_id: str) -> None:
+def save_cache(path: Path, cache: dict[tuple, PairRecord], task_key: str, env_id: str) -> None:
     lines = [
-        json.dumps(record_to_json(record, env_id)) + "\n" for record in cache.values()
+        json.dumps(record_to_json(record, task_key, env_id)) + "\n" for record in cache.values()
     ]
     path.write_text("".join(lines), encoding="utf-8")
 
@@ -279,6 +319,12 @@ def main() -> None:
     parser.add_argument("--cem-population", type=int, default=24)
     parser.add_argument("--knowledge-capacity", type=int, default=24)
     parser.add_argument("--knowledge-top-k", type=int, default=3)
+    parser.add_argument(
+        "--grammar-seeds",
+        type=int,
+        default=3,
+        help="number of random best-shot seed bodies for grammar templates",
+    )
     parser.add_argument("--train-episodes", type=int, default=6)
     parser.add_argument("--test-episodes", type=int, default=30)
     parser.add_argument("--variants", nargs="+", choices=VARIANT_NAMES, default=list(VARIANT_NAMES))
@@ -292,11 +338,10 @@ def main() -> None:
 
     adapter = ENV_ADAPTERS[TEMPLATE_ADAPTERS[args.environment]]
     template = TEMPLATES[args.environment]
-    default_spec = template.default_spec()
     train_seeds = list(range(args.train_episodes))
     test_seeds = list(range(1000, 1000 + args.test_episodes))
     cache_path = output / "records.jsonl"
-    cache = load_cache(cache_path, adapter.env_id) if args.resume else {}
+    cache = load_cache(cache_path, args.environment, adapter.env_id) if args.resume else {}
     responses: list[dict[str, object]] = []
 
     client = NVIDIAChatClient(api_key, model=args.model, endpoint=args.base_url)
@@ -311,7 +356,8 @@ def main() -> None:
         "retrieve_per_polarity": args.knowledge_top_k,
     }
 
-    initial_pairs = [(default_spec, structure) for structure in adapter.classical]
+    initial_specs = template.seed_specs(args.grammar_seeds, seed=0)
+    initial_pairs = [(spec, structure) for spec in initial_specs for structure in adapter.classical]
     results: dict[str, dict[str, object]] = {}
     for name in args.variants:
         print(f"=== variant {name} ===", flush=True)
@@ -335,7 +381,7 @@ def main() -> None:
         )
         best, reports = runner.run(initial_pairs)
         results[name] = {
-            "best": record_to_json(best, adapter.env_id),
+            "best": record_to_json(best, args.environment, adapter.env_id),
             "reports": [report.to_dict() for report in reports],
             "api_calls": len([entry for entry in responses if entry["variant"] == name]),
             "episodes_spent": runner.episodes_spent,
@@ -344,7 +390,7 @@ def main() -> None:
             "operator_stats": runner.navigator.stats_dict(),
             "failures": runner.failures.failure,
         }
-        save_cache(cache_path, cache, adapter.env_id)
+        save_cache(cache_path, cache, args.environment, adapter.env_id)
         best_payload = record_from_json(results[name]["best"])
         print(
             f"variant {name} done: best={best_payload.structure.name}"
@@ -381,14 +427,13 @@ def main() -> None:
             **config_kwargs,
             "train_episodes": args.train_episodes,
             "test_episodes": args.test_episodes,
+            "grammar_seeds": args.grammar_seeds,
             "variants": args.variants,
         },
         "variants": results,
     }
     (output / "results.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    (output / "nim_responses.json").write_text(
-        json.dumps(responses, indent=2), encoding="utf-8"
-    )
+    (output / "nim_responses.json").write_text(json.dumps(responses, indent=2), encoding="utf-8")
     summary = {}
     for name, entry in results.items():
         best = record_from_json(entry["best"])

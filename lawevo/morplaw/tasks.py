@@ -18,6 +18,34 @@ the return improves the earlier and the closer the fingertip approaches. Longer 
 farther but carry more inertia, so they accelerate more slowly for the same motor torque;
 heavier (denser) links and weaker gears slow the arm further. The joint angles, joint
 velocities, and fingertip-to-target offset are observable.""",
+    "reacher_payload": """A horizontal two-link planar robot arm must reach random target
+points while carrying a concentrated spherical payload at its fingertip. Both revolute joints
+are torque actuated, and link lengths, link radii, material densities, motor gear, payload
+radius, and payload density are morphology variables. The payload increases distal inertia,
+so acceleration and braking authority change much more strongly than when mass is added near
+the base. The episode lasts 50 control steps; success requires final Cartesian error below
+0.05 m across randomized targets and +/-10% body-mass perturbations.""",
+    "reacher_gravity": """A two-link robot arm moves in a vertical x-y plane. Gravity acts
+downward along the negative y-axis, so both shoulder and elbow must support configuration-
+dependent link weight while reaching random target points. Link lengths, radii, densities,
+and motor gear are morphology variables. A controller that works only as a horizontal-plane
+kinematic servo can retain steady-state error or sag; proportional task feedback, integral
+action, and velocity damping must be balanced. The episode lasts 50 control steps and success
+requires final Cartesian error below 0.05 m under +/-10% body-mass perturbations.""",
+    "reacher_precision": """A horizontal two-link planar robot arm must acquire a small target
+and settle accurately. The target marker radius is 0.003 m and success requires final
+fingertip-target error below 0.02 m over a 100-step episode. Link lengths, radii, densities,
+and motor gear are morphology variables. High gain can approach quickly but tends to overshoot
+or chatter around the tight tolerance, while excessive damping may not settle in time.
+Training evaluations perturb body masses by +/-10%.""",
+    "pusher": """A fixed-base seven-joint robot arm must contact a movable cylinder on a table
+and push it toward a goal. The control signal is a seven-vector of normalized joint commands.
+Task-space feedback can separately represent tip-to-object error, object-to-goal error, their
+combined push direction, joint damping, and posture regulation. Upper-arm and forearm length
+and radius, arm density, and actuator gear are morphology variables, so reach, contact
+leverage, inertia, and motor authority must be co-designed. Episodes last 100 control steps,
+and success requires the object to finish within 0.1 m of the goal under +/-10% body-mass
+perturbations.""",
     "walker2d": """A planar bipedal robot stands on a flat floor. Its rigid torso carries two
 identical legs, each made of three segments: a thigh attached to the torso by a hip hinge, a
 shin attached to the thigh by a knee hinge, and a foot attached to the shin by an ankle
@@ -104,6 +132,36 @@ controller has one scalar gain per term and applies to any leg count), but they 
 and coordination burden. Gaits coordinate legs in diagonal pairs. Longer legs raise the body
 and stride but increase leg inertia and center-of-mass height; stronger gears give more leg
 authority. Training evaluations randomly perturb body masses by +/-10%.""",
+    "robomorph_flat": """A free-root three-dimensional modular robot must locomote forward
+on flat ground. Its body is not a fixed Ant template: a grammar may create a serial chain of
+one to four body modules, connect them through rigid, roll, or twist joints, and attach
+bilaterally mirrored limbs to any body module. Each limb may contain one to three links with
+rigid, roll, knee, or elbow joints and terminate in a contact foot or passive wheel. Every
+non-rigid body or limb joint is torque actuated; passive wheels roll freely. The number and
+ordering of actuators therefore change with the graph. The controller law is shared across
+topologies through one scalar gain per vector-valued signal. Episodes last 300 control steps
+and end early if the root body falls. Training evaluations perturb body masses by +/-10%.""",
+    "robomorph_ridged": """A free-root three-dimensional modular robot must locomote forward
+across 15 transverse cylindrical ridges. Each ridge has radius 0.2 m and the ridge centers
+are spaced 2 m apart. The robot uses the same graph grammar as robomorph_flat: one to four
+serial body modules, optional compiler-mirrored bilateral limbs, one to three links per limb,
+actuated non-rigid joints, and foot or passive-wheel terminals. The terrain rewards clearance,
+well-timed contact, and recovery after impacts; passive wheels must climb repeated rounded
+steps rather than merely roll on a plane. Episodes last 300 control steps, end if the root
+falls, and training evaluations perturb body masses by +/-10%.""",
+    "robomorph_frozen_lake": """A free-root three-dimensional modular robot must locomote
+forward on a flat low-friction plane whose tangential friction coefficient is 0.05. The robot
+uses the same variable graph grammar as robomorph_flat. Low traction makes narrow, high-force
+gaits prone to slip, so body geometry, contact count, passive-wheel use, and the feedback law
+must be co-designed for stability and useful thrust. Episodes last 300 control steps, end if
+the root falls, and training evaluations perturb body masses by +/-10%.""",
+    "robomorph_beams": """A free-root three-dimensional modular robot must locomote forward
+through 15 transverse cylindrical beams with radius 0.2 m, center height 0.5 m, and 2 m
+spacing. Each beam's lower surface is 0.3 m above the floor, creating repeated overhead
+clearance constraints. The robot uses the same variable graph grammar as robomorph_flat.
+Compact bodies can pass below the beams while taller bodies may need a crawling posture or
+careful contact strategy. Episodes last 300 control steps, end if the root falls, and training
+evaluations perturb body masses by +/-10%.""",
 }
 
 CONTROL_GOALS = {
@@ -115,6 +173,29 @@ prefer lower torque energy, smoother torque changes, and fewer terms. A fast ini
 that cannot settle is not success. When designing for THIS body, remember the trade-off the
 morphology imposes: long heavy links need strong low-frequency feedback and damping to stop
 cleanly, while short light links can use more aggressive proportional action.""",
+    "reacher_payload": """Primary goal: move the payload-bearing fingertip onto each target
+within 50 steps and finish below 0.05 m error. Match task-space proportional/integral action
+and joint damping to the distal payload inertia: enough authority for fast approach, enough
+braking to prevent the payload from carrying through the target, and no persistent offset.
+Among similarly accurate bodies, prefer lower torque energy, smoother commands, and fewer
+terms. Robustness must hold under randomized link and payload mass perturbations.""",
+    "reacher_gravity": """Primary goal: reach and hold random targets in the vertical plane
+within 50 steps, finishing below 0.05 m error despite gravitational loading. The law must
+remove configuration-dependent sag without causing integral windup, overshoot, or torque
+chatter. Body geometry and density determine gravity torque, while gear determines available
+joint authority. Prefer robust accuracy first, then lower energy, smoother commands, and
+lower law/morphology complexity.""",
+    "reacher_precision": """Primary goal: enter and remain inside a 0.02 m Cartesian error
+ball during the 100-step episode. Optimize settling, not just closest approach: suppress
+overshoot, limit cycles, and noisy normalized feedback near zero. Integral action may remove
+small offsets but must not wind up; damping must stop the arm without making it sluggish.
+Prefer lower energy, jerk, and structural complexity only after tight accuracy is achieved.""",
+    "pusher": """Primary goal: first acquire stable fingertip-object contact, then move the
+object to within 0.1 m of the goal during the 100-step episode. A useful law must transition
+from reaching toward the object to sustained pushing toward the goal without losing contact
+or saturating all seven joints. Match arm reach and leverage to the task while damping
+redundant joint motion. Prefer task success, then lower energy, smoother commands, and lower
+law/morphology complexity.""",
     "walker2d": """Primary goal: walk forward quickly and survive all 300 steps; success
 requires surviving without a fall and ending above 0.75 m/s. Maintain torso height near
 1.25 m and pitch near zero while producing an alternating-leg gait. Prefer speed achieved
@@ -165,6 +246,31 @@ any actuator count, prefer structures whose signals are naturally periodic and d
 (sinusoidal phases, posture, damping) over anything that assumes a fixed leg count. For THIS
 body, gaits must respect the leg count and geometry: with more legs, diagonal pairing and
 phase offsets must scale accordingly.""",
+    "robomorph_flat": """Primary goal: discover a high-performing body plan and matched
+symbolic law that move forward for all 300 steps without the root body falling. Structural
+changes may be non-local: body count, body joints, limb placement, limb depth, joint types,
+and foot versus passive wheel are all design variables. Prefer forward return and survival,
+then lower mass-normalized torque energy, smoother commands, and lower graph/control
+complexity. The law must remain meaningful for the candidate's live actuator graph rather
+than assuming a fixed Ant joint order.""",
+    "robomorph_ridged": """Primary goal: discover a body plan and matched symbolic law that
+make sustained forward progress over repeated 0.2 m-radius ridges and remain healthy for all
+300 steps. Favor sufficient underbody clearance, stable contacts before and after each ridge,
+and a gait that does not spend all its energy striking obstacles. Evaluate wheels as climbing
+contacts, not as an assumed flat-ground advantage. Among similarly capable designs, prefer
+lower mass-normalized torque energy, smoother commands, and lower graph/control complexity.""",
+    "robomorph_frozen_lake": """Primary goal: discover a body plan and matched symbolic law
+that make sustained forward progress for 300 steps despite a 0.05 tangential-friction floor.
+Favor slip-tolerant stability, controlled force application, and contact geometry that creates
+useful propulsion without relying on high traction. Reject laws that simply saturate motors
+and spin or skate in place. Among similarly capable designs, prefer lower mass-normalized
+torque energy, smoother commands, and lower graph/control complexity.""",
+    "robomorph_beams": """Primary goal: discover a body plan and matched symbolic law that
+advance beneath or negotiate repeated beams whose lower surfaces are 0.3 m above the floor,
+while remaining healthy for all 300 steps. Favor a compatible resting height, compact pitch
+envelope, and a gait that preserves clearance as it moves. Reject designs that gain speed on
+open ground but repeatedly strike or become trapped by beams. Among similarly capable designs,
+prefer lower mass-normalized torque energy, smoother commands, and lower complexity.""",
 }
 
 TERM_SEMANTICS = {
@@ -178,6 +284,17 @@ persistent target offset but can wind up.
 - normalized_jt_error: jt_error divided by its own norm — unit-magnitude direction signal;
 tends to chatter near the target.
 - task_damping: J^T J qdot — damps Cartesian (task-space) motion rather than each joint.""",
+    "pusher": """All terms are seven-vectors aligned with the arm's actuated joints.
+- jt_object_error: J^T(object - fingertip), task-space feedback that acquires contact.
+- jt_goal_error: J^T(goal - object), projected goal direction for the current arm pose.
+- jt_push_error: J^T[(object - fingertip) + 0.5(goal - object)], balancing acquisition and push.
+- joint_velocity: joint-rate damping across all seven joints.
+- integral_jt_push: clipped integral of jt_push_error; removes persistent push offset but can
+  wind up when contact or reach constraints prevent motion.
+- tanh_jt_push / normalized_jt_push: bounded and unit-direction versions of push feedback.
+- task_damping: J^T J qdot, damping motion of the end effector rather than every null-space
+  joint equally.
+- posture_error: negative joint positions, a regularizer for redundant arm configurations.""",
     "locomotion": """All terms are vectors with one component per actuator.
 - phase_sin / phase_cos: a fixed-frequency traveling oscillation (CPG) whose per-actuator
 phase advances along the body — generates the cyclic motion; both together set amplitude and
@@ -216,6 +333,17 @@ diagonal-leg pattern — the gait generator.
 - body_angle: torso roll and pitch weighted per actuator — attitude correction.
 - height_error: torso-height deficit weighted per actuator — prevents collapse.
 - forward_speed_error: target-speed deficit weighted per actuator — accelerates the gait.""",
+    "robomorph": """All terms are vectors aligned with the live MuJoCo actuator order; no
+term assumes a fixed number of legs or a fixed joint naming layout.
+- phase_sin / phase_cos: a fixed-frequency CPG. Mirrored limb joints receive side- and
+  body-position-aware phase offsets; actuated body joints alternate by graph order.
+- posture_error / joint_velocity: position regulation and damping read through MuJoCo's
+  actuator-to-joint map, so passive wheel coordinates are intentionally excluded.
+- integral_posture: clipped time integral of actuated-joint posture error.
+- tanh_posture / tanh_velocity: bounded posture and damping feedback.
+- body_angle: root roll/pitch projected onto side/front correction patterns for each motor.
+- height_error: root-height deficit broadcast to every actuator.
+- forward_speed_error: target-speed deficit with graph-order gait signs.""",
 }
 
 MORPHOLOGY_GUIDANCE = {
@@ -230,6 +358,45 @@ benefit — usually a pure cost unless extra mass stabilizes terminal precision.
 proportional feedback it invites overshoot and chatter.
 - The link lengths also move the elbow and fingertip positions, so the workspace changes
 with every length proposal.""",
+    "reacher_payload": """Field physics extends the base reacher fields with payload_radius
+and payload_density:
+- Endpoint payload mass scales with density and approximately with radius cubed, so a small
+  radius increase can sharply increase distal inertia and stopping distance.
+- Longer links compound payload inertia through a larger moment arm; increasing link length
+  and payload size together demands much more motor and damping authority.
+- Higher gear can restore acceleration but may amplify overshoot and chatter unless the law
+  adds matched velocity damping.
+- Link radii/densities distribute mass along the arm, whereas payload mass is concentrated at
+  the fingertip and therefore has stronger dynamic leverage.""",
+    "reacher_gravity": """Field physics in the vertical plane (l0/l1 lengths, r0/r1 radii,
+density0/density1 material density, gear motor strength):
+- Longer and denser links raise both rotational inertia and configuration-dependent gravity
+  torque; the distal link also loads the shoulder through the full kinematic chain.
+- Increasing gear improves gravity compensation authority, but high proportional/integral
+  gains can overshoot as the arm moves through configurations with different gravity load.
+- Thicker links add mass roughly with radius squared, increasing sag without increasing reach.
+- Morphology and integral action interact strongly: underpowered heavy arms need sustained
+  bias, but excessive integral feedback winds up near unreachable or saturated states.""",
+    "reacher_precision": """Field physics for tight settling uses the base reacher fields:
+- Short/light links have lower inertia and can settle quickly, but too little combined length
+  makes outer targets unreachable.
+- Longer or denser links require more braking and make a 0.02 m tolerance harder to hold.
+- Higher gear shortens rise time but magnifies quantization-free numerical chatter and
+  overshoot when paired with aggressive task-space gains.
+- Geometry changes the Jacobian and conditioning near each target, so one PID-like law must
+  remain well behaved across the evolved arm's workspace.""",
+    "pusher": """Field physics (upper_len/forearm_len segment lengths, upper_radius/
+forearm_radius thickness, arm_density material density, gear motor-strength scale):
+- Longer links expand the reachable table area and can improve pushing leverage, but increase
+  inertia and can make near-object positioning less precise.
+- upper_len moves the elbow and forearm_len moves the wrist/end effector, so both are coupled
+  kinematic changes rather than visual scaling.
+- Thicker or denser arms resist contact disturbances but cost more torque and are harder to
+  stop; distal forearm mass has especially strong leverage.
+- Higher gear helps maintain object contact and push force, but can cause impact, slip, and
+  joint chatter when task-space gains are too aggressive.
+- All seven joints remain actuated; morphology changes geometry and dynamics, not the action
+  dimension.""",
     "walker2d": """Field physics (thigh_len, leg_len, foot_len = segment half-lengths;
 *_density = per-segment material density; gear = motor strength multiplier):
 - Longer thighs raise the hip/torso and lengthen the stride, but swing more slowly and put
@@ -298,6 +465,48 @@ add weight and coordination burden.
 - Longer upper/lower segments raise the body, increase clearance and stride, but raise
 inertia and the center of mass; denser material, bigger torso, and thicker legs all add
 mass; higher gear strengthens every joint.""",
+    "robomorph_flat": """Grammar physics:
+- Adding body modules increases length and offers more limb attachment sites, but adds mass
+  and may require actuated roll/twist stabilization between modules.
+- Bilateral limbs are mirrored automatically. More limb pairs enlarge the support polygon
+  but add mass and coordination burden; limb placement along the body controls pitch balance.
+- Longer/deeper limbs increase clearance and stride but raise swing inertia and root height.
+- Knee joints swing in the sagittal plane, roll joints provide lateral articulation, elbow
+  joints turn in the horizontal plane, and rigid joints add structure without an actuator.
+- Passive wheels can exploit rolling contact on flat ground but cannot generate torque; an
+  actuated upstream joint must load and steer them.
+- A graph must contain 2-16 actuated joints. Compile-time bilateral symmetry and bounded
+  module counts keep generated designs physically valid.""",
+    "robomorph_ridged": """Grammar physics on repeated ridges:
+- The same body/limb grammar and 2-16 actuator constraint as robomorph_flat apply.
+- Ridges have 0.2 m radius and 2 m center spacing. Limb depth and body height determine
+  whether the torso clears each crest; longer limbs add clearance but also swing inertia.
+- Multiple limb pairs can bridge a ridge and stabilize impacts, but add mass and coordination
+  burden. Their body-chain attachment sites determine pitch leverage during climbing.
+- Passive wheels reduce rolling loss between ridges but still require upstream actuation and
+  enough radius, loading, and approach geometry to climb a 0.2 m rounded obstacle.
+- Articulated body joints can conform to crests or recover pitch, but consume actuator budget
+  and can buckle without sufficient posture feedback.""",
+    "robomorph_frozen_lake": """Grammar physics on low-friction ground:
+- The same body/limb grammar and 2-16 actuator constraint as robomorph_flat apply.
+- Floor tangential friction is 0.05, so aggressive fore-aft contact forces readily become
+  slip. Wider bilateral support, lower root height, and distributed contacts improve stability.
+- Extra limb pairs may share contact load but add inertial and coordination costs. Long limbs
+  raise the center of mass and amplify lateral slip unless the law damps roll and pitch.
+- Passive wheels are unpowered and low traction does not guarantee useful rolling propulsion;
+  upstream joints must generate a controlled normal load and favorable contact direction.
+- Prefer morphology-law pairs that apply force smoothly instead of depending on impulsive
+  push-off or motor saturation.""",
+    "robomorph_beams": """Grammar physics under repeated beams:
+- The same body/limb grammar and 2-16 actuator constraint as robomorph_flat apply.
+- Beam centers are 0.5 m high with radius 0.2 m, leaving only 0.3 m beneath each beam. Root
+  height, body thickness, limb depth, and gait-induced pitching jointly determine clearance.
+- Shorter or laterally spread limbs and a compact body chain can lower the profile; longer
+  limbs may improve stride but raise the torso into the obstacle corridor.
+- Additional body articulation can create a crawling posture, but roll/twist joints add
+  instability and require matched posture feedback.
+- Passive wheels may help a low robot roll between beams, but an upstream joint must load and
+  steer them and the whole body must remain below the clearance envelope.""",
 }
 
 EFFICIENCY_GUIDANCE = """Secondary objectives: minimize squared torque energy

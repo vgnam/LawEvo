@@ -409,28 +409,69 @@ later ablation cannot see candidates or guidance discovered by an earlier one.
 Morphology fields are substituted into vendored, parameterized MJCF assets
 (`lawevo/morplaw/assets/`) with coupled geometry rules (a longer thigh moves the leg
 body). `MorphologyTemplate.compile` is the MuJoCo validity gate, and the rendered XML is
-cached under the system temp directory. Two template families ship:
+cached under the system temp directory. Three template families ship:
 
 - **Parametric** (topology fixed; observation/action sizes never change): `walker2d`
-  (8 fields), `reacher` (7), `hopper` (8), `half_cheetah` (8), `swimmer` (6), `ant` (6).
+  (8 fields), `reacher` (7), `reacher_payload` (9), `reacher_gravity` (7),
+  `reacher_precision` (7), `pusher` (6), `hopper` (8), `half_cheetah` (8), `swimmer`
+  (6), and `ant` (6).
 - **Topology-changing** (count fields change the joint/actuator count and therefore the
   observation/action dimensions; the law space is unchanged because each `GymStructure`
   term carries one scalar gain): `swimmer_topology` (`n_links` 3..6) and `ant_topology`
   (`n_legs` 4..6). The locomotion adapters derive their per-actuator patterns from the
   live action dimension, and `morph_cost` penalizes count fields per added unit.
+- **Grammar-native**: `robomorph_flat`, `robomorph_ridged`, `robomorph_frozen_lake`, and
+  `robomorph_beams` evolve a complete module graph rather than fields on an Ant template. A
+  graph contains 1..4 serial body modules connected by rigid/roll/twist joints. Any body
+  module may carry a compiler-mirrored bilateral limb with 1..3 links,
+  rigid/roll/knee/elbow joints, and a foot or passive-wheel terminal. The LLM may make
+  non-local graph mutations or elite crossovers; bounds, symmetry, the 2..16 actuator limit,
+  MJCF compilation, and one forward dynamics step form deterministic validity gates.
+
+For grammar search, MorpLaw starts from three reproducible randomly sampled valid body graphs
+and gives the morphology generator the highest-scoring **unique** body graphs as best-shot
+examples. The topology-agnostic locomotion adapter reads MuJoCo's live actuator-to-joint map,
+so symbolic terms and CEM work when the graph changes joint count, joint order, or contains
+unactuated wheels. This adopts RoboMorph's grammar-generation and best-shot ideas while
+retaining MorpLaw's interpretable law co-evolution, directed knowledge, one-sided
+counterfactuals, and factorial interaction measurements. The four environments reproduce
+the geometry and friction parameters of RoboMorph's
+[official terrain suite](https://github.com/kevinxqiu/robomorph/tree/main/train/envs): flat
+ground, 15 ground-level cylindrical ridges, a friction-0.05 frozen lake, and 15 cylindrical
+beams centered 0.5 m above the floor. Obstacles are mirrored onto the positive x-axis because
+Gymnasium Ant rewards positive-x travel, while RoboMorph's environment rewards negative-x
+travel. This remains a MorpLaw symbolic-controller/CEM benchmark, not a reproduction of
+RoboMorph's SAC/Brax training pipeline.
+
+The PID-friendly arm suite separates four control regimes. `reacher_payload` adds an
+evolvable concentrated endpoint load; `reacher_gravity` rotates gravity into the arm's
+motion plane; `reacher_precision` tightens success to 0.02 m and doubles the settling
+horizon to 100 steps; and `pusher` co-designs a seven-joint arm for contact-rich object
+pushing. Reacher task features are computed from MuJoCo's live actuator-to-joint map and
+body Jacobian, while Pusher exposes tip-to-object, object-to-goal, combined push, damping,
+integral, and posture terms.
 
 ### Running
 
 ```powershell
 py -m experiments.evolve_morplaw --environment reacher
+py -m experiments.evolve_morplaw --environment reacher_payload
+py -m experiments.evolve_morplaw --environment reacher_gravity
+py -m experiments.evolve_morplaw --environment reacher_precision
+py -m experiments.evolve_morplaw --environment pusher
 py -m experiments.evolve_morplaw --environment walker2d
 py -m experiments.evolve_morplaw --environment swimmer_topology
 py -m experiments.evolve_morplaw --environment ant_topology
+py -m experiments.evolve_morplaw --environment robomorph_flat
+py -m experiments.evolve_morplaw --environment robomorph_ridged
+py -m experiments.evolve_morplaw --environment robomorph_frozen_lake
+py -m experiments.evolve_morplaw --environment robomorph_beams
 ```
 
 Defaults: 5 generations, 4 primary proposals per side, 1 responsive proposal per side,
 2 independently ranked joint probes, CEM 5 iterations × 24 population, 6 training episodes,
 30 held-out episodes, 24 items per knowledge bank, and top-3 retrieval from each polarity.
+Grammar templates additionally use 3 initial best-shot body graphs (`--grammar-seeds`).
 One invocation runs `no_knowledge`, `m_to_l`, `l_to_m`, and `full`, and writes
 `results/morplaw_<environment>/` with the comparison plot,
 `results.json`, `nim_responses.json`, and a resumable `records.jsonl` pair cache.

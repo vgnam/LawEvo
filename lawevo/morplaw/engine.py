@@ -19,7 +19,7 @@ from lawevo.morplaw.knowledge import (
 )
 from lawevo.morplaw.morphology import (
     MorphologyError,
-    MorphologySpec,
+    MorphologyGenome,
     MorphologyTemplate,
 )
 from lawevo.morplaw.navigator import MorpLawNavigator, SearchDirective
@@ -65,7 +65,7 @@ class MorpLawConfig:
 
 @dataclass
 class PairRecord:
-    spec: MorphologySpec
+    spec: MorphologyGenome
     structure: GymStructure
     gains: np.ndarray
     metrics: PairMetrics
@@ -73,12 +73,13 @@ class PairRecord:
     provenance: str = "seed"
     episode_budget: int = 0
 
-    def key(self) -> tuple[tuple[str, ...], tuple[tuple[str, float], ...]]:
+    def key(self) -> tuple[object, object]:
         return (self.structure.key(), self.spec.key())
 
     def to_dict(self) -> dict[str, object]:
         return {
             "spec": self.spec.to_dict(),
+            "spec_type": self.spec.spec_type,
             "structure": self.structure.to_dict(),
             "gains": self.gains.tolist(),
             "metrics": self.metrics.to_dict(),
@@ -109,13 +110,13 @@ class MorphologyGenerator(Protocol):
         generation: int,
         directive: SearchDirective,
         responsive: bool,
-    ) -> Sequence[MorphologyProposal | MorphologySpec]: ...
+    ) -> Sequence[MorphologyProposal | MorphologyGenome]: ...
 
 
 @dataclass(frozen=True)
 class InteractionRecord:
     generation: int
-    morphology: dict[str, float]
+    morphology: dict[str, object]
     law_terms: tuple[str, ...]
     baseline_score: float
     morph_score: float
@@ -213,9 +214,7 @@ class MorpLawRunner:
         self.morph_generator = morph_generator
         self.config = config or MorpLawConfig()
         self.archive = archive if archive is not None else {}
-        self.evaluation_cache = (
-            evaluation_cache if evaluation_cache is not None else self.archive
-        )
+        self.evaluation_cache = evaluation_cache if evaluation_cache is not None else self.archive
         self.knowledge = DirectedKnowledgeBase(
             self.config.knowledge_mode,
             self.config.knowledge_capacity,
@@ -229,7 +228,7 @@ class MorpLawRunner:
         self.episodes_requested = 0
 
     def _evaluate(
-        self, spec: MorphologySpec, structure: GymStructure, provenance: str, generation: int
+        self, spec: MorphologyGenome, structure: GymStructure, provenance: str, generation: int
     ) -> PairRecord | None:
         key = (structure.key(), spec.key())
         existing = self.archive.get(key)
@@ -278,7 +277,7 @@ class MorpLawRunner:
         return record
 
     def run(
-        self, initial_pairs: Sequence[tuple[MorphologySpec, GymStructure]]
+        self, initial_pairs: Sequence[tuple[MorphologyGenome, GymStructure]]
     ) -> tuple[PairRecord, list[MorpLawGenerationReport]]:
         if not initial_pairs:
             raise ValueError("initial pairs must not be empty")
@@ -348,8 +347,7 @@ class MorpLawRunner:
                 directive,
             )
             base_interactions = tuple(
-                self._observe_joint(incumbent, evaluation, generation)
-                for evaluation in base_joints
+                self._observe_joint(incumbent, evaluation, generation) for evaluation in base_joints
             )
             responsive_joints, responsive_records = self._evaluate_responsive_joints(
                 incumbent,
@@ -487,9 +485,7 @@ class MorpLawRunner:
     ) -> tuple[list[_JointEvaluation], list[PairRecord | None]]:
         candidates = [
             (morph_proposal, law_proposal, morph_record, law_record)
-            for morph_proposal, morph_record in zip(
-                morph_proposals, morph_records, strict=True
-            )
+            for morph_proposal, morph_record in zip(morph_proposals, morph_records, strict=True)
             if morph_record is not None
             for law_proposal, law_record in zip(law_proposals, law_records, strict=True)
             if law_record is not None
@@ -660,16 +656,14 @@ class MorpLawRunner:
             modification,
             delta,
             _metric_deltas(offspring.metrics, parent.metrics),
-            _knowledge_context(self.adapter.env_id, parent),
+            _knowledge_context(self.template.knowledge_key(), parent),
             hypothesis.id,
             provenance,
             interaction,
         )
         self.knowledge.credit(retrieved_ids, delta > 1e-12)
         item_id = self.knowledge.observe(hypothesis, evidence)
-        self.navigator.record(
-            operator, proposed=1, valid=1, improved=int(delta > 1e-12)
-        )
+        self.navigator.record(operator, proposed=1, valid=1, improved=int(delta > 1e-12))
         return item_id
 
     def _observe_joint(
@@ -687,9 +681,7 @@ class MorpLawRunner:
             evaluation.law_proposal.hypothesis,
             evaluation.law_proposal.retrieved_ids,
             generation,
-            _law_modification(
-                evaluation.morph_record.structure, evaluation.law_proposal.structure
-            ),
+            _law_modification(evaluation.morph_record.structure, evaluation.law_proposal.structure),
             evaluation.law_proposal.operator,
             provenance=evaluation.provenance,
             interaction=interaction,
@@ -700,9 +692,7 @@ class MorpLawRunner:
             evaluation.morph_proposal.hypothesis,
             evaluation.morph_proposal.retrieved_ids,
             generation,
-            self.template.field_deltas(
-                evaluation.morph_proposal.spec, evaluation.law_record.spec
-            ),
+            self.template.field_deltas(evaluation.morph_proposal.spec, evaluation.law_record.spec),
             evaluation.morph_proposal.operator,
             provenance=evaluation.provenance,
             interaction=interaction,
@@ -720,9 +710,7 @@ class MorpLawRunner:
         )
 
     @staticmethod
-    def _check_count(
-        items: Sequence[object], side: str, generation: int, expected: int
-    ) -> None:
+    def _check_count(items: Sequence[object], side: str, generation: int, expected: int) -> None:
         if len(items) != expected:
             raise ValueError(
                 f"{side} generator returned {len(items)} proposals at generation "
@@ -763,7 +751,7 @@ def _invoke_generator(
     return generator(incumbent, knowledge, count, generation)
 
 
-def _as_morph_proposal(item: MorphologyProposal | MorphologySpec) -> MorphologyProposal:
+def _as_morph_proposal(item: MorphologyProposal | MorphologyGenome) -> MorphologyProposal:
     if isinstance(item, MorphologyProposal):
         return item
     modification = f"set morphology {item.describe()}"

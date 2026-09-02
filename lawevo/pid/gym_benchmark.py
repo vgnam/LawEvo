@@ -311,9 +311,7 @@ class InvertedDoublePendulumAdapter(BenchmarkAdapter):
         cart, pole1, pole2 = map(float, qpos)
         cart_velocity, pole1_velocity, pole2_velocity = map(float, qvel)
         pole_sum = pole1 + pole2
-        memory["integral_cart"] = float(
-            np.clip(memory["integral_cart"] + cart * dt, -2.0, 2.0)
-        )
+        memory["integral_cart"] = float(np.clip(memory["integral_cart"] + cart * dt, -2.0, 2.0))
         memory["integral_poles"] = float(
             np.clip(memory["integral_poles"] + pole_sum * dt, -1.0, 1.0)
         )
@@ -345,6 +343,7 @@ class InvertedDoublePendulumAdapter(BenchmarkAdapter):
 class ReacherAdapter(BenchmarkAdapter):
     env_id = "Reacher-v5"
     horizon = 50
+    success_tolerance = 0.05
     allowed_terms = (
         "jt_error",
         "joint_velocity",
@@ -375,14 +374,19 @@ class ReacherAdapter(BenchmarkAdapter):
         return unwrapped._get_obs()
 
     def features(self, env, observation, memory, dt):
+        del observation
         unwrapped = env.unwrapped
-        body_id = unwrapped.model.body("fingertip").id
-        jacobian = np.zeros((3, unwrapped.model.nv))
-        mujoco.mj_jacBody(unwrapped.model, unwrapped.data, jacobian, None, body_id)
-        jxy = jacobian[:2, :2]
-        # Reacher observation stores fingertip - target in the final two elements.
-        task_error = -np.asarray(observation[-2:], dtype=float)
-        qvel = np.asarray(observation[6:8], dtype=float)
+        model, data = unwrapped.model, unwrapped.data
+        body_id = model.body("fingertip").id
+        joint_ids = np.asarray(model.actuator_trnid[:, 0], dtype=int)
+        dof_addresses = np.asarray(model.jnt_dofadr[joint_ids], dtype=int)
+        jacobian = np.zeros((3, model.nv))
+        mujoco.mj_jacBody(model, data, jacobian, None, body_id)
+        jxy = jacobian[:2, dof_addresses]
+        fingertip = np.asarray(data.body("fingertip").xpos[:2], dtype=float)
+        target = np.asarray(data.body("target").xpos[:2], dtype=float)
+        task_error = target - fingertip
+        qvel = np.asarray(data.qvel[dof_addresses], dtype=float)
         jt_error = jxy.T @ task_error
         memory["integral"] = np.clip(memory["integral"] + jt_error * dt, -0.5, 0.5)
         norm = float(np.linalg.norm(jt_error))
@@ -397,8 +401,10 @@ class ReacherAdapter(BenchmarkAdapter):
         }
 
     def success(self, env, observation, steps, terminated):
-        del env, steps, terminated
-        return float(np.linalg.norm(observation[-2:])) < 0.05
+        del observation, steps, terminated
+        data = env.unwrapped.data
+        error = data.body("fingertip").xpos[:2] - data.body("target").xpos[:2]
+        return float(np.linalg.norm(error)) < self.success_tolerance
 
 
 class LocomotionAdapter(BenchmarkAdapter):
@@ -589,9 +595,7 @@ class SwimmerAdapter(BenchmarkAdapter):
         joint_position = np.asarray(data.qpos[3 : 3 + nu], dtype=float)
         joint_velocity = np.asarray(data.qvel[3 : 3 + nu], dtype=float)
         posture_error = -joint_position
-        memory["integral"] = np.clip(
-            memory["integral"] + posture_error * dt, -2.0, 2.0
-        )
+        memory["integral"] = np.clip(memory["integral"] + posture_error * dt, -2.0, 2.0)
         phase = 2 * np.pi * self.phase_frequency * float(memory["step"]) * dt
         memory["step"] += 1
         alternating = np.resize(np.array([1.0, -1.0]), nu)
@@ -606,15 +610,12 @@ class SwimmerAdapter(BenchmarkAdapter):
             "tanh_velocity": np.tanh(joint_velocity),
             "body_angle": float(data.qpos[2]) * alternating,
             "lateral_velocity": float(data.qvel[1]) * alternating,
-            "forward_speed_error": (self.target_speed - float(data.qvel[0]))
-            * np.ones(nu),
+            "forward_speed_error": (self.target_speed - float(data.qvel[0])) * np.ones(nu),
         }
 
     def success(self, env, observation, steps, terminated):
         del observation
-        displacement = float(env.unwrapped.data.qpos[0]) - float(
-            env.unwrapped._lawevo_start_x
-        )
+        displacement = float(env.unwrapped.data.qpos[0]) - float(env.unwrapped._lawevo_start_x)
         return not terminated and steps == self.horizon and displacement > 1.0
 
 
@@ -669,8 +670,7 @@ class FreeJointLocomotionAdapter(LocomotionAdapter):
             "integral_posture": memory["integral"],
             "tanh_posture": np.tanh(2 * posture_error),
             "tanh_velocity": np.tanh(joint_velocity),
-            "body_angle": roll * patterns["roll_pattern"]
-            + pitch * patterns["pitch_pattern"],
+            "body_angle": roll * patterns["roll_pattern"] + pitch * patterns["pitch_pattern"],
             "height_error": height_error * patterns["height_pattern"],
             "forward_speed_error": speed_error * patterns["speed_pattern"],
         }
@@ -818,9 +818,7 @@ class HumanoidStandupAdapter(HumanoidAdapter):
         joint_position = np.asarray(data.qpos[7:], dtype=float)[self.joint_order]
         joint_velocity = np.asarray(data.qvel[6:], dtype=float)[self.joint_order]
         posture_error = -joint_position
-        memory["integral"] = np.clip(
-            memory["integral"] + posture_error * dt, -2.0, 2.0
-        )
+        memory["integral"] = np.clip(memory["integral"] + posture_error * dt, -2.0, 2.0)
         w, x, y, z = map(float, data.qpos[3:7])
         roll = float(np.arctan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)))
         pitch = float(np.arcsin(np.clip(2 * (w * y - z * x), -1.0, 1.0)))
@@ -838,8 +836,7 @@ class HumanoidStandupAdapter(HumanoidAdapter):
             "torso_roll": roll * self.roll_pattern,
             "torso_pitch": pitch * self.pitch_pattern,
             "root_angular_velocity": root_angular_velocity,
-            "height_error": (self.target_height - float(data.qpos[2]))
-            * self.height_pattern,
+            "height_error": (self.target_height - float(data.qpos[2])) * self.height_pattern,
             "vertical_velocity": -float(data.qvel[2]) * self.height_pattern,
         }
 
@@ -916,9 +913,7 @@ class BipedalWalkerAdapter(BenchmarkAdapter):
         joint_position = observation[[4, 6, 9, 11]]
         joint_velocity = observation[[5, 7, 10, 12]]
         posture_error = self.neutral_posture - joint_position
-        memory["integral"] = np.clip(
-            memory["integral"] + posture_error * dt, -2.0, 2.0
-        )
+        memory["integral"] = np.clip(memory["integral"] + posture_error * dt, -2.0, 2.0)
         phase = 2 * np.pi * self.phase_frequency * float(memory["step"]) * dt
         memory["step"] += 1
         contact_difference = float(observation[8] - observation[13])
@@ -932,8 +927,7 @@ class BipedalWalkerAdapter(BenchmarkAdapter):
             "tanh_posture": np.tanh(2.0 * posture_error),
             "tanh_velocity": np.tanh(joint_velocity),
             "hull_angle": float(observation[0]) * self.hull_pattern,
-            "forward_speed_error": (self.target_speed - float(observation[2]))
-            * self.speed_pattern,
+            "forward_speed_error": (self.target_speed - float(observation[2])) * self.speed_pattern,
             "vertical_velocity": -float(observation[3]) * self.hull_pattern,
             "ground_contact": contact_difference * self.contact_pattern,
             "terrain_clearance": clearance_error * self.speed_pattern,
@@ -1057,9 +1051,7 @@ def inverted_pendulum_lqr() -> tuple[GymStructure, np.ndarray]:
         try:
             # MuJoCo 3.3 rejects transition finite differences with RK4.
             unwrapped.model.opt.integrator = mujoco.mjtIntegrator.mjINT_EULER
-            mujoco.mjd_transitionFD(
-                unwrapped.model, unwrapped.data, 1e-6, 1, a, b, None, None
-            )
+            mujoco.mjd_transitionFD(unwrapped.model, unwrapped.data, 1e-6, 1, a, b, None, None)
         finally:
             unwrapped.model.opt.integrator = original_integrator
         q = np.diag([1.0, 20.0, 0.1, 0.5])
@@ -1091,11 +1083,7 @@ def run_episode(
         observation = adapter.prepare_reset(env, observation, seed)
         action_dim = int(np.prod(env.action_space.shape))
         memory = adapter.reset_controller(action_dim)
-        dt = (
-            float(env.unwrapped.dt)
-            if hasattr(env.unwrapped, "dt")
-            else adapter.fallback_dt
-        )
+        dt = float(env.unwrapped.dt) if hasattr(env.unwrapped, "dt") else adapter.fallback_dt
         total_return = energy = jerk = 0.0
         previous = np.zeros(action_dim)
         terminated = False

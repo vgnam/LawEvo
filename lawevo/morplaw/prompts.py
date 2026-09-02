@@ -10,7 +10,7 @@ from lawevo.morplaw.knowledge import (
     KnowledgeHypothesis,
     KnowledgeItem,
 )
-from lawevo.morplaw.morphology import MorphologyError, MorphologySpec, MorphologyTemplate
+from lawevo.morplaw.morphology import MorphologyError, MorphologyGenome, MorphologyTemplate
 from lawevo.morplaw.navigator import SearchDirective
 from lawevo.morplaw.proposals import LawProposal, MorphologyProposal
 from lawevo.morplaw.tasks import (
@@ -24,6 +24,10 @@ from lawevo.pid.gym_benchmark import BenchmarkAdapter, GymStructure
 
 _TERM_KEYS = {
     "reacher": "reacher",
+    "reacher_payload": "reacher",
+    "reacher_gravity": "reacher",
+    "reacher_precision": "reacher",
+    "pusher": "pusher",
     "walker2d": "locomotion",
     "hopper": "locomotion",
     "half_cheetah": "locomotion",
@@ -31,6 +35,10 @@ _TERM_KEYS = {
     "ant": "ant",
     "swimmer_topology": "swimmer",
     "ant_topology": "ant",
+    "robomorph_flat": "robomorph",
+    "robomorph_ridged": "robomorph",
+    "robomorph_frozen_lake": "robomorph",
+    "robomorph_beams": "robomorph",
 }
 
 
@@ -87,6 +95,7 @@ CONTROL GOAL
 
 CURRENT BODY (this proposal round changes the controller only, never the body)
 {incumbent.spec.describe()}
+{json.dumps(incumbent.spec.to_dict(), indent=2)}
 
 CURRENT PAIR DIAGNOSTICS
 law terms = {json.dumps(list(incumbent.structure.terms))}
@@ -136,24 +145,10 @@ def morphology_mutation_prompt(
     *,
     responsive: bool = False,
 ) -> str:
-    fields = template.field_descriptions()
-    field_names = [field["name"] for field in fields]
-    if template.has_counts():
-        topology_note = (
-            "Topology fields (kind 'count') change the number of joints, actuators, and "
-            "therefore the observation/action dimensions. The controller law is "
-            "dimension-agnostic (one scalar gain per term), so the same law structure "
-            "applies to every proposed body; CEM re-tunes the gains per pair. Count "
-            "values must be integers inside the declared bounds."
-        )
-    else:
-        topology_note = (
-            "The joint count and the observation/action sizes must stay fixed — never "
-            "propose topology changes."
-        )
+    representation = template.field_descriptions()
     phase = "RESPONSIVE" if responsive else "PRIMARY"
     response_schema = {
-        "values": {name: "number" for name in field_names},
+        **template.proposal_schema(),
         "knowledge": {
             "summary": "mechanistic rationale",
             "recommendation": "actionable body design rule",
@@ -185,26 +180,28 @@ CURRENT LAW (fixed for this proposal round; gains already tuned by CEM)
 CEM gains = {json.dumps(incumbent.gains.tolist())}
 CURRENT PAIR METRICS = {json.dumps(incumbent.metrics.to_dict(), sort_keys=True)}
 
+CURRENT BODY (mutate this graph/parameterization or cross it with an elite)
+{json.dumps(incumbent.spec.to_dict(), indent=2)}
+
 RETRIEVED LAW-TO-MORPHOLOGY KNOWLEDGE
 {knowledge.summary(retrieved)}
 
-MORPHOLOGY FIELD PHYSICS
+MORPHOLOGY / TOPOLOGY PHYSICS
 {_context_lookup(task_key, "morph")}
 
-Morphology fields with allowed ranges (default = the original body):
-{json.dumps(fields, indent=2)}
+EXECUTABLE DESIGN GRAMMAR OR FIELDS
+{json.dumps(representation, indent=2)}
 
-Rules: every value must stay inside its bounds. Prefer small, physically motivated changes,
-varying one or two fields per proposal unless experience suggests otherwise. Use the
-law-conditional experience to decide which change plausibly helps (e.g., raise gear when
-the energy cost is the bottleneck, lengthen or shorten limbs when the law oscillates or
-cannot keep pace). Coupled geometry is handled automatically (child bodies and joints move
-with the changed segment). {topology_note}
+DESIGN RULES
+{template.proposal_guidance()}
+Use law-conditional experience to decide which physical or structural change plausibly
+helps. Every proposal must be a complete executable artifact, even when it is described as
+a mutation or crossover of the incumbent and elites.
 
 ELITE PAIRS (body, structure, CEM-tuned metrics) ranked by score:
 {json.dumps(elite_payload(elites), indent=2)}
 
-First form a falsifiable law-to-morphology hypothesis, then ground it as body parameters.
+First form a falsifiable law-to-morphology hypothesis, then ground it as an executable body.
 Return ONLY a JSON array of exactly {count} objects with this schema:
 {json.dumps(response_schema, indent=2)}
 """
@@ -286,20 +283,14 @@ def extract_morphology_proposals(
     """Parse morphology values together with their knowledge-first hypotheses."""
     payload = _decode_payload(response, "morphologies")
     output: list[MorphologyProposal] = []
-    field_names = [field.name for field in template.fields]
     for item in payload:
         if not isinstance(item, dict):
             continue
-        values = item.get("values", item)
-        if not isinstance(values, dict):
-            continue
         try:
-            spec = MorphologySpec.of({name: float(values[name]) for name in field_names})
+            spec = template.parse_proposal(item)
         except (KeyError, TypeError, ValueError, MorphologyError):
             continue
-        if not template.validate(spec) and spec.key() not in {
-            existing.spec.key() for existing in output
-        }:
+        if spec.key() not in {existing.spec.key() for existing in output}:
             modification = "set morphology " + spec.describe()
             output.append(
                 MorphologyProposal(
@@ -317,7 +308,7 @@ def extract_structures(response: str, allowed: tuple[str, ...]) -> list[GymStruc
     return [proposal.structure for proposal in extract_law_proposals(response, allowed)]
 
 
-def extract_morphologies(response: str, template: MorphologyTemplate) -> list[MorphologySpec]:
+def extract_morphologies(response: str, template: MorphologyTemplate) -> list[MorphologyGenome]:
     """Backward-compatible artifact-only morphology parser."""
     return [proposal.spec for proposal in extract_morphology_proposals(response, template)]
 

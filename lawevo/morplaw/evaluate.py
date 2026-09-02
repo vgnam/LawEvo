@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from lawevo.morplaw.morphology import KIND_COUNT, MorphologySpec, MorphologyTemplate
+from lawevo.morplaw.morphology import MorphologyGenome, MorphologyTemplate
 from lawevo.pid.gym_benchmark import (
     BenchmarkAdapter,
     GymEpisode,
@@ -49,40 +49,29 @@ class PairMetrics:
 
 
 def make_morph_env(
-    adapter: BenchmarkAdapter, template: MorphologyTemplate, spec: MorphologySpec
+    adapter: BenchmarkAdapter, template: MorphologyTemplate, spec: MorphologyGenome
 ) -> gym.Env:
     """Create the adapter's environment with the morphology's rendered MJCF."""
     import gymnasium as gym
 
+    extra_kwargs = adapter.morph_env_kwargs() if hasattr(adapter, "morph_env_kwargs") else {}
     return gym.make(
         adapter.env_id,
         xml_file=str(template.xml_path(spec)),
         max_episode_steps=adapter.horizon,
+        **extra_kwargs,
     )
 
 
-def morph_cost(
-    template: MorphologyTemplate, spec: MorphologySpec, weight: float = 0.05
-) -> float:
-    """Penalize deviation of each field from the default body, so bigger bodies
-    cannot buy fitness with size or actuator strength. Count fields are penalized
-    per added unit; continuous fields proportionally to their relative change."""
-    defaults = template.defaults()
-    kinds = template.field_kinds()
-    total = 0.0
-    for name, value in spec.values:
-        base = defaults[name]
-        if kinds[name] == KIND_COUNT:
-            total += abs(value - base)
-        else:
-            total += abs((value - base) / base)
-    return weight * total
+def morph_cost(template: MorphologyTemplate, spec: MorphologyGenome, weight: float = 0.05) -> float:
+    """Template-specific physical/structural complexity penalty."""
+    return template.cost(spec, weight)
 
 
 def pair_adjust(
     adapter: BenchmarkAdapter,
     template: MorphologyTemplate,
-    spec: MorphologySpec,
+    spec: MorphologyGenome,
     metrics: GymMetrics,
     morph_cost_weight: float = 0.05,
 ) -> PairMetrics:
@@ -106,7 +95,7 @@ def pair_adjust(
 def evaluate_pair(
     adapter: BenchmarkAdapter,
     template: MorphologyTemplate,
-    spec: MorphologySpec,
+    spec: MorphologyGenome,
     structure: GymStructure,
     gains: np.ndarray,
     seeds: list[int],
@@ -116,9 +105,7 @@ def evaluate_pair(
     """Evaluate a tuned pair on the given episode seeds."""
     envs = [make_morph_env(adapter, template, spec) for _ in seeds]
     try:
-        metrics, episodes = evaluate_gym_structure(
-            adapter, structure, gains, seeds, envs=envs
-        )
+        metrics, episodes = evaluate_gym_structure(adapter, structure, gains, seeds, envs=envs)
         return pair_adjust(adapter, template, spec, metrics, morph_cost_weight), episodes
     finally:
         for env in envs:
@@ -128,7 +115,7 @@ def evaluate_pair(
 def tune_pair_cem(
     adapter: BenchmarkAdapter,
     template: MorphologyTemplate,
-    spec: MorphologySpec,
+    spec: MorphologyGenome,
     structure: GymStructure,
     seeds: list[int],
     *,
@@ -143,7 +130,12 @@ def tune_pair_cem(
     """
     digest = hashlib.sha256(
         json.dumps(
-            {"env": adapter.env_id, "terms": structure.terms, "morph": spec.to_dict()},
+            {
+                "env": adapter.env_id,
+                "template": template.cache_namespace(),
+                "terms": structure.terms,
+                "morph": spec.key(),
+            },
             sort_keys=True,
         ).encode()
     ).digest()
@@ -164,9 +156,7 @@ def tune_pair_cem(
         best_metrics = evaluate(best_gains)
         elite_count = max(2, round(0.2 * population_size))
         for _ in range(iterations):
-            samples = np.clip(
-                rng.normal(mean, sigma, size=(population_size, dimension)), -20, 20
-            )
+            samples = np.clip(rng.normal(mean, sigma, size=(population_size, dimension)), -20, 20)
             scored = sorted(
                 ((sample, evaluate(sample)) for sample in samples),
                 key=lambda item: item[1].score,

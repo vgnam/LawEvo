@@ -3,9 +3,10 @@ from __future__ import annotations
 import hashlib
 import json
 import tempfile
-from collections.abc import Mapping
+from collections.abc import Hashable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import ClassVar, Protocol
 
 import numpy as np
 
@@ -19,6 +20,7 @@ def _format_number(value: float) -> str:
         text += ".0"
     return text
 
+
 KIND_LENGTH = "length"
 KIND_MASS = "mass"
 KIND_RADIUS = "radius"
@@ -29,6 +31,18 @@ VALID_KINDS = (KIND_LENGTH, KIND_MASS, KIND_RADIUS, KIND_GEAR, KIND_COUNT)
 
 class MorphologyError(ValueError):
     """Raised when a morphology spec is invalid or its MJCF model fails to compile."""
+
+
+class MorphologyGenome(Protocol):
+    """Common contract for parametric and grammar-native robot bodies."""
+
+    spec_type: ClassVar[str]
+
+    def to_dict(self) -> dict[str, object]: ...
+
+    def key(self) -> Hashable: ...
+
+    def describe(self) -> str: ...
 
 
 @dataclass(frozen=True)
@@ -65,6 +79,7 @@ class MorphologySpec:
     """Immutable, canonical (name-sorted) set of morphology field values."""
 
     values: tuple[tuple[str, float], ...]
+    spec_type: ClassVar[str] = "parameters"
 
     def __post_init__(self) -> None:
         canonical = tuple(sorted((str(name), float(value)) for name, value in self.values))
@@ -118,7 +133,15 @@ class MorphologyTemplate:
         self._source = (
             self.asset_path.read_text(encoding="utf-8") if self.asset_path is not None else ""
         )
-        self._mass_cache: dict[tuple[tuple[str, float], ...], float] = {}
+        self._mass_cache: dict[Hashable, float] = {}
+
+    def cache_namespace(self) -> str:
+        """Identity of the compiler/environment contract used by disk/temp caches."""
+        return f"{type(self).__module__}.{type(self).__qualname__}:{self.env_id}"
+
+    def knowledge_key(self) -> str:
+        """Task context stored alongside directed morphology/law evidence."""
+        return self.env_id
 
     def defaults(self) -> dict[str, float]:
         return {field.name: field.default for field in self.fields}
@@ -126,16 +149,74 @@ class MorphologyTemplate:
     def default_spec(self) -> MorphologySpec:
         return MorphologySpec.of(self.defaults())
 
+    def seed_specs(self, count: int = 1, seed: int = 0) -> tuple[MorphologyGenome, ...]:
+        """Initial best-shot bodies; parametric templates keep their original body."""
+        del count, seed
+        return (self.default_spec(),)
+
     def field_descriptions(self) -> list[dict[str, object]]:
         return [field.to_dict() for field in self.fields]
 
     def field_kinds(self) -> dict[str, str]:
         return {field.name: field.kind for field in self.fields}
 
+    def proposal_schema(self) -> dict[str, object]:
+        """Executable artifact schema requested from the morphology generator."""
+        return {"values": {field.name: "number" for field in self.fields}}
+
+    def proposal_guidance(self) -> str:
+        if self.has_counts():
+            topology_note = (
+                "Topology fields (kind 'count') change the number of joints, actuators, and "
+                "therefore the observation/action dimensions. The controller law is "
+                "dimension-agnostic (one scalar gain per term), so the same law structure "
+                "applies to every proposed body; CEM re-tunes the gains per pair. Count "
+                "values must be integers inside the declared bounds."
+            )
+        else:
+            topology_note = (
+                "The joint count and the observation/action sizes must stay fixed; never "
+                "propose topology changes."
+            )
+        return (
+            "Every value must stay inside its bounds. Prefer small, physically motivated "
+            "changes, varying one or two fields per proposal unless experience suggests "
+            "otherwise. Coupled geometry is handled automatically. " + topology_note
+        )
+
+    def parse_proposal(self, payload: Mapping[str, object]) -> MorphologySpec:
+        """Turn one LLM artifact into a validated parametric morphology."""
+        raw = payload.get("values", payload)
+        if not isinstance(raw, Mapping):
+            raise MorphologyError("morphology proposal must contain a values mapping")
+        try:
+            spec = MorphologySpec.of({field.name: float(raw[field.name]) for field in self.fields})
+        except (KeyError, TypeError, ValueError) as exc:
+            raise MorphologyError(f"invalid morphology values: {exc}") from exc
+        self.check(spec)
+        return spec
+
+    def cost(self, spec: MorphologyGenome, weight: float = 0.05) -> float:
+        """Penalty for parametric distance from the original body."""
+        if not isinstance(spec, MorphologySpec):
+            raise MorphologyError("parametric template requires MorphologySpec")
+        defaults = self.defaults()
+        kinds = self.field_kinds()
+        total = 0.0
+        for name, value in spec.values:
+            base = defaults[name]
+            if kinds[name] == KIND_COUNT:
+                total += abs(value - base)
+            else:
+                total += abs((value - base) / base)
+        return weight * total
+
     def has_counts(self) -> bool:
         return any(field.kind == KIND_COUNT for field in self.fields)
 
-    def validate(self, spec: MorphologySpec) -> list[str]:
+    def validate(self, spec: MorphologyGenome) -> list[str]:
+        if not isinstance(spec, MorphologySpec):
+            return ["parametric template requires MorphologySpec"]
         errors: list[str] = []
         known = set(self._field_map)
         seen: set[str] = set()
@@ -150,9 +231,7 @@ class MorphologyTemplate:
                 continue
             low, high = field.bounds
             if not np.isfinite(value) or not (low <= value <= high):
-                errors.append(
-                    f"field {name!r} value {value} outside bounds [{low}, {high}]"
-                )
+                errors.append(f"field {name!r} value {value} outside bounds [{low}, {high}]")
             if field.kind == KIND_COUNT and not float(value).is_integer():
                 errors.append(f"count field {name!r} value {value} is not integral")
         missing = known - seen
@@ -160,7 +239,7 @@ class MorphologyTemplate:
             errors.append(f"missing fields for {self.env_id}: {sorted(missing)}")
         return errors
 
-    def check(self, spec: MorphologySpec) -> None:
+    def check(self, spec: MorphologyGenome) -> None:
         errors = self.validate(spec)
         if errors:
             raise MorphologyError("; ".join(errors))
@@ -169,8 +248,9 @@ class MorphologyTemplate:
         """Environment-specific coupled values; overridden by subclasses."""
         return {}
 
-    def render(self, spec: MorphologySpec) -> str:
+    def render(self, spec: MorphologyGenome) -> str:
         self.check(spec)
+        assert isinstance(spec, MorphologySpec)
         xml = self._xml(spec.to_dict())
         if "{" in xml or "}" in xml:
             raise MorphologyError(f"{self.env_id}: unsubstituted placeholder in rendered XML")
@@ -187,7 +267,7 @@ class MorphologyTemplate:
         except (KeyError, ValueError) as exc:
             raise MorphologyError(f"{self.env_id}: template substitution failed: {exc}") from exc
 
-    def compile(self, spec: MorphologySpec):
+    def compile(self, spec: MorphologyGenome):
         """Compile the rendered MJCF; the primary morphology validity gate."""
         import mujoco
 
@@ -206,7 +286,7 @@ class MorphologyTemplate:
             raise MorphologyError(f"{self.env_id}: compiled model has non-finite state")
         return model
 
-    def total_mass(self, spec: MorphologySpec) -> float:
+    def total_mass(self, spec: MorphologyGenome) -> float:
         key = spec.key()
         cached = self._mass_cache.get(key)
         if cached is not None:
@@ -215,11 +295,11 @@ class MorphologyTemplate:
         self._mass_cache[key] = mass
         return mass
 
-    def xml_path(self, spec: MorphologySpec) -> Path:
+    def xml_path(self, spec: MorphologyGenome) -> Path:
         """Write the rendered XML to a cached temp file for gym.make(xml_file=...)."""
         self.check(spec)
         digest = hashlib.sha256(
-            json.dumps([self.env_id, spec.to_dict()], sort_keys=True).encode()
+            json.dumps([self.cache_namespace(), spec.key()], sort_keys=True).encode()
         ).hexdigest()[:16]
         directory = Path(tempfile.gettempdir()) / "lawevo_morplaw_xml"
         directory.mkdir(parents=True, exist_ok=True)
@@ -228,10 +308,12 @@ class MorphologyTemplate:
             path.write_text(self.render(spec), encoding="utf-8")
         return path
 
-    def field_deltas(
-        self, spec: MorphologySpec, baseline: MorphologySpec | None = None
-    ) -> str:
+    def field_deltas(self, spec: MorphologyGenome, baseline: MorphologyGenome | None = None) -> str:
         """Change of each field against the actual parent (or default if omitted)."""
+        if not isinstance(spec, MorphologySpec):
+            raise MorphologyError("parametric template requires MorphologySpec")
+        if baseline is not None and not isinstance(baseline, MorphologySpec):
+            raise MorphologyError("parametric baseline requires MorphologySpec")
         defaults = baseline.to_dict() if baseline is not None else self.defaults()
         kinds = self.field_kinds()
         parts = []

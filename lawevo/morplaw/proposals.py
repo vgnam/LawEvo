@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from lawevo.morplaw.knowledge import KnowledgeHypothesis
-from lawevo.morplaw.morphology import MorphologySpec
+from lawevo.morplaw.morphology import MorphologyGenome
 from lawevo.pid.gym_benchmark import GymStructure
 
 
@@ -17,7 +17,7 @@ class LawProposal:
 
 @dataclass(frozen=True)
 class MorphologyProposal:
-    spec: MorphologySpec
+    spec: MorphologyGenome
     hypothesis: KnowledgeHypothesis
     retrieved_ids: tuple[str, ...] = ()
     operator: str = "morph_mutation"
