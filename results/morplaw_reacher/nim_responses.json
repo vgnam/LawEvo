@@ -1,0 +1,282 @@
+[
+  {
+    "variant": "both",
+    "generation": 1,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"Task PD+Tanh\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"Damped Task\",\n    \"terms\": [\"task_damping\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"Integral Tanh\",\n    \"terms\": [\"integral_jt_error\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"Normalized PD\",\n    \"terms\": [\"normalized_jt_error\", \"joint_velocity\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 1,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.1,\n    \"l1\": 0.1,\n    \"r0\": 0.008,\n    \"r1\": 0.008,\n    \"density0\": 500.0,\n    \"density1\": 500.0,\n    \"gear\": 200.0\n  },\n  {\n    \"l0\": 0.1,\n    \"l1\": 0.1,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 300.0\n  },\n  {\n    \"l0\": 0.12,\n    \"l1\": 0.08,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 200.0\n  },\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 250.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 2,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"PD+TaskDamping\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"task_damping\"]\n  },\n  {\n    \"name\": \"BoundedPD\",\n    \"terms\": [\"tanh_jt_error\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"IntegralBoundedDamped\",\n    \"terms\": [\"integral_jt_error\", \"tanh_jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"NormalizedPD+TaskDamping\",\n    \"terms\": [\"normalized_jt_error\", \"joint_velocity\", \"task_damping\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 2,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 250.0\n  },\n  {\n    \"l0\": 0.09,\n    \"l1\": 0.09,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 250.0\n  },\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 300.0\n  },\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.008,\n    \"r1\": 0.008,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 250.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 3,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"IntegralBoostedPD\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"integral_jt_error\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"NormalizedTaskDamp\",\n    \"terms\": [\"normalized_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"BoundedVelocity\",\n    \"terms\": [\"tanh_jt_error\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"TaskErrorTaskDamp\",\n    \"terms\": [\"jt_error\", \"task_damping\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 3,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 250.0\n  },\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 270.0\n  },\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.008,\n    \"r1\": 0.008,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 250.0\n  },\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 260.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 4,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"TaskPDWithDamping\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"task_damping\"]\n  },\n  {\n    \"name\": \"IntegralNorm\",\n    \"terms\": [\"jt_error\", \"integral_jt_error\", \"normalized_jt_error\"]\n  },\n  {\n    \"name\": \"BoundedPD\",\n    \"terms\": [\"tanh_jt_error\", \"joint_velocity\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"IntegralTaskDamping\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"integral_jt_error\", \"task_damping\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 4,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 260.0\n  },\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 280.0\n  },\n  {\n    \"l0\": 0.075,\n    \"l1\": 0.075,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 260.0\n  },\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.008,\n    \"r1\": 0.008,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 260.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 5,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"TaskPD_Damping_Integral\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"task_damping\", \"integral_jt_error\"]\n  },\n  {\n    \"name\": \"TanhBounded\",\n    \"terms\": [\"tanh_jt_error\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"NormalizedPD\",\n    \"terms\": [\"normalized_jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"Integral_TanhVelocity\",\n    \"terms\": [\"integral_jt_error\", \"tanh_velocity\", \"joint_velocity\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 5,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 300.0\n  },\n  {\n    \"l0\": 0.09,\n    \"l1\": 0.09,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 260.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 260.0\n  },\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 280.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 6,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"IntegralBoostedPD_CartesianDamping\",\n    \"terms\": [\"jt_error\", \"task_damping\", \"integral_jt_error\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"BoundedPD\",\n    \"terms\": [\"tanh_jt_error\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"IntegralNormDamped\",\n    \"terms\": [\"integral_jt_error\", \"normalized_jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"TaskPD_TanhDamping\",\n    \"terms\": [\"jt_error\", \"task_damping\", \"tanh_jt_error\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 6,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 280.0\n  },\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 300.0\n  },\n  {\n    \"l0\": 0.065,\n    \"l1\": 0.065,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 280.0\n  },\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1200.0,\n    \"density1\": 1200.0,\n    \"gear\": 260.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 7,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"TaskPD_Simple\",\n    \"terms\": [\"jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"IntegralBoosted_TanhDamping\",\n    \"terms\": [\"jt_error\", \"integral_jt_error\", \"tanh_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"NormalizedDirection_Damping\",\n    \"terms\": [\"normalized_jt_error\", \"joint_velocity\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"FullCartesianHybrid\",\n    \"terms\": [\"jt_error\", \"task_damping\", \"joint_velocity\", \"tanh_jt_error\", \"tanh_velocity\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 7,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 300.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 280.0\n  },\n  {\n    \"l0\": 0.065,\n    \"l1\": 0.065,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 340.0\n  },\n  {\n    \"l0\": 0.065,\n    \"l1\": 0.065,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1500.0,\n    \"density1\": 1500.0,\n    \"gear\": 280.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 8,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"CompactPD\",\n    \"terms\": [\"jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"IntegralTanh\",\n    \"terms\": [\"jt_error\", \"integral_jt_error\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"DampedNormalized\",\n    \"terms\": [\"normalized_jt_error\", \"task_damping\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"FullBoost\",\n    \"terms\": [\"jt_error\", \"integral_jt_error\", \"tanh_jt_error\", \"task_damping\", \"joint_velocity\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 8,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.065,\n    \"l1\": 0.065,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 300.0\n  },\n  {\n    \"l0\": 0.075,\n    \"l1\": 0.075,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 340.0\n  },\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.008,\n    \"r1\": 0.008,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 340.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 1500.0,\n    \"density1\": 1500.0,\n    \"gear\": 280.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 9,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"IntegralBoosted_TanhDampingPlusJointVel\",\n    \"terms\": [\"jt_error\", \"integral_jt_error\", \"tanh_jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"TaskPD_TanhVelocity\",\n    \"terms\": [\"jt_error\", \"task_damping\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"CompactPD_Integral\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"integral_jt_error\"]\n  },\n  {\n    \"name\": \"NormalizedTanhBoost\",\n    \"terms\": [\"normalized_jt_error\", \"tanh_jt_error\", \"integral_jt_error\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 9,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.065,\n    \"l1\": 0.065,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 380.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 340.0\n  },\n  {\n    \"l0\": 0.065,\n    \"l1\": 0.065,\n    \"r0\": 0.018,\n    \"r1\": 0.018,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 340.0\n  },\n  {\n    \"l0\": 0.065,\n    \"l1\": 0.065,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 800.0,\n    \"density1\": 800.0,\n    \"gear\": 340.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 10,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"TaskPD_JointVel\",\n    \"terms\": [\"jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"Integral_TanhVel\",\n    \"terms\": [\"jt_error\", \"integral_jt_error\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"NormalizedPD_TanhDamp\",\n    \"terms\": [\"normalized_jt_error\", \"task_damping\", \"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"Hybrid_IntegralJointVel\",\n    \"terms\": [\"jt_error\", \"integral_jt_error\", \"tanh_jt_error\", \"joint_velocity\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 10,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.065,\n    \"l1\": 0.065,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.075,\n    \"l1\": 0.075,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 350.0\n  },\n  {\n    \"l0\": 0.065,\n    \"l1\": 0.065,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 380.0\n  },\n  {\n    \"l0\": 0.065,\n    \"l1\": 0.065,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 800.0,\n    \"density1\": 800.0,\n    \"gear\": 380.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 11,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"PropDamp\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"task_damping\"]\n  },\n  {\n    \"name\": \"BoundedBoost\",\n    \"terms\": [\"tanh_jt_error\", \"tanh_velocity\", \"integral_jt_error\"]\n  },\n  {\n    \"name\": \"DirectionIntegral\",\n    \"terms\": [\"normalized_jt_error\", \"integral_jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"SimplePD\",\n    \"terms\": [\"jt_error\", \"joint_velocity\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 11,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.065,\n    \"l1\": 0.065,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 1000.0,\n    \"density1\": 1000.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.065,\n    \"l1\": 0.065,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 800.0,\n    \"density1\": 800.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 800.0,\n    \"density1\": 800.0,\n    \"gear\": 400.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 12,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"PD_Simple\",\n    \"terms\": [\"jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"TanhIntegral_Damping\",\n    \"terms\": [\"tanh_jt_error\", \"integral_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"NormError_Viscous\",\n    \"terms\": [\"normalized_jt_error\", \"joint_velocity\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Integral_TanhVel\",\n    \"terms\": [\"integral_jt_error\", \"tanh_velocity\", \"task_damping\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 12,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 800.0,\n    \"density1\": 800.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.018,\n    \"r1\": 0.018,\n    \"density0\": 800.0,\n    \"density1\": 800.0,\n    \"gear\": 400.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 13,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"PD_Joint\",\n    \"terms\": [\n      \"jt_error\",\n      \"joint_velocity\"\n    ]\n  },\n  {\n    \"name\": \"BoundedError_TaskDamping\",\n    \"terms\": [\n      \"tanh_jt_error\",\n      \"task_damping\"\n    ]\n  },\n  {\n    \"name\": \"Integral_Damping\",\n    \"terms\": [\n      \"integral_jt_error\",\n      \"joint_velocity\"\n    ]\n  },\n  {\n    \"name\": \"FullMix_Normalized_TanhVel\",\n    \"terms\": [\n      \"jt_error\",\n      \"integral_jt_error\",\n      \"normalized_jt_error\",\n      \"tanh_velocity\"\n    ]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 13,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.1,\n    \"l1\": 0.1,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 800.0,\n    \"density1\": 800.0,\n    \"gear\": 300.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.018,\n    \"r1\": 0.018,\n    \"density0\": 500.0,\n    \"density1\": 500.0,\n    \"gear\": 400.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 14,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"FullMix_TanhVel\",\n    \"terms\": [\"jt_error\", \"integral_jt_error\", \"normalized_jt_error\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"BoundedSmooth\",\n    \"terms\": [\"tanh_jt_error\", \"tanh_velocity\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Proportional_Damping\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Normalized_Bounded\",\n    \"terms\": [\"normalized_jt_error\", \"tanh_jt_error\", \"task_damping\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 14,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 300.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.018,\n    \"r1\": 0.018,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 500.0,\n    \"density1\": 500.0,\n    \"gear\": 400.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 15,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"BoundedError_JointVel\",\n    \"terms\": [\"tanh_jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"NormalizedError_TaskDamping\",\n    \"terms\": [\"normalized_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"FullMix_Bounded_TanhVel_JointVel\",\n    \"terms\": [\"tanh_jt_error\", \"tanh_velocity\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"Integral_Normalized_JointVel\",\n    \"terms\": [\"integral_jt_error\", \"normalized_jt_error\", \"joint_velocity\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 15,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.018,\n    \"r1\": 0.018,\n    \"density0\": 500.0,\n    \"density1\": 500.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.005,\n    \"r1\": 0.005,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.018,\n    \"r1\": 0.018,\n    \"density0\": 500.0,\n    \"density1\": 500.0,\n    \"gear\": 400.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 16,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"BoundedError_TaskDamping\",\n    \"terms\": [\"tanh_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"TanhIntegral_TaskDamping\",\n    \"terms\": [\"tanh_jt_error\", \"integral_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"NormalizedBounded_TanhVelocity\",\n    \"terms\": [\"normalized_jt_error\", \"tanh_jt_error\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"JTError_TaskDamping\",\n    \"terms\": [\"jt_error\", \"task_damping\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 16,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.01,\n    \"r1\": 0.01,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 500.0,\n    \"density1\": 500.0,\n    \"gear\": 400.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 17,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"BoundedError_Integral_Damping\",\n    \"terms\": [\"tanh_jt_error\", \"integral_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"PureBounded\",\n    \"terms\": [\"tanh_jt_error\"]\n  },\n  {\n    \"name\": \"Normalized_Damping\",\n    \"terms\": [\"normalized_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"TanhError_TanhVel\",\n    \"terms\": [\"tanh_jt_error\", \"tanh_velocity\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 17,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.018,\n    \"r1\": 0.018,\n    \"density0\": 500.0,\n    \"density1\": 500.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 500.0,\n    \"density1\": 500.0,\n    \"gear\": 400.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 18,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"BoundedError_JointVel\",\n    \"terms\": [\"tanh_jt_error\", \"joint_velocity\"]\n  },\n  {\n    \"name\": \"ErrorIntegral_TaskDamping\",\n    \"terms\": [\"jt_error\", \"integral_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"NormalizedError_Velocity_Damping\",\n    \"terms\": [\"normalized_jt_error\", \"joint_velocity\", \"task_damping\"]\n  },\n  {\n    \"name\": \"FullBounded\",\n    \"terms\": [\"tanh_jt_error\", \"integral_jt_error\", \"tanh_velocity\", \"task_damping\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 18,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 600,\n    \"density1\": 600,\n    \"gear\": 400\n  },\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 600,\n    \"density1\": 600,\n    \"gear\": 400\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.014,\n    \"r1\": 0.014,\n    \"density0\": 600,\n    \"density1\": 600,\n    \"gear\": 400\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 550,\n    \"density1\": 550,\n    \"gear\": 400\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 19,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"TanhError_TaskDamping\",\n    \"terms\": [\"tanh_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"TanhError_Integral_Damping\",\n    \"terms\": [\"tanh_jt_error\", \"integral_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Error_Velocity_Damping\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"task_damping\"]\n  },\n  {\n    \"name\": \"NormalizedError_TanhVelocity\",\n    \"terms\": [\"normalized_jt_error\", \"tanh_velocity\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 19,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.07,\n    \"l1\": 0.07,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 500.0,\n    \"density1\": 500.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 500.0,\n    \"density1\": 500.0,\n    \"gear\": 400.0\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 20,
+    "side": "law",
+    "valid": 4,
+    "response": "[\n  {\n    \"name\": \"BoundedError_Integral_Damping\",\n    \"terms\": [\"tanh_jt_error\", \"integral_jt_error\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Proportional_JointDamping\",\n    \"terms\": [\"jt_error\", \"joint_velocity\", \"task_damping\"]\n  },\n  {\n    \"name\": \"Normalized_TanhVelocity\",\n    \"terms\": [\"normalized_jt_error\", \"tanh_velocity\"]\n  },\n  {\n    \"name\": \"FullBounded\",\n    \"terms\": [\"tanh_jt_error\", \"integral_jt_error\", \"tanh_velocity\", \"task_damping\"]\n  }\n]"
+  },
+  {
+    "variant": "both",
+    "generation": 20,
+    "side": "morphology",
+    "valid": 4,
+    "response": "[\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 500.0,\n    \"density1\": 500.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.08,\n    \"l1\": 0.08,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 500.0,\n    \"density1\": 500.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.015,\n    \"r1\": 0.015,\n    \"density0\": 600.0,\n    \"density1\": 600.0,\n    \"gear\": 400.0\n  },\n  {\n    \"l0\": 0.06,\n    \"l1\": 0.06,\n    \"r0\": 0.012,\n    \"r1\": 0.012,\n    \"density0\": 550.0,\n    \"density1\": 550.0,\n    \"gear\": 400.0\n  }\n]"
+  }
+]

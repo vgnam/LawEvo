@@ -1,0 +1,554 @@
+{
+  "model": "openai/gpt-oss-120b",
+  "environment": "Reacher-v5",
+  "morphology_fields": [
+    {
+      "name": "l0",
+      "kind": "length",
+      "default": 0.1,
+      "bounds": [
+        0.06,
+        0.14
+      ],
+      "unit": "m"
+    },
+    {
+      "name": "l1",
+      "kind": "length",
+      "default": 0.1,
+      "bounds": [
+        0.06,
+        0.14
+      ],
+      "unit": "m"
+    },
+    {
+      "name": "r0",
+      "kind": "radius",
+      "default": 0.01,
+      "bounds": [
+        0.005,
+        0.02
+      ],
+      "unit": "m"
+    },
+    {
+      "name": "r1",
+      "kind": "radius",
+      "default": 0.01,
+      "bounds": [
+        0.005,
+        0.02
+      ],
+      "unit": "m"
+    },
+    {
+      "name": "density0",
+      "kind": "mass",
+      "default": 1000.0,
+      "bounds": [
+        500.0,
+        2000.0
+      ],
+      "unit": "kg/m^3"
+    },
+    {
+      "name": "density1",
+      "kind": "mass",
+      "default": 1000.0,
+      "bounds": [
+        500.0,
+        2000.0
+      ],
+      "unit": "kg/m^3"
+    },
+    {
+      "name": "gear",
+      "kind": "gear",
+      "default": 200.0,
+      "bounds": [
+        100.0,
+        400.0
+      ],
+      "unit": "actuator gear"
+    }
+  ],
+  "config": {
+    "generations": 20,
+    "proposals_per_side": 4,
+    "joint_top_k": 2,
+    "cem_iterations": 5,
+    "cem_population": 24,
+    "train_episodes": 6,
+    "test_episodes": 30,
+    "variants": [
+      "both"
+    ]
+  },
+  "variants": {
+    "both": {
+      "best": {
+        "spec": {
+          "density0": 600.0,
+          "density1": 600.0,
+          "gear": 400.0,
+          "l0": 0.06,
+          "l1": 0.06,
+          "r0": 0.012,
+          "r1": 0.012
+        },
+        "structure": {
+          "name": "BoundedError_TaskDamping",
+          "terms": [
+            "tanh_jt_error",
+            "task_damping"
+          ]
+        },
+        "gains": [
+          3.629568311537692,
+          -2.921925775600895
+        ],
+        "metrics": {
+          "score": -4.097702044091415,
+          "episode_return": -3.9051377868800423,
+          "success_rate": 0.6666666666666666,
+          "energy": 0.011507055177510966,
+          "energy_norm": 0.23725727358213308,
+          "jerk": 9.584223777552518,
+          "complexity": 2,
+          "morph_cost": 0.15000000000000002,
+          "total_mass": 0.048500326265139705
+        },
+        "generation": 17,
+        "provenance": "morph_cross",
+        "episode_budget": 726,
+        "env": "Reacher-v5"
+      },
+      "reports": [
+        {
+          "generation": 1,
+          "incumbent": "Task PD+Tanh@{density0=1000, density1=1000, gear=250, l0=0.08, l1=0.08, r0=0.01, r1=0.01}",
+          "best_score": -5.737755432165803,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 2,
+          "incumbent": "Task PD+Tanh@{density0=1000, density1=1000, gear=250, l0=0.08, l1=0.08, r0=0.01, r1=0.01}",
+          "best_score": -5.737755432165803,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 3,
+          "incumbent": "IntegralBoostedPD@{density0=1000, density1=1000, gear=260, l0=0.07, l1=0.07, r0=0.01, r1=0.01}",
+          "best_score": -5.21546872395779,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 4,
+          "incumbent": "IntegralBoostedPD@{density0=1000, density1=1000, gear=260, l0=0.07, l1=0.07, r0=0.01, r1=0.01}",
+          "best_score": -5.21546872395779,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 5,
+          "incumbent": "IntegralBoostedPD@{density0=1000, density1=1000, gear=280, l0=0.07, l1=0.07, r0=0.015, r1=0.015}",
+          "best_score": -5.124179885835953,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 6,
+          "incumbent": "TaskPD_TanhDamping@{density0=1000, density1=1000, gear=280, l0=0.065, l1=0.065, r0=0.015, r1=0.015}",
+          "best_score": -4.70716211588287,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 7,
+          "incumbent": "IntegralBoosted_TanhDamping@{density0=1000, density1=1000, gear=340, l0=0.065, l1=0.065, r0=0.015, r1=0.015}",
+          "best_score": -4.429183973457735,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 8,
+          "incumbent": "IntegralBoosted_TanhDamping@{density0=1000, density1=1000, gear=340, l0=0.065, l1=0.065, r0=0.015, r1=0.015}",
+          "best_score": -4.429183973457735,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 9,
+          "incumbent": "IntegralBoosted_TanhDamping@{density0=1000, density1=1000, gear=380, l0=0.065, l1=0.065, r0=0.015, r1=0.015}",
+          "best_score": -4.295630287277796,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 10,
+          "incumbent": "IntegralBoosted_TanhDamping@{density0=1000, density1=1000, gear=400, l0=0.065, l1=0.065, r0=0.015, r1=0.015}",
+          "best_score": -4.239722014168969,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 11,
+          "incumbent": "IntegralBoosted_TanhDamping@{density0=800, density1=800, gear=400, l0=0.06, l1=0.06, r0=0.015, r1=0.015}",
+          "best_score": -4.204702076482761,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 12,
+          "incumbent": "TanhIntegral_Damping@{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.015, r1=0.015}",
+          "best_score": -4.1457869040313104,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 13,
+          "incumbent": "BoundedError_TaskDamping@{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.015, r1=0.015}",
+          "best_score": -4.12661855379238,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 14,
+          "incumbent": "BoundedError_TaskDamping@{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.015, r1=0.015}",
+          "best_score": -4.12661855379238,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 15,
+          "incumbent": "BoundedError_TaskDamping@{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.015, r1=0.015}",
+          "best_score": -4.12661855379238,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 16,
+          "incumbent": "BoundedError_TaskDamping@{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.015, r1=0.015}",
+          "best_score": -4.12661855379238,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 17,
+          "incumbent": "BoundedError_TaskDamping@{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}",
+          "best_score": -4.097702044091415,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 18,
+          "incumbent": "BoundedError_TaskDamping@{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}",
+          "best_score": -4.097702044091415,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 19,
+          "incumbent": "BoundedError_TaskDamping@{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}",
+          "best_score": -4.097702044091415,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        },
+        {
+          "generation": 20,
+          "incumbent": "BoundedError_TaskDamping@{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}",
+          "best_score": -4.097702044091415,
+          "evaluated": 10,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 4,
+            "morph_cross": 4,
+            "joint": 2,
+            "rejected": 0
+          }
+        }
+      ],
+      "api_calls": 40,
+      "episodes_spent": 116160,
+      "belief": {
+        "morph_to_law": [
+          {
+            "statement": "M[{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}]: BoundedError_Integral_Damping (tanh_jt_error, integral_jt_error, task_damping) score -4.12 vs incumbent BoundedError_TaskDamping -4.098 (delta -0.02225); success 0.667 vs 0.667; energy_norm 0.2199 vs 0.2373",
+            "context": {
+              "morphology": "{\"density0\": 600.0, \"density1\": 600.0, \"gear\": 400.0, \"l0\": 0.06, \"l1\": 0.06, \"r0\": 0.012, \"r1\": 0.012}"
+            }
+          },
+          {
+            "statement": "M[{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}]: FullBounded (tanh_jt_error, integral_jt_error, tanh_velocity, task_damping) score -4.731 vs incumbent BoundedError_TaskDamping -4.098 (delta -0.6335); success 0.667 vs 0.667; energy_norm 0.11 vs 0.2373",
+            "context": {
+              "morphology": "{\"density0\": 600.0, \"density1\": 600.0, \"gear\": 400.0, \"l0\": 0.06, \"l1\": 0.06, \"r0\": 0.012, \"r1\": 0.012}"
+            }
+          },
+          {
+            "statement": "M[{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}]: Normalized_TanhVelocity (normalized_jt_error, tanh_velocity) score -7.951 vs incumbent BoundedError_TaskDamping -4.098 (delta -3.853); success 0 vs 0.667; energy_norm 0.2842 vs 0.2373",
+            "context": {
+              "morphology": "{\"density0\": 600.0, \"density1\": 600.0, \"gear\": 400.0, \"l0\": 0.06, \"l1\": 0.06, \"r0\": 0.012, \"r1\": 0.012}"
+            }
+          },
+          {
+            "statement": "M[{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}]: Proportional_JointDamping (jt_error, joint_velocity, task_damping) score -9.492 vs incumbent BoundedError_TaskDamping -4.098 (delta -5.394); success 0 vs 0.667; energy_norm 0.0003821 vs 0.2373",
+            "context": {
+              "morphology": "{\"density0\": 600.0, \"density1\": 600.0, \"gear\": 400.0, \"l0\": 0.06, \"l1\": 0.06, \"r0\": 0.012, \"r1\": 0.012}"
+            }
+          },
+          {
+            "statement": "M[{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}]: TanhError_TaskDamping (tanh_jt_error, task_damping) score -4.098 vs incumbent BoundedError_TaskDamping -4.098 (delta +0); success 0.667 vs 0.667; energy_norm 0.2373 vs 0.2373",
+            "context": {
+              "morphology": "{\"density0\": 600.0, \"density1\": 600.0, \"gear\": 400.0, \"l0\": 0.06, \"l1\": 0.06, \"r0\": 0.012, \"r1\": 0.012}"
+            }
+          },
+          {
+            "statement": "M[{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}]: TanhError_Integral_Damping (tanh_jt_error, integral_jt_error, task_damping) score -4.12 vs incumbent BoundedError_TaskDamping -4.098 (delta -0.02225); success 0.667 vs 0.667; energy_norm 0.2199 vs 0.2373",
+            "context": {
+              "morphology": "{\"density0\": 600.0, \"density1\": 600.0, \"gear\": 400.0, \"l0\": 0.06, \"l1\": 0.06, \"r0\": 0.012, \"r1\": 0.012}"
+            }
+          },
+          {
+            "statement": "M[{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}]: NormalizedError_TanhVelocity (normalized_jt_error, tanh_velocity) score -7.951 vs incumbent BoundedError_TaskDamping -4.098 (delta -3.853); success 0 vs 0.667; energy_norm 0.2842 vs 0.2373",
+            "context": {
+              "morphology": "{\"density0\": 600.0, \"density1\": 600.0, \"gear\": 400.0, \"l0\": 0.06, \"l1\": 0.06, \"r0\": 0.012, \"r1\": 0.012}"
+            }
+          },
+          {
+            "statement": "M[{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}]: Error_Velocity_Damping (jt_error, joint_velocity, task_damping) score -9.492 vs incumbent BoundedError_TaskDamping -4.098 (delta -5.394); success 0 vs 0.667; energy_norm 0.0003821 vs 0.2373",
+            "context": {
+              "morphology": "{\"density0\": 600.0, \"density1\": 600.0, \"gear\": 400.0, \"l0\": 0.06, \"l1\": 0.06, \"r0\": 0.012, \"r1\": 0.012}"
+            }
+          },
+          {
+            "statement": "M[{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}]: BoundedError_JointVel (tanh_jt_error, joint_velocity) score -5.225 vs incumbent BoundedError_TaskDamping -4.098 (delta -1.127); success 0.5 vs 0.667; energy_norm 0.03841 vs 0.2373",
+            "context": {
+              "morphology": "{\"density0\": 600.0, \"density1\": 600.0, \"gear\": 400.0, \"l0\": 0.06, \"l1\": 0.06, \"r0\": 0.012, \"r1\": 0.012}"
+            }
+          },
+          {
+            "statement": "M[{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}]: NormalizedError_Velocity_Damping (normalized_jt_error, joint_velocity, task_damping) score -6.117 vs incumbent BoundedError_TaskDamping -4.098 (delta -2.02); success 0.833 vs 0.667; energy_norm 0.6839 vs 0.2373",
+            "context": {
+              "morphology": "{\"density0\": 600.0, \"density1\": 600.0, \"gear\": 400.0, \"l0\": 0.06, \"l1\": 0.06, \"r0\": 0.012, \"r1\": 0.012}"
+            }
+          },
+          {
+            "statement": "M[{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.012, r1=0.012}]: ErrorIntegral_TaskDamping (jt_error, integral_jt_error, task_damping) score -6.613 vs incumbent BoundedError_TaskDamping -4.098 (delta -2.516); success 0.333 vs 0.667; energy_norm 0.01525 vs 0.2373",
+            "context": {
+              "morphology": "{\"density0\": 600.0, \"density1\": 600.0, \"gear\": 400.0, \"l0\": 0.06, \"l1\": 0.06, \"r0\": 0.012, \"r1\": 0.012}"
+            }
+          },
+          {
+            "statement": "M[{density0=600, density1=600, gear=400, l0=0.06, l1=0.06, r0=0.015, r1=0.015}]: BoundedError_Integral_Damping (tanh_jt_error, integral_jt_error, task_damping) score -4.146 vs incumbent BoundedError_TaskDamping -4.127 (delta -0.01917); success 0.667 vs 0.667; energy_norm 0.1408 vs 0.1406",
+            "context": {
+              "morphology": "{\"density0\": 600.0, \"density1\": 600.0, \"gear\": 400.0, \"l0\": 0.06, \"l1\": 0.06, \"r0\": 0.015, \"r1\": 0.015}"
+            }
+          }
+        ],
+        "law_to_morph": [
+          {
+            "statement": "under BoundedError_TaskDamping (tanh_jt_error, task_damping): morphology change [density0 1000->550 (-45.0%), density1 1000->550 (-45.0%), gear 200->400 (+100.0%), l0 0.1->0.06 (-40.0%), l1 0.1->0.06 (-40.0%), r0 0.01->0.012 (+20.0%), r1 0.01->0.012 (+20.0%)] -> score -4.104 vs -4.098 (delta -0.005815); success 0.667 vs 0.667; energy_norm 0.2668 vs 0.2373. Hypothesis: this direction looks compatible with the incumbent law \u2014 continue exploring it.",
+            "context": {
+              "structure": "[\"tanh_jt_error\", \"task_damping\"]"
+            }
+          },
+          {
+            "statement": "under BoundedError_TaskDamping (tanh_jt_error, task_damping): morphology change [density0 1000->500 (-50.0%), density1 1000->500 (-50.0%), gear 200->400 (+100.0%), l0 0.1->0.06 (-40.0%), l1 0.1->0.06 (-40.0%), r0 0.01->0.012 (+20.0%), r1 0.01->0.012 (+20.0%)] -> score -4.112 vs -4.098 (delta -0.01462); success 0.667 vs 0.667; energy_norm 0.2408 vs 0.2373. Hypothesis: this direction looks compatible with the incumbent law \u2014 continue exploring it.",
+            "context": {
+              "structure": "[\"tanh_jt_error\", \"task_damping\"]"
+            }
+          },
+          {
+            "statement": "under BoundedError_TaskDamping (tanh_jt_error, task_damping): morphology change [density0 1000->600 (-40.0%), density1 1000->600 (-40.0%), gear 200->400 (+100.0%), l0 0.1->0.06 (-40.0%), l1 0.1->0.06 (-40.0%), r0 0.01->0.015 (+50.0%), r1 0.01->0.015 (+50.0%)] -> score -4.127 vs -4.098 (delta -0.02892); success 0.667 vs 0.667; energy_norm 0.1406 vs 0.2373. Hypothesis: this direction looks compatible with the incumbent law \u2014 continue exploring it.",
+            "context": {
+              "structure": "[\"tanh_jt_error\", \"task_damping\"]"
+            }
+          },
+          {
+            "statement": "under BoundedError_TaskDamping (tanh_jt_error, task_damping): morphology change [density0 1000->500 (-50.0%), density1 1000->500 (-50.0%), gear 200->400 (+100.0%), l0 0.1->0.08 (-20.0%), l1 0.1->0.08 (-20.0%), r0 0.01->0.012 (+20.0%), r1 0.01->0.012 (+20.0%)] -> score -4.618 vs -4.098 (delta -0.5205); success 1 vs 0.667; energy_norm 0.3175 vs 0.2373. Hypothesis: actuator gear is the bottleneck, not geometry \u2014 raise gear before mass.",
+            "context": {
+              "structure": "[\"tanh_jt_error\", \"task_damping\"]"
+            }
+          },
+          {
+            "statement": "under BoundedError_TaskDamping (tanh_jt_error, task_damping): morphology change [density0 1000->500 (-50.0%), density1 1000->500 (-50.0%), gear 200->400 (+100.0%), l0 0.1->0.06 (-40.0%), l1 0.1->0.06 (-40.0%), r0 0.01->0.015 (+50.0%), r1 0.01->0.015 (+50.0%)] -> score -4.203 vs -4.098 (delta -0.1055); success 0.833 vs 0.667; energy_norm 0.1363 vs 0.2373. Hypothesis: this direction looks compatible with the incumbent law \u2014 continue exploring it.",
+            "context": {
+              "structure": "[\"tanh_jt_error\", \"task_damping\"]"
+            }
+          },
+          {
+            "statement": "under BoundedError_TaskDamping (tanh_jt_error, task_damping): morphology change [density0 1000->600 (-40.0%), density1 1000->600 (-40.0%), gear 200->400 (+100.0%), l0 0.1->0.07 (-30.0%), l1 0.1->0.07 (-30.0%), r0 0.01->0.012 (+20.0%), r1 0.01->0.012 (+20.0%)] -> score -4.339 vs -4.098 (delta -0.2416); success 1 vs 0.667; energy_norm 0.2076 vs 0.2373. Hypothesis: this direction looks compatible with the incumbent law \u2014 continue exploring it.",
+            "context": {
+              "structure": "[\"tanh_jt_error\", \"task_damping\"]"
+            }
+          },
+          {
+            "statement": "under BoundedError_TaskDamping (tanh_jt_error, task_damping): morphology change [density0 1000->600 (-40.0%), density1 1000->600 (-40.0%), gear 200->400 (+100.0%), l0 0.1->0.06 (-40.0%), l1 0.1->0.06 (-40.0%), r0 0.01->0.012 (+20.0%), r1 0.01->0.012 (+20.0%)] -> score -4.098 vs -4.098 (delta +0); success 0.667 vs 0.667; energy_norm 0.2373 vs 0.2373. Hypothesis: this direction looks compatible with the incumbent law \u2014 continue exploring it.",
+            "context": {
+              "structure": "[\"tanh_jt_error\", \"task_damping\"]"
+            }
+          },
+          {
+            "statement": "under BoundedError_TaskDamping (tanh_jt_error, task_damping): morphology change [density0 1000->600 (-40.0%), density1 1000->600 (-40.0%), gear 200->400 (+100.0%), l0 0.1->0.06 (-40.0%), l1 0.1->0.06 (-40.0%), r0 0.01->0.014 (+40.0%), r1 0.01->0.014 (+40.0%)] -> score -4.308 vs -4.098 (delta -0.2103); success 0.833 vs 0.667; energy_norm 0.2092 vs 0.2373. Hypothesis: this direction looks compatible with the incumbent law \u2014 continue exploring it.",
+            "context": {
+              "structure": "[\"tanh_jt_error\", \"task_damping\"]"
+            }
+          },
+          {
+            "statement": "under BoundedError_TaskDamping (tanh_jt_error, task_damping): morphology change [density0 1000->600 (-40.0%), density1 1000->600 (-40.0%), gear 200->400 (+100.0%), l0 0.1->0.06 (-40.0%), l1 0.1->0.06 (-40.0%), r0 0.01->0.012 (+20.0%), r1 0.01->0.012 (+20.0%)] -> score -4.098 vs -4.127 (delta +0.02892); success 0.667 vs 0.667; energy_norm 0.2373 vs 0.1406. Hypothesis: this direction looks compatible with the incumbent law \u2014 continue exploring it.",
+            "context": {
+              "structure": "[\"tanh_jt_error\", \"task_damping\"]"
+            }
+          },
+          {
+            "statement": "under BoundedError_TaskDamping (tanh_jt_error, task_damping): morphology change [density0 1000->500 (-50.0%), density1 1000->500 (-50.0%), gear 200->400 (+100.0%), l0 0.1->0.06 (-40.0%), l1 0.1->0.06 (-40.0%), r0 0.01->0.018 (+80.0%), r1 0.01->0.018 (+80.0%)] -> score -4.169 vs -4.127 (delta -0.0422); success 0.667 vs 0.667; energy_norm 0.1192 vs 0.1406. Hypothesis: this direction looks compatible with the incumbent law \u2014 continue exploring it.",
+            "context": {
+              "structure": "[\"tanh_jt_error\", \"task_damping\"]"
+            }
+          },
+          {
+            "statement": "under BoundedError_TaskDamping (tanh_jt_error, task_damping): morphology change [density0 1000->600 (-40.0%), density1 1000->600 (-40.0%), gear 200->400 (+100.0%), l0 0.1->0.07 (-30.0%), l1 0.1->0.07 (-30.0%), r0 0.01->0.015 (+50.0%), r1 0.01->0.015 (+50.0%)] -> score -4.364 vs -4.127 (delta -0.237); success 1 vs 0.667; energy_norm 0.1489 vs 0.1406. Hypothesis: this direction looks compatible with the incumbent law \u2014 continue exploring it.",
+            "context": {
+              "structure": "[\"tanh_jt_error\", \"task_damping\"]"
+            }
+          },
+          {
+            "statement": "under BoundedError_TaskDamping (tanh_jt_error, task_damping): morphology change [density0 1000->500 (-50.0%), density1 1000->500 (-50.0%), gear 200->400 (+100.0%), l0 0.1->0.08 (-20.0%), l1 0.1->0.08 (-20.0%), r0 0.01->0.015 (+50.0%), r1 0.01->0.015 (+50.0%)] -> score -4.647 vs -4.127 (delta -0.5205); success 1 vs 0.667; energy_norm 0.2133 vs 0.1406. Hypothesis: actuator gear is the bottleneck, not geometry \u2014 raise gear before mass.",
+            "context": {
+              "structure": "[\"tanh_jt_error\", \"task_damping\"]"
+            }
+          }
+        ]
+      },
+      "heldout": {
+        "score": -3.782573463490147,
+        "episode_return": -3.5893340568283123,
+        "success_rate": 0.8,
+        "energy": 0.013790960974748693,
+        "energy_norm": 0.28434779797885895,
+        "jerk": 19.79643410230229,
+        "complexity": 2,
+        "morph_cost": 0.15000000000000002,
+        "total_mass": 0.048500326265139705
+      }
+    }
+  }
+}

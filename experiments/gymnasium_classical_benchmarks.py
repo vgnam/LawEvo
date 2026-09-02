@@ -24,7 +24,9 @@ from lawevo.evolve.nvidia_nim import (
 )
 from lawevo.pid import (
     ADAPTERS,
+    GENESIS_ADAPTERS,
     LOCOMOTION_ADAPTERS,
+    MANISKILL_ADAPTERS,
     PANDA_GYM_ADAPTERS,
     ROBOSUITE_ADAPTERS,
     GymMetrics,
@@ -180,6 +182,34 @@ above the second cube within 100 PyBullet control steps. Dense reward combines t
 cube-goal distances and success requires both to be within 0.05 m. The four-dimensional
 action commands end-effector xyz and gripper displacement. Signals implement reaching,
 grasping, lifting, alignment, release, and a gated sequential stack motion.""",
+    "maniskill_push_cube": """Task: use a simulated Panda arm to push a cube into a
+0.1 m-radius target region within 50 ManiSkill control steps. The normalized action is a
+seven-dimensional end-effector delta pose [delta_xyz, delta_axis_angle, gripper], while
+these controllers deliberately leave orientation and gripper fixed. State-dictionary
+observations expose tool-center-point, cube, and goal poses. Signals stage motion through
+the useful push point behind the cube and then toward the goal; reaching the cube without
+moving it, lifting it off the table, or approaching it from the wrong side are failures.""",
+    "maniskill_pick_cube": """Task: use a simulated Panda arm to grasp a randomized cube
+and carry it to a randomized three-dimensional target within 50 ManiSkill control steps.
+The normalized seven-dimensional delta-pose action commands xyz, axis-angle rotation, and
+the gripper; the provided signals use translation and gripper while keeping orientation
+neutral. State-dictionary observations provide TCP, cube, target, and grasp state. Useful
+structures must reach, close, lift with clearance, transport, settle, and release smoothly;
+task success additionally requires the cube at the goal and the robot nearly static.""",
+    "genesis_push_cube": """Task: use a Franka Panda simulated by Genesis World to push
+a randomized cube into a target region in 75 steps. Genesis runs a reusable batch of
+independent scenes directly on the CUDA GPU, so CEM candidates and training seeds are
+evaluated in parallel. Four-dimensional controller signals command normalized Cartesian
+translation and gripper state; damped least-squares inverse kinematics maps translation to
+the nine Franka joints. The controller must approach behind the cube, establish contact,
+and preserve a directed push without lifting the cube or circling around the target.""",
+    "genesis_pick_cube": """Task: use a Franka Panda simulated by Genesis World to grasp,
+lift, and carry a randomized cube to a randomized 3D target in 75 steps. Batched CUDA
+physics evaluates many gains and seeds concurrently. Controller features generate Cartesian
+translation and gripper commands, which a GPU damped-least-squares IK layer maps to Franka
+joint targets. Useful structures must approach with an open gripper, close near the cube,
+lift above the plane, transport toward the goal, and avoid premature release or high-jerk
+commands that destabilize the grasp.""",
 }
 
 CONTROL_GOALS = {
@@ -303,6 +333,30 @@ achieved cube positions inside their 0.05 m goal tolerances. Reach and grasp the
 cube, lift with clearance, align above the fixed cube, lower, and release into a stable
 stack. Success and dense return dominate; then minimize command energy, jerk, collisions,
 regrasping, and unnecessary structural complexity.""",
+    "maniskill_push_cube": """Primary goal: complete ManiSkill PushCube-v1 within 50
+steps by placing the cube inside the 0.1 m target region while keeping it on the table.
+First move the Panda TCP to the push pose behind the cube, then preserve contact and drive
+the cube toward the target. Dense return and success dominate; among comparable successful
+controllers prefer lower normalized delta-pose command energy, smoother changes, fewer
+impacts, and fewer terms. Touching the cube without making goal progress is not success.""",
+    "maniskill_pick_cube": """Primary goal: complete ManiSkill PickCube-v1 within 50
+steps by placing the cube within 0.025 m of its randomized 3D target and settling the robot.
+Reach the cube, close securely, lift with clearance, carry it to the target, and stop without
+premature release. Dense return and task success dominate; among comparable controllers
+prefer lower normalized delta-pose command energy, smoother commands, fewer failed grasps,
+and fewer terms. A transient target crossing without a static final placement is not success.""",
+    "genesis_push_cube": """Primary goal: complete GenesisPushCube-v0 within 75 steps by
+placing the cube within 0.06 m of its randomized planar target. Approach the useful point
+behind the cube before applying goal-directed motion, then maintain contact without lifting
+or overshooting. Success and dense return dominate; among comparable GPU-batched controllers
+prefer lower normalized command energy, smoother commands, robustness across randomized
+starts, and fewer terms. Reaching the cube without producing target progress is failure.""",
+    "genesis_pick_cube": """Primary goal: complete GenesisPickCube-v0 within 75 steps by
+placing the cube within 0.055 m of its randomized 3D target. Reach with the gripper open,
+close near the cube, lift above 0.10 m, and transport while preserving the grasp. Success
+and dense return dominate; among comparable GPU-batched controllers prefer lower command
+energy, smoother changes, reliable grasps across randomized starts, and fewer terms. Merely
+touching the cube or moving the hand to the goal without the cube is not success.""",
 }
 
 
@@ -634,7 +688,9 @@ def main() -> None:
         adapter.env_id: (name, adapter)
         for name, adapter in {
             **ADAPTERS,
+            **GENESIS_ADAPTERS,
             **LOCOMOTION_ADAPTERS,
+            **MANISKILL_ADAPTERS,
             **PANDA_GYM_ADAPTERS,
             **ROBOSUITE_ADAPTERS,
         }.items()
@@ -644,7 +700,10 @@ def main() -> None:
         "--environment",
         choices=tuple(sorted(available_adapters)),
         required=True,
-        help="run one supported Gymnasium, Panda-Gym, or robosuite environment",
+        help=(
+            "run one supported Gymnasium, Genesis, Panda-Gym, ManiSkill, or robosuite "
+            "environment"
+        ),
     )
     parser.add_argument("--model", default=os.environ.get("NVIDIA_MODEL", DEFAULT_NVIDIA_MODEL))
     parser.add_argument(
@@ -659,10 +718,19 @@ def main() -> None:
     parser.add_argument("--train-episodes", type=int, default=6)
     parser.add_argument("--test-episodes", type=int, default=30)
     parser.add_argument(
+        "--genesis-batch-size",
+        type=int,
+        default=int(os.environ.get("LAWEVO_GENESIS_BATCH_SIZE", "32")),
+        help="parallel Genesis GPU scenes; lower this if CUDA runs out of memory",
+    )
+    parser.add_argument(
         "--resume-run",
         help="resume a timestamped run directory under results, for example 20260827_231500",
     )
     args = parser.parse_args()
+    if args.genesis_batch_size < 1:
+        parser.error("--genesis-batch-size must be positive")
+    os.environ["LAWEVO_GENESIS_BATCH_SIZE"] = str(args.genesis_batch_size)
     started_at = datetime.now().astimezone()
     run_id = args.resume_run or started_at.strftime("%Y%m%d_%H%M%S")
     run_root = Path("results") / run_id

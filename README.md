@@ -85,9 +85,9 @@ classical gain with the same CEM budget using **6 training episodes**, and repor
 controller over exactly **30 held-out test episodes**. The CLI defaults use this 20/6/30
 protocol.
 
-### Commands for all 22 environments
+### Commands for all 26 environments
 
-The 22 copy-paste commands below each run exactly one environment. They explicitly use
+The 26 copy-paste commands below each run exactly one environment. They explicitly use
 the standard 20-generation, 6-training-episode, 30-test-episode protocol:
 
 ```powershell
@@ -156,6 +156,18 @@ py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteNutAssem
 
 # 22. Robosuite Door with Panda OSC
 py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteDoor-v0 --generations 20 --train-episodes 6 --test-episodes 30
+
+# 23. ManiSkill PushCube with Panda delta-pose control
+py -m experiments.gymnasium_classical_benchmarks --environment PushCube-v1 --generations 20 --train-episodes 6 --test-episodes 30
+
+# 24. ManiSkill PickCube with Panda delta-pose control
+py -m experiments.gymnasium_classical_benchmarks --environment PickCube-v1 --generations 20 --train-episodes 6 --test-episodes 30
+
+# 25. Genesis World PushCube with batched CUDA simulation
+py -m experiments.gymnasium_classical_benchmarks --environment GenesisPushCube-v0 --genesis-batch-size 32 --generations 20 --train-episodes 6 --test-episodes 30
+
+# 26. Genesis World PickCube with batched CUDA simulation
+py -m experiments.gymnasium_classical_benchmarks --environment GenesisPickCube-v0 --genesis-batch-size 32 --generations 20 --train-episodes 6 --test-episodes 30
 ```
 
 The reported return, success rate, energy, and jerk are means over the 30 held-out test
@@ -228,6 +240,10 @@ py -m experiments.gymnasium_classical_benchmarks `
 | `RobosuiteStack-v0` | Reach P/PD, Pick+Stack, Pick+Stack PD |
 | `RobosuiteNutAssemblySquare-v0` | Reach P/PD, Pick+Insert, Pick+Insert PD |
 | `RobosuiteDoor-v0` | Reach P/PD, Door P/PD |
+| `PushCube-v1` | Reach P/PD, Object Goal P, Contact+Goal PD |
+| `PickCube-v1` | Reach P/PD, Pick+Place, Pick+Place PD |
+| `GenesisPushCube-v0` | Reach P/PD, Object Goal P, Contact+Goal PD |
+| `GenesisPickCube-v0` | Reach P/PD, Pick+Place, Pick+Place PD |
 
 These are the environments currently implemented by LawEvo adapters. Other Gymnasium
 environments can be added, but require an adapter defining observation-to-signal mapping,
@@ -236,6 +252,68 @@ action semantics, classical structures, success criteria, and task-specific prom
 The Panda-Gym tasks use PyBullet and dense-reward `v3` environments with normalized
 end-effector displacement control. Install all benchmark dependencies, including
 `panda-gym==3.0.7`, with `py -m pip install -e ".[benchmarks]"`.
+
+### ManiSkill commands
+
+ManiSkill uses its standard single-environment CPU simulation, `state_dict` observations,
+dense rewards, and the Panda `pd_ee_delta_pose` controller. Its action is normalized
+`[delta_xyz, delta_axis_angle, gripper]`; the LawEvo signals command translation and the
+gripper while leaving axis-angle rotation neutral. Install it with the other benchmark
+dependencies (ManiSkill 3.x is required):
+
+```powershell
+py -m pip install -e ".[benchmarks]"
+```
+
+Then run either supported task:
+
+```powershell
+py -m experiments.gymnasium_classical_benchmarks --environment PushCube-v1 --generations 20 --train-episodes 6 --test-episodes 30
+py -m experiments.gymnasium_classical_benchmarks --environment PickCube-v1 --generations 20 --train-episodes 6 --test-episodes 30
+```
+
+On Windows, ManiSkill supports CPU simulation but not GPU simulation. Rendering also
+requires a working Vulkan setup; these headless state-based benchmarks do not request a
+render mode.
+
+### Genesis World GPU commands
+
+Genesis World runs the Franka, cube, IK controller, and multiple independent rollouts on
+the CUDA GPU. LawEvo batches the CEM population and training seeds into one reusable scene;
+this is the accelerated path on Windows. The default batch size is 32, selected to fit a
+4 GB GPU. Lower it to 8 or 16 if other applications are consuming VRAM, or raise it on a
+larger GPU.
+
+```powershell
+py -m pip install -e ".[benchmarks]"
+
+py -m experiments.gymnasium_classical_benchmarks `
+  --environment GenesisPushCube-v0 `
+  --genesis-batch-size 32 `
+  --generations 20 `
+  --train-episodes 6 `
+  --test-episodes 30
+
+py -m experiments.gymnasium_classical_benchmarks `
+  --environment GenesisPickCube-v0 `
+  --genesis-batch-size 32 `
+  --generations 20 `
+  --train-episodes 6 `
+  --test-episodes 30
+```
+
+The first Genesis launch JIT-compiles its GPU kernels and can take roughly one minute on
+this machine. Later evaluations in the same benchmark process reuse the compiled scene.
+For a quick validation before the full 20-generation protocol:
+
+```powershell
+py -m experiments.gymnasium_classical_benchmarks `
+  --environment GenesisPushCube-v0 `
+  --genesis-batch-size 8 `
+  --generations 2 --proposals 2 `
+  --cem-iterations 2 --cem-population 8 `
+  --train-episodes 2 --test-episodes 5
+```
 
 ### Panda-Gym commands
 
@@ -279,6 +357,67 @@ The original unicycle PID-structure experiment is available with:
 py -m experiments.evolve_pid_structure_nim `
   --output results/pid_structure_nim
 ```
+
+## MorpLaw: morphology × law co-evolution
+
+MorpLaw co-evolves the robot's MJCF morphology and its symbolic control law. Each
+individual is a **(morphology, structure) pair**; CEM tunes every pair's gains with an
+equal simulation budget, and the pair is scored with mass-normalized energy plus a
+morphology-cost penalty so bigger bodies cannot buy fitness with size or actuator
+strength.
+
+### Bidirectional experience
+
+Each generation proposes laws (on the incumbent body) and body variants (under the
+incumbent law). The one-sided cross evaluations isolate each side's contribution, and
+their results feed two context-tagged belief channels:
+
+- `morph_to_law` — **measured facts**: how law variants behave on the current body.
+- `law_to_morph` — **hypotheses**: what the current law's failures imply about body
+  bottlenecks (gear, mass, limb length). Hypotheses must survive the next generation's
+  cross evaluation to stay in the belief space.
+
+`cross_direction` gates the channels for ablation: `both`, `m_to_l`, `l_to_m`, `none`.
+`morphology_frozen` reproduces the law-only LawEvo baseline; `law_frozen` reproduces the
+RoboMoRe-style sequential baseline (fixed law, evolve morphology only).
+
+### Morphology representation
+
+Morphology fields are substituted into vendored, parameterized MJCF assets
+(`lawevo/morplaw/assets/`) with coupled geometry rules (a longer thigh moves the leg
+body). `MorphologyTemplate.compile` is the MuJoCo validity gate, and the rendered XML is
+cached under the system temp directory. Two template families ship:
+
+- **Parametric** (topology fixed; observation/action sizes never change): `walker2d`
+  (8 fields), `reacher` (7), `hopper` (8), `half_cheetah` (8), `swimmer` (6), `ant` (6).
+- **Topology-changing** (count fields change the joint/actuator count and therefore the
+  observation/action dimensions; the law space is unchanged because each `GymStructure`
+  term carries one scalar gain): `swimmer_topology` (`n_links` 3..6) and `ant_topology`
+  (`n_legs` 4..6). The locomotion adapters derive their per-actuator patterns from the
+  live action dimension, and `morph_cost` penalizes count fields per added unit.
+
+### Running
+
+```powershell
+py -m experiments.evolve_morplaw --environment reacher
+py -m experiments.evolve_morplaw --environment walker2d
+py -m experiments.evolve_morplaw --environment swimmer_topology
+py -m experiments.evolve_morplaw --environment ant_topology
+```
+
+Defaults: 5 generations, 4 proposals per side, CEM 5 iterations × 24 population, 6
+training and 30 held-out episodes. One invocation runs the classical, `law_only`,
+`morph_only`, `none`, `m_to_l`, `l_to_m`, and `both` variants, writes
+`results/morplaw_<environment>/` with the comparison plot, `results.json`,
+`nim_responses.json`, and a resumable `records.jsonl` pair cache:
+
+```powershell
+py -m experiments.evolve_morplaw --environment walker2d --resume
+py -m experiments.evolve_morplaw --environment reacher --variants classical  # no API key needed
+```
+
+MorpLaw tests require the benchmarks extras; they are skipped automatically on a
+NumPy-only install (`pytest.importorskip`).
 
 ## Barrier syntax
 

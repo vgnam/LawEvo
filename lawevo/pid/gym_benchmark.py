@@ -563,7 +563,6 @@ class SwimmerAdapter(BenchmarkAdapter):
     energy_weight, jerk_weight = 0.01, 0.000001
     target_speed = 0.2
     phase_frequency = 1.0
-    phase_offsets = np.array([0.0, np.pi])
 
     def prepare_reset(self, env, observation, seed):
         rng = np.random.default_rng(seed + 4201)
@@ -586,26 +585,29 @@ class SwimmerAdapter(BenchmarkAdapter):
     def features(self, env, observation, memory, dt):
         del observation
         data = env.unwrapped.data
-        joint_position = np.asarray(data.qpos[3:5], dtype=float)
-        joint_velocity = np.asarray(data.qvel[3:5], dtype=float)
+        nu = int(data.ctrl.size)
+        joint_position = np.asarray(data.qpos[3 : 3 + nu], dtype=float)
+        joint_velocity = np.asarray(data.qvel[3 : 3 + nu], dtype=float)
         posture_error = -joint_position
         memory["integral"] = np.clip(
             memory["integral"] + posture_error * dt, -2.0, 2.0
         )
         phase = 2 * np.pi * self.phase_frequency * float(memory["step"]) * dt
         memory["step"] += 1
+        alternating = np.resize(np.array([1.0, -1.0]), nu)
+        phase_offsets = np.resize(np.array([0.0, np.pi]), nu)
         return {
-            "phase_sin": np.sin(phase + self.phase_offsets),
-            "phase_cos": np.cos(phase + self.phase_offsets),
+            "phase_sin": np.sin(phase + phase_offsets),
+            "phase_cos": np.cos(phase + phase_offsets),
             "posture_error": posture_error,
             "joint_velocity": joint_velocity,
             "integral_posture": memory["integral"],
             "tanh_posture": np.tanh(2.0 * posture_error),
             "tanh_velocity": np.tanh(joint_velocity),
-            "body_angle": float(data.qpos[2]) * np.array([1.0, -1.0]),
-            "lateral_velocity": float(data.qvel[1]) * np.array([1.0, -1.0]),
+            "body_angle": float(data.qpos[2]) * alternating,
+            "lateral_velocity": float(data.qvel[1]) * alternating,
             "forward_speed_error": (self.target_speed - float(data.qvel[0]))
-            * np.ones(2),
+            * np.ones(nu),
         }
 
     def success(self, env, observation, steps, terminated):
@@ -617,17 +619,39 @@ class SwimmerAdapter(BenchmarkAdapter):
 
 
 class FreeJointLocomotionAdapter(LocomotionAdapter):
-    """Locomotion features read from MuJoCo state for free-root robots."""
+    """Locomotion features read from MuJoCo state for free-root robots.
+
+    Topology-changing morphologies vary the actuator count, so adapters may
+    override `joint_order_for` and `patterns_for` to derive their layouts from
+    the live action dimension instead of fixed class attributes.
+    """
 
     joint_order: np.ndarray
     roll_pattern: np.ndarray
     pitch_pattern: np.ndarray
 
+    def joint_order_for(self, nu: int) -> np.ndarray:
+        return self.joint_order
+
+    def patterns_for(self, nu: int) -> dict[str, np.ndarray]:
+        del nu
+        return {
+            "phase_offsets": self.phase_offsets,
+            "roll_pattern": self.roll_pattern,
+            "pitch_pattern": self.pitch_pattern,
+            "balance_pattern": self.balance_pattern,
+            "height_pattern": self.height_pattern,
+            "speed_pattern": self.speed_pattern,
+        }
+
     def features(self, env, observation, memory, dt):
         del observation
         data = env.unwrapped.data
-        joint_position = np.asarray(data.qpos[7:], dtype=float)[self.joint_order]
-        joint_velocity = np.asarray(data.qvel[6:], dtype=float)[self.joint_order]
+        nu = int(data.ctrl.size)
+        joint_order = self.joint_order_for(nu)
+        patterns = self.patterns_for(nu)
+        joint_position = np.asarray(data.qpos[7:], dtype=float)[joint_order]
+        joint_velocity = np.asarray(data.qvel[6:], dtype=float)[joint_order]
         posture_error = -joint_position
         memory["integral"] = np.clip(memory["integral"] + posture_error * dt, -2.0, 2.0)
         phase = 2 * np.pi * self.phase_frequency * float(memory["step"]) * dt
@@ -638,16 +662,17 @@ class FreeJointLocomotionAdapter(LocomotionAdapter):
         height_error = self.target_height - float(data.qpos[2])
         speed_error = self.target_speed - float(data.qvel[0])
         return {
-            "phase_sin": np.sin(phase + self.phase_offsets),
-            "phase_cos": np.cos(phase + self.phase_offsets),
+            "phase_sin": np.sin(phase + patterns["phase_offsets"]),
+            "phase_cos": np.cos(phase + patterns["phase_offsets"]),
             "posture_error": posture_error,
             "joint_velocity": joint_velocity,
             "integral_posture": memory["integral"],
             "tanh_posture": np.tanh(2 * posture_error),
             "tanh_velocity": np.tanh(joint_velocity),
-            "body_angle": roll * self.roll_pattern + pitch * self.pitch_pattern,
-            "height_error": height_error * self.height_pattern,
-            "forward_speed_error": speed_error * self.speed_pattern,
+            "body_angle": roll * patterns["roll_pattern"]
+            + pitch * patterns["pitch_pattern"],
+            "height_error": height_error * patterns["height_pattern"],
+            "forward_speed_error": speed_error * patterns["speed_pattern"],
         }
 
     def success(self, env, observation, steps, terminated):
@@ -659,19 +684,51 @@ class FreeJointLocomotionAdapter(LocomotionAdapter):
         )
 
 
+def _ant_patterns(nu: int) -> dict[str, np.ndarray]:
+    """Per-actuator patterns for an Ant with nu actuators (two per leg: hip, ankle).
+
+    For the default four-legged Ant (nu=8) this reproduces the historical
+    hardcoded pattern arrays exactly; larger leg counts extend the same rules.
+    """
+    n_legs = nu // 2
+    phase: list[float] = []
+    roll: list[float] = []
+    pitch: list[float] = []
+    height: list[float] = []
+    speed: list[float] = []
+    for leg in range(n_legs):
+        pair = (leg // 2) % 2
+        diagonal = 1.0 if (leg % 4) in (0, 3) else -1.0
+        phase_leg = 0.0 if diagonal > 0 else np.pi
+        phase.extend([phase_leg, phase_leg])
+        roll_sign = 1.0 if leg % 2 == 0 else -1.0
+        roll.extend([1.0 * roll_sign, 0.4 * roll_sign])
+        pitch_sign = 1.0 if pair == 0 else -1.0
+        pitch.extend([1.0 * pitch_sign, 0.4 * pitch_sign])
+        height.extend([1.0, 0.5])
+        speed.extend([1.0 * diagonal, 0.5 * diagonal])
+    return {
+        "phase_offsets": np.array(phase),
+        "roll_pattern": np.array(roll),
+        "pitch_pattern": np.array(pitch),
+        "balance_pattern": np.zeros(nu),
+        "height_pattern": np.array(height),
+        "speed_pattern": np.array(speed),
+    }
+
+
 class AntAdapter(FreeJointLocomotionAdapter):
     env_id = "Ant-v5"
     action_dim = 8
-    joint_order = np.arange(8)
     target_height = 0.65
     target_speed = 1.5
     phase_frequency = 1.5
-    phase_offsets = np.array([0.0, 0.0, np.pi, np.pi, np.pi, np.pi, 0.0, 0.0])
-    roll_pattern = np.array([1.0, 0.4, -1.0, -0.4, 1.0, 0.4, -1.0, -0.4])
-    pitch_pattern = np.array([1.0, 0.4, 1.0, 0.4, -1.0, -0.4, -1.0, -0.4])
-    balance_pattern = np.zeros(8)
-    height_pattern = np.array([1.0, 0.5, 1.0, 0.5, 1.0, 0.5, 1.0, 0.5])
-    speed_pattern = np.array([1.0, 0.5, -1.0, -0.5, -1.0, -0.5, 1.0, 0.5])
+
+    def joint_order_for(self, nu: int) -> np.ndarray:
+        return np.arange(nu)
+
+    def patterns_for(self, nu: int) -> dict[str, np.ndarray]:
+        return _ant_patterns(nu)
 
 
 class HumanoidAdapter(FreeJointLocomotionAdapter):
@@ -1075,14 +1132,17 @@ def evaluate_gym_structure(
 ) -> tuple[GymMetrics, list[GymEpisode]]:
     if not set(structure.terms) <= set(adapter.allowed_terms):
         raise ValueError("structure uses unavailable terms")
-    episodes = (
-        [run_episode(adapter, structure, gains, seed) for seed in seeds]
-        if envs is None
-        else [
-            run_episode(adapter, structure, gains, seed, env=env)
-            for seed, env in zip(seeds, envs, strict=True)
-        ]
-    )
+    if envs is None and hasattr(adapter, "evaluate_episodes"):
+        episodes = adapter.evaluate_episodes(structure, gains, seeds)
+    else:
+        episodes = (
+            [run_episode(adapter, structure, gains, seed) for seed in seeds]
+            if envs is None
+            else [
+                run_episode(adapter, structure, gains, seed, env=env)
+                for seed, env in zip(seeds, envs, strict=True)
+            ]
+        )
     episode_return = float(np.mean([item.episode_return for item in episodes]))
     success = float(np.mean([item.success for item in episodes]))
     energy = float(np.mean([item.energy for item in episodes]))
@@ -1105,6 +1165,25 @@ def tune_gym_cem(
     rng = np.random.default_rng(int.from_bytes(digest[:4], "little"))
     dimension = len(structure.terms)
     mean, sigma = np.zeros(dimension), np.full(dimension, 3.0)
+    if hasattr(adapter, "evaluate_gain_batch"):
+        best_gains = mean.copy()
+        best_metrics = adapter.evaluate_gain_batch(structure, mean[None, :], seeds)[0]
+        elite_count = max(2, round(0.2 * population_size))
+        for _ in range(iterations):
+            samples = np.clip(rng.normal(mean, sigma, size=(population_size, dimension)), -20, 20)
+            metrics = adapter.evaluate_gain_batch(structure, samples, seeds)
+            scored = sorted(
+                zip(samples, metrics, strict=True),
+                key=lambda item: item[1].score,
+                reverse=True,
+            )
+            elites = np.vstack([item[0] for item in scored[:elite_count]])
+            mean = 0.25 * mean + 0.75 * elites.mean(axis=0)
+            sigma = np.maximum(0.05, 0.25 * sigma + 0.75 * elites.std(axis=0))
+            if scored[0][1].score > best_metrics.score:
+                best_gains, best_metrics = scored[0][0].copy(), scored[0][1]
+        return best_gains, best_metrics
+
     envs = [adapter.make_env() for _ in seeds]
     try:
         best_gains = mean.copy()
