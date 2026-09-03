@@ -24,4 +24,4 @@
 
 | variant | best pair | train score | held-out score |
 |---|---|---:|---:|
-| full | `Minimal Bounded PD + Task‑Space Damping@{density0=1000, density1=1000, gear=400, l0=0.06, l1=0.06, r0=0.01, r1=0.01}` | -3.802 | -3.638 |
+| full | `Bounded PD without Integral (Ablation Test)@{density0=900, density1=900, gear=400, l0=0.14, l1=0.14, r0=0.011, r1=0.011}` | -6.036 | -5.798 |
