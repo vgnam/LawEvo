@@ -33,7 +33,7 @@ def test_new_adapter_features_match_action_space(adapter_key: str) -> None:
         assert all(np.asarray(value).shape == (action_dim,) for value in features.values())
         assert all(np.isfinite(value).all() for value in features.values())
         for baseline in adapter.classical:
-            assert set(baseline.terms) <= set(adapter.allowed_terms)
+            assert set(baseline.signals) <= set(adapter.allowed_terms)
 
         next_observation, reward, *_ = env.step(np.zeros(action_dim, dtype=np.float32))
         assert np.isfinite(next_observation).all()
@@ -59,6 +59,6 @@ def test_swimmer_reset_drift_is_not_success() -> None:
     adapter = LOCOMOTION_ADAPTERS["swimmer"]
     structure = adapter.classical[0]
 
-    episode = run_episode(adapter, structure, np.zeros(len(structure.terms)), seed=7)
+    episode = run_episode(adapter, structure, np.zeros(structure.parameter_count), seed=7)
 
     assert not episode.success

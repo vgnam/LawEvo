@@ -30,8 +30,8 @@ def test_timestamped_environment_artifact_layout(tmp_path, monkeypatch) -> None:
 
     def fake_complete(self, system, prompt, **kwargs):
         del self, system, kwargs
-        allowed = json.loads(re.search(r"Allowed terms: (\[[^\n]+\])", prompt).group(1))
-        return json.dumps([{"name": "smoke_evolved", "terms": [allowed[-1]]}])
+        allowed = json.loads(re.search(r"Allowed signals: (\[[^\n]+\])", prompt).group(1))
+        return json.dumps([{"name": "smoke_evolved", "expression": f"K1*{allowed[-1]}"}])
 
     monkeypatch.setattr(NVIDIAChatClient, "complete", fake_complete)
     monkeypatch.setenv("NVIDIA_API_KEY", "smoke-only")

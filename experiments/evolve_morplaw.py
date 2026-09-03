@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import getpass
 import json
-import os
 from pathlib import Path
 
 import matplotlib as mpl
@@ -14,7 +13,9 @@ from lawevo.evolve.nvidia_nim import (
     DEFAULT_NVIDIA_BASE_URL,
     DEFAULT_NVIDIA_MODEL,
     NVIDIAChatClient,
+    env_setting,
     load_env_file,
+    resolve_endpoint,
 )
 from lawevo.morplaw import (
     ARM_ADAPTERS,
@@ -203,8 +204,7 @@ def record_from_json(payload: dict[str, object]) -> PairRecord:
     from lawevo.morplaw.grammar import RobotGraphSpec
     from lawevo.pid.gym_benchmark import GymStructure
 
-    structure_payload = payload["structure"]
-    structure = GymStructure(structure_payload["name"], tuple(structure_payload["terms"]))
+    structure = GymStructure.from_dict(payload["structure"])
     spec_payload = payload["spec"]
     spec = (
         RobotGraphSpec.from_dict(spec_payload)
@@ -307,9 +307,15 @@ def main() -> None:
     parser.add_argument(
         "--output", type=Path, default=None, help="defaults to results/morplaw_<environment>"
     )
-    parser.add_argument("--model", default=os.environ.get("NVIDIA_MODEL", DEFAULT_NVIDIA_MODEL))
     parser.add_argument(
-        "--base-url", default=os.environ.get("NVIDIA_BASE_URL", DEFAULT_NVIDIA_BASE_URL)
+        "--model",
+        default=env_setting("OPENAI_MODEL", "NVIDIA_MODEL", default=DEFAULT_NVIDIA_MODEL),
+    )
+    parser.add_argument(
+        "--base-url",
+        default=resolve_endpoint(
+            env_setting("OPENAI_BASE_URL", "NVIDIA_BASE_URL", default=DEFAULT_NVIDIA_BASE_URL)
+        ),
     )
     parser.add_argument("--generations", type=int, default=5)
     parser.add_argument("--proposals-per-side", type=int, default=4)
@@ -332,9 +338,9 @@ def main() -> None:
     args = parser.parse_args()
     output = args.output or Path(f"results/morplaw_{args.environment}")
     output.mkdir(parents=True, exist_ok=True)
-    api_key = os.environ.get("NVIDIA_API_KEY") or getpass.getpass("NVIDIA API key: ")
+    api_key = env_setting("OPENAI_API_KEY", "NVIDIA_API_KEY") or getpass.getpass("API key: ")
     if not api_key:
-        raise SystemExit("NVIDIA_API_KEY is required for MorpLaw ablations")
+        raise SystemExit("Set OPENAI_API_KEY (or NVIDIA_API_KEY) in .env")
 
     adapter = ENV_ADAPTERS[TEMPLATE_ADAPTERS[args.environment]]
     template = TEMPLATES[args.environment]

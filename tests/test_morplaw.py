@@ -59,7 +59,12 @@ def _reacher_stub_law(prefix: str = "stub"):
         return [
             GymStructure(
                 f"{prefix}_{generation}_{index}",
-                tuple(terms_pool[(generation + index) % len(terms_pool) :][:2]),
+                " + ".join(
+                    f"K{i + 1}*{name}"
+                    for i, name in enumerate(
+                        terms_pool[(generation + index) % len(terms_pool) :][:2]
+                    )
+                ),
             )
             for index in range(count)
         ]
@@ -278,7 +283,7 @@ def test_pid_arm_prompts_have_complete_task_specific_context() -> None:
         incumbent = PairRecord(
             template.default_spec(),
             structure,
-            np.zeros(len(structure.terms)),
+            np.zeros(structure.parameter_count),
             metrics,
             0,
         )
@@ -316,7 +321,7 @@ def test_pid_arm_pair_cache_is_task_scoped(tmp_path) -> None:
     record = PairRecord(
         template.default_spec(),
         structure,
-        np.zeros(len(structure.terms)),
+        np.zeros(structure.parameter_count),
         PairMetrics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1, 0.0, 1.0),
         0,
     )
@@ -483,16 +488,16 @@ def test_morplaw_engine_evolves_complete_robot_graphs(monkeypatch) -> None:
     def fake_tune(adapter, body_template, spec, structure, seeds, **kwargs):
         del adapter, body_template, seeds, kwargs
         counts = spec.counts()
-        score = 10.0 * counts["body_segments"] + counts["wheels"] + len(structure.terms)
-        metrics = PairMetrics(score, score, 1.0, 1.0, 0.1, 0.1, len(structure.terms), 0.1, 5.0)
-        return np.zeros(len(structure.terms)), metrics, 1
+        score = 10.0 * counts["body_segments"] + counts["wheels"] + structure.parameter_count
+        metrics = PairMetrics(score, score, 1.0, 1.0, 0.1, 0.1, structure.parameter_count, 0.1, 5.0)
+        return np.zeros(structure.parameter_count), metrics, 1
 
     monkeypatch.setattr("lawevo.morplaw.engine.tune_pair_cem", fake_tune)
 
     def laws(incumbent, knowledge, count, generation):
         del incumbent, knowledge, generation
         return [
-            GymStructure("graph_pd", ("phase_sin", "posture_error", "joint_velocity"))
+            GymStructure("graph_pd", "K1*phase_sin + K2*posture_error + K3*joint_velocity")
             for _ in range(count)
         ]
 
@@ -598,7 +603,7 @@ def test_archive_dedup_skips_reevaluation() -> None:
     structure = REACHER.classical[0]
 
     def constant_law(incumbent, belief, count, generation):
-        return [GymStructure("constant", structure.terms) for _ in range(count)]
+        return [structure.renamed("constant") for _ in range(count)]
 
     def constant_morph(incumbent, belief, count, generation):
         return [template.default_spec() for _ in range(count)]
@@ -788,7 +793,7 @@ def test_directed_knowledge_keeps_positive_and_negative_with_soft_retrieval() ->
 
 def test_knowledge_first_proposal_parsers_preserve_hypotheses() -> None:
     laws = extract_law_proposals(
-        """[{"name":"bounded_pd","terms":["tanh_jt_error","task_damping"],
+        """[{"name":"bounded_pd","expression":"K1*tanh(jt_error) + K2*task_damping",
         "knowledge":{"summary":"bounded error needs damping",
         "recommendation":"pair bounded error with task damping",
         "condition":"light high-gear links",
@@ -1021,7 +1026,12 @@ def test_topology_runner_smoke() -> None:
         return [
             GymStructure(
                 f"top_{generation}_{index}",
-                tuple(pool[(generation + index) % len(pool) :][:2]),
+                " + ".join(
+                    f"K{i + 1}*{name}"
+                    for i, name in enumerate(
+                        pool[(generation + index) % len(pool) :][:2]
+                    )
+                ),
             )
             for index in range(count)
         ]

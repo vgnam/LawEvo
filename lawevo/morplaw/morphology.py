@@ -169,9 +169,9 @@ class MorphologyTemplate:
             topology_note = (
                 "Topology fields (kind 'count') change the number of joints, actuators, and "
                 "therefore the observation/action dimensions. The controller law is "
-                "dimension-agnostic (one scalar gain per term), so the same law structure "
-                "applies to every proposed body; CEM re-tunes the gains per pair. Count "
-                "values must be integers inside the declared bounds."
+                "dimension-agnostic (vector-valued signals, one scalar gain per K slot), so "
+                "the same law expression applies to every proposed body; CEM re-tunes the "
+                "gains per pair. Count values must be integers inside the declared bounds."
             )
         else:
             topology_note = (

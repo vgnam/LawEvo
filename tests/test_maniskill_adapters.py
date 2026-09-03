@@ -29,7 +29,7 @@ def test_maniskill_adapter_features_match_delta_pose_action(adapter_key: str) ->
     assert all(np.asarray(value).shape == (7,) for value in features.values())
     assert all(np.isfinite(value).all() for value in features.values())
     for baseline in adapter.classical:
-        assert set(baseline.terms) <= set(adapter.allowed_terms)
+        assert set(baseline.signals) <= set(adapter.allowed_terms)
 
 
 def test_maniskill_adapters_have_task_specific_prompt_context() -> None:

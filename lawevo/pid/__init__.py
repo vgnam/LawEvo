@@ -8,6 +8,14 @@ from lawevo.pid.benchmark import (
     grid_tune,
     simulate_pid,
 )
+from lawevo.pid.expression import (
+    BINARY_FNS,
+    MAX_DEPTH,
+    MAX_NODES,
+    MAX_PARAMS,
+    UNARY_FNS,
+    SymbolicExpression,
+)
 from lawevo.pid.genesis_benchmark import GENESIS_ADAPTERS
 from lawevo.pid.gym_benchmark import (
     ADAPTERS,
@@ -34,13 +42,18 @@ from lawevo.pid.structure import (
 
 __all__ = [
     "ADAPTERS",
+    "BINARY_FNS",
     "DISTANCE_TERMS",
     "GENESIS_ADAPTERS",
     "HEADING_TERMS",
     "LOCOMOTION_ADAPTERS",
     "MANISKILL_ADAPTERS",
+    "MAX_DEPTH",
+    "MAX_NODES",
+    "MAX_PARAMS",
     "PANDA_GYM_ADAPTERS",
     "ROBOSUITE_ADAPTERS",
+    "UNARY_FNS",
     "VELOCITY_GATES",
     "ControllerStructure",
     "GymMetrics",
@@ -49,6 +62,7 @@ __all__ = [
     "PIDGains",
     "PIDMetrics",
     "PIDScenario",
+    "SymbolicExpression",
     "evaluate_gains",
     "evaluate_gym_structure",
     "evaluate_structure",

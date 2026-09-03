@@ -133,14 +133,14 @@ def tune_pair_cem(
             {
                 "env": adapter.env_id,
                 "template": template.cache_namespace(),
-                "terms": structure.terms,
+                "law": structure.to_expression_string(),
                 "morph": spec.key(),
             },
             sort_keys=True,
         ).encode()
     ).digest()
     rng = np.random.default_rng(int.from_bytes(digest[:4], "little"))
-    dimension = len(structure.terms)
+    dimension = structure.parameter_count
     mean, sigma = np.zeros(dimension), np.full(dimension, 3.0)
     envs = [make_morph_env(adapter, template, spec) for _ in seeds]
     episode_count = 0
@@ -174,6 +174,4 @@ def tune_pair_cem(
 
 
 def pair_formula(structure: GymStructure, gains: np.ndarray) -> str:
-    return " + ".join(
-        f"({gain:.4g})*{term}" for gain, term in zip(gains, structure.terms, strict=True)
-    )
+    return structure.formula(gains)

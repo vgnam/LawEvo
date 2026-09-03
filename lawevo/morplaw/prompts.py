@@ -98,7 +98,7 @@ CURRENT BODY (this proposal round changes the controller only, never the body)
 {json.dumps(incumbent.spec.to_dict(), indent=2)}
 
 CURRENT PAIR DIAGNOSTICS
-law terms = {json.dumps(list(incumbent.structure.terms))}
+law = {incumbent.structure.to_expression_string()}
 CEM gains = {json.dumps(incumbent.gains.tolist())}
 metrics = {json.dumps(incumbent.metrics.to_dict(), sort_keys=True)}
 
@@ -108,14 +108,22 @@ RETRIEVED MORPHOLOGY-TO-LAW KNOWLEDGE
 AVAILABLE SIGNALS
 {_context_lookup(task_key, "terms")}
 
-The controller is a weighted sum of the selected signals. Do NOT propose numeric gains:
-every gain K is tuned afterward by an equal-budget Cross-Entropy Method; you select only
-the signal terms, 1-8 unique terms from the allowed list. Vector-valued terms combine
-componentwise (one scalar gain per term), so the same structure applies to any actuator
-count. Add a term only when the task, the body geometry, or the experience above suggests
-the signal helps on this specific body.
+The controller is a free-form mathematical expression over the allowed signals, written in
+this grammar: sums (`a + b`), products (`a*b`), unary functions (`tanh(a)`, `sin(a)`,
+`cos(a)`, `sqrt(a)`, `square(a)`, `abs(a)`, `exp(a)`), pairwise `min(a, b)` / `max(a, b)`,
+parentheses, and signed numeric constants. Every tuned scalar is written as a `K` token
+(`K1`, `K2`, ...); reusing the same `K` name ties those places to one shared gain. Do NOT
+invent numeric gain values: every `K` slot is tuned afterward by an equal-budget
+Cross-Entropy Method; you choose only the expression structure. Vector-valued signals
+combine componentwise (one scalar gain per `K` slot), so the same law applies to any
+actuator count. Compose nonlinearity deliberately — saturations like `tanh`, gating via
+`min`/`max`, multiplicative coupling like `error*velocity` — only when the task, the body
+geometry, or the experience above suggests it helps on this specific body. Keep laws small:
+at most 16 structural nodes, depth 5, and 12 distinct `K` slots.
 
-Allowed term names: {json.dumps(list(adapter.allowed_terms))}
+Allowed signal names: {json.dumps(list(adapter.allowed_terms))}
+
+Write each law as a single expression string under the key "expression".
 
 {EFFICIENCY_GUIDANCE}
 
@@ -125,7 +133,8 @@ ELITE PAIRS (body, structure, CEM-tuned metrics) ranked by score:
 First form a falsifiable morphology-to-law hypothesis, then ground it as a controller
 structure. Propose structurally diverse mutations and crossovers rather than cosmetic edits.
 Return ONLY a JSON array of exactly {count} objects with this schema:
-{{"name": "...", "terms": ["..."], "knowledge": {{"summary": "mechanistic rationale",
+{{"name": "...", "expression": "K1*tanh(K2*signal) + K3*signal*signal", "knowledge":
+{{"summary": "mechanistic rationale",
 "recommendation": "actionable law design rule", "condition": "when it applies",
 "prediction": {{"score": "increase", "success_rate": "non_decrease",
 "energy_norm": "decrease|non_increase|unknown", "jerk": "decrease|unknown"}}}}}}
@@ -176,7 +185,7 @@ CONTROL GOAL
 {_context_lookup(task_key, "goal")}
 
 CURRENT LAW (fixed for this proposal round; gains already tuned by CEM)
-{incumbent.structure.name}: terms = {json.dumps(list(incumbent.structure.terms))}
+{incumbent.structure.name}: {incumbent.structure.to_expression_string()}
 CEM gains = {json.dumps(incumbent.gains.tolist())}
 CURRENT PAIR METRICS = {json.dumps(incumbent.metrics.to_dict(), sort_keys=True)}
 
@@ -211,7 +220,7 @@ def law_knowledge_query(task_key: str, incumbent: PairRecord) -> dict[str, objec
     return {
         "task": task_key,
         "morphology": incumbent.spec.to_dict(),
-        "law_terms": list(incumbent.structure.terms),
+        "law_expression": incumbent.structure.to_expression_string(),
         "metrics": incumbent.metrics.to_dict(),
     }
 
@@ -219,7 +228,7 @@ def law_knowledge_query(task_key: str, incumbent: PairRecord) -> dict[str, objec
 def morphology_knowledge_query(task_key: str, incumbent: PairRecord) -> dict[str, object]:
     return {
         "task": task_key,
-        "law_terms": list(incumbent.structure.terms),
+        "law_expression": incumbent.structure.to_expression_string(),
         "morphology": incumbent.spec.to_dict(),
         "metrics": incumbent.metrics.to_dict(),
     }
@@ -253,15 +262,24 @@ def extract_law_proposals(
         if not isinstance(item, dict):
             continue
         try:
-            structure = GymStructure(
-                str(item.get("name", f"proposal_{index}"))[:50], tuple(item["terms"])
-            )
+            if "expression" in item:
+                structure = GymStructure(
+                    str(item.get("name", f"proposal_{index}"))[:50], item["expression"]
+                )
+            else:
+                structure = GymStructure(
+                    str(item.get("name", f"proposal_{index}"))[:50], tuple(item["terms"])
+                )
         except (KeyError, TypeError, ValueError):
             continue
-        if set(structure.terms) <= set(allowed) and structure.key() not in {
+        try:
+            structure.validate(allowed)
+        except ValueError:
+            continue
+        if structure.key() not in {
             existing.structure.key() for existing in output
         }:
-            modification = f"select law terms {', '.join(structure.terms)}"
+            modification = f"set law expression {structure.to_expression_string()}"[:160]
             output.append(
                 LawProposal(
                     structure,

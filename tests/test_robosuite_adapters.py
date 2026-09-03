@@ -23,7 +23,7 @@ def test_robosuite_adapter_features_match_osc_action(adapter_key: str) -> None:
         assert all(np.asarray(value).shape == (action_dim,) for value in features.values())
         assert all(np.isfinite(value).all() for value in features.values())
         for baseline in adapter.classical:
-            assert set(baseline.terms) <= set(adapter.allowed_terms)
+            assert set(baseline.signals) <= set(adapter.allowed_terms)
 
         _, reward, terminated, truncated, _ = env.step(
             np.zeros(action_dim, dtype=np.float32)

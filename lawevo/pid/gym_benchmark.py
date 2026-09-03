@@ -9,25 +9,16 @@ import mujoco
 import numpy as np
 from scipy.linalg import solve_discrete_are
 
+from lawevo.pid.expression import SymbolicExpression
+
+# Backward-compatible alias: the evolved law genome is now a free-form symbolic
+# expression instead of a flat term list. Legacy callers that construct laws
+# from a term tuple still work (they build the equivalent linear expression).
+GymStructure = SymbolicExpression
+
 
 def _wrap(value: float) -> float:
     return float((value + np.pi) % (2 * np.pi) - np.pi)
-
-
-@dataclass(frozen=True)
-class GymStructure:
-    name: str
-    terms: tuple[str, ...]
-
-    def __post_init__(self) -> None:
-        if not 1 <= len(self.terms) <= 8 or len(set(self.terms)) != len(self.terms):
-            raise ValueError("a structure requires 1-8 unique terms")
-
-    def key(self) -> tuple[str, ...]:
-        return self.terms
-
-    def to_dict(self) -> dict[str, object]:
-        return {"name": self.name, "terms": list(self.terms)}
 
 
 @dataclass(frozen=True)
@@ -1061,7 +1052,7 @@ def inverted_pendulum_lqr() -> tuple[GymStructure, np.ndarray]:
         structure = GymStructure(
             "LQR", ("cart_position", "pole_angle", "cart_velocity", "pole_velocity")
         )
-        # The controller applies u=-Kx; DSL terms are summed as gain_i*signal_i.
+        # The controller applies u=-Kx; expression gain slots are summed as gain_i*signal_i.
         return structure, -k.ravel()
     finally:
         env.close()
@@ -1090,7 +1081,7 @@ def run_episode(
         steps = 0
         for steps in range(1, adapter.horizon + 1):
             features = adapter.features(env, observation, memory, dt)
-            action = sum(gain * features[term] for gain, term in zip(gains, structure.terms))
+            action = structure.evaluate(features, gains)
             action = np.clip(action, env.action_space.low, env.action_space.high).astype(np.float32)
             observation, reward, terminated, truncated, _ = env.step(action)
             total_return += float(reward)
@@ -1118,8 +1109,8 @@ def evaluate_gym_structure(
     *,
     envs: list | None = None,
 ) -> tuple[GymMetrics, list[GymEpisode]]:
-    if not set(structure.terms) <= set(adapter.allowed_terms):
-        raise ValueError("structure uses unavailable terms")
+    if not set(structure.signals) <= set(adapter.allowed_terms):
+        raise ValueError("structure uses unavailable signals")
     if envs is None and hasattr(adapter, "evaluate_episodes"):
         episodes = adapter.evaluate_episodes(structure, gains, seeds)
     else:
@@ -1135,8 +1126,8 @@ def evaluate_gym_structure(
     success = float(np.mean([item.success for item in episodes]))
     energy = float(np.mean([item.energy for item in episodes]))
     jerk = float(np.mean([item.jerk for item in episodes]))
-    score = adapter.score(episode_return, energy, jerk, len(structure.terms))
-    return GymMetrics(score, episode_return, success, energy, jerk, len(structure.terms)), episodes
+    score = adapter.score(episode_return, energy, jerk, structure.complexity)
+    return GymMetrics(score, episode_return, success, energy, jerk, structure.complexity), episodes
 
 
 def tune_gym_cem(
@@ -1148,10 +1139,10 @@ def tune_gym_cem(
     population_size: int = 24,
 ) -> tuple[np.ndarray, GymMetrics]:
     digest = hashlib.sha256(
-        json.dumps({"env": adapter.env_id, "terms": structure.terms}, sort_keys=True).encode()
+        json.dumps({"env": adapter.env_id, "law": structure.to_expression_string()}, sort_keys=True).encode()
     ).digest()
     rng = np.random.default_rng(int.from_bytes(digest[:4], "little"))
-    dimension = len(structure.terms)
+    dimension = structure.parameter_count
     mean, sigma = np.zeros(dimension), np.full(dimension, 3.0)
     if hasattr(adapter, "evaluate_gain_batch"):
         best_gains = mean.copy()

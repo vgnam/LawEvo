@@ -223,12 +223,12 @@ class GenesisAdapter(BenchmarkAdapter):
             jerk = float(np.mean([item.jerk for item in episodes]))
             metrics.append(
                 GymMetrics(
-                    self.score(episode_return, energy, jerk, len(structure.terms)),
+                    self.score(episode_return, energy, jerk, structure.complexity),
                     episode_return,
                     success,
                     energy,
                     jerk,
-                    len(structure.terms),
+                    structure.complexity,
                 )
             )
         return metrics
@@ -261,9 +261,7 @@ class GenesisAdapter(BenchmarkAdapter):
                 features, integral = self._torch_features(
                     scene, tcp, obj, velocity, integral
                 )
-                action = torch.zeros((scene.batch_size, 4), device=scene.device)
-                for term_index, term in enumerate(structure.terms):
-                    action += batch_gains[:, term_index, None] * features[term]
+                action = structure.evaluate_torch(features, batch_gains)
                 action = torch.clamp(action, -1.0, 1.0)
                 scene.apply_action(action)
                 tcp_after = scene.tcp

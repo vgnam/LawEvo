@@ -115,7 +115,7 @@ body wave — in viscous fluid a symmetric back-and-forth stroke or a static pos
 almost no net displacement. The number of links is a design variable: more links give a
 smoother, larger-amplitude body wave and more actuators, but the chain is heavier, harder to
 coordinate, and each extra link adds one hinge motor and increases the action dimension (the
-controller has one scalar gain per term and applies to any number of actuators). Measurable
+controller law is a shared expression and applies to any number of actuators). Measurable
 signals include each joint angle and velocity, body orientation, lateral velocity,
 forward-speed error, and a fixed-frequency oscillation.""",
     "ant_topology": """A three-dimensional multi-legged robot has a spherical torso and
@@ -128,7 +128,7 @@ lasts 300 control steps and ends early if the body becomes unhealthy (torso fall
 is to walk forward: survive the full horizon, keep torso height near 0.65 m with controlled
 roll and pitch, and end above 0.75 m/s. The number of legs is a design variable: more legs
 distribute support and add actuators (two per leg, increasing the action dimension — the
-controller has one scalar gain per term and applies to any leg count), but they add weight
+controller law is a shared expression and applies to any gain slots, any leg count), but they add weight
 and coordination burden. Gaits coordinate legs in diagonal pairs. Longer legs raise the body
 and stride but increase leg inertia and center-of-mass height; stronger gears give more leg
 authority. Training evaluations randomly perturb body masses by +/-10%.""",
@@ -138,8 +138,8 @@ one to four body modules, connect them through rigid, roll, or twist joints, and
 bilaterally mirrored limbs to any body module. Each limb may contain one to three links with
 rigid, roll, knee, or elbow joints and terminate in a contact foot or passive wheel. Every
 non-rigid body or limb joint is torque actuated; passive wheels roll freely. The number and
-ordering of actuators therefore change with the graph. The controller law is shared across
-topologies through one scalar gain per vector-valued signal. Episodes last 300 control steps
+ordering of actuators therefore change with the graph. The controller law is a shared
+expression over vector-valued signals, common to every topology. Episodes last 300 control steps
 and end early if the root body falls. Training evaluations perturb body masses by +/-10%.""",
     "robomorph_ridged": """A free-root three-dimensional modular robot must locomote forward
 across 15 transverse cylindrical ridges. Each ridge has radius 0.2 m and the ridge centers
@@ -169,7 +169,7 @@ CONTROL_GOALS = {
 maximizing return over the 50-step episode; final fingertip-target distance below 0.05
 counts as success across randomized targets and link masses. Near the target, suppress
 overshoot, oscillation, and torque chatter. Among structures with comparable accuracy,
-prefer lower torque energy, smoother torque changes, and fewer terms. A fast initial swing
+prefer lower torque energy, smoother torque changes, and simpler laws. A fast initial swing
 that cannot settle is not success. When designing for THIS body, remember the trade-off the
 morphology imposes: long heavy links need strong low-frequency feedback and damping to stop
 cleanly, while short light links can use more aggressive proportional action.""",
@@ -219,7 +219,7 @@ so the phase relationship between front and rear legs must change with it; longe
 increase limb inertia, and the gear scale sets the whole actuator budget.""",
     "swimmer": """Primary goal: generate sustained forward propulsion for 300 steps and move
 at least 1.0 m from the start. Discover a repeatable traveling body wave, not a static pose
-or one impulse. Minimize torque energy, jerk, lateral drift, and unnecessary terms among
+or one impulse. Minimize torque energy, jerk, lateral drift, and unnecessary complexity among
 comparable swimmers. For THIS body, the wave shape must match the segment lengths: longer
 segments propagate the wave over more body length and need appropriately scaled joint
 amplitudes; heavier/denser segments and weaker gears slow the wave frequency.""",
@@ -233,7 +233,7 @@ authority.""",
     "swimmer_topology": """Primary goal: generate sustained forward propulsion for 300 steps
 and move at least 1.0 m from the start, for any proposed number of links. Discover a
 repeatable traveling body wave. Minimize torque energy, jerk, lateral drift, and unnecessary
-terms among comparable swimmers. Because the law has one scalar gain per term and applies to
+complexity among comparable swimmers. Because the law is a shared expression that applies to
 any actuator count, prefer structures whose signals are naturally periodic and distributed
 (sinusoidal phases, posture, damping) over anything that assumes a fixed joint count. For
 THIS body, the wave must match the number and length of segments: more links allow a
@@ -241,7 +241,7 @@ smoother wave but require the phases to advance evenly along the chain.""",
     "ant_topology": """Primary goal: walk forward quickly, stay healthy for all 300 steps,
 and end above 0.75 m/s, for any proposed number of legs. Maintain torso height near 0.65 m
 and control roll/pitch with coordinated diagonal-leg cycles. Minimize torque energy and jerk
-among equally successful gaits. Because the law has one scalar gain per term and applies to
+among equally successful gaits. Because the law is a shared expression that applies to
 any actuator count, prefer structures whose signals are naturally periodic and distributed
 (sinusoidal phases, posture, damping) over anything that assumes a fixed leg count. For THIS
 body, gaits must respect the leg count and geometry: with more legs, diagonal pairing and
@@ -284,7 +284,7 @@ persistent target offset but can wind up.
 - normalized_jt_error: jt_error divided by its own norm — unit-magnitude direction signal;
 tends to chatter near the target.
 - task_damping: J^T J qdot — damps Cartesian (task-space) motion rather than each joint.""",
-    "pusher": """All terms are seven-vectors aligned with the arm's actuated joints.
+    "pusher": """All signals are seven-vectors aligned with the arm's actuated joints.
 - jt_object_error: J^T(object - fingertip), task-space feedback that acquires contact.
 - jt_goal_error: J^T(goal - object), projected goal direction for the current arm pose.
 - jt_push_error: J^T[(object - fingertip) + 0.5(goal - object)], balancing acquisition and push.
@@ -295,7 +295,7 @@ tends to chatter near the target.
 - task_damping: J^T J qdot, damping motion of the end effector rather than every null-space
   joint equally.
 - posture_error: negative joint positions, a regularizer for redundant arm configurations.""",
-    "locomotion": """All terms are vectors with one component per actuator.
+    "locomotion": """All signals are vectors with one component per actuator.
 - phase_sin / phase_cos: a fixed-frequency traveling oscillation (CPG) whose per-actuator
 phase advances along the body — generates the cyclic motion; both together set amplitude and
 offset.
@@ -311,7 +311,7 @@ correction; keeps the torso upright.
 - height_error: the torso-height deficit weighted per actuator — prevents collapse.
 - forward_speed_error: the target-speed deficit weighted per actuator — accelerates the
 gait.""",
-    "swimmer": """All terms are vectors with one component per actuator.
+    "swimmer": """All signals are vectors with one component per actuator.
 - phase_sin / phase_cos: a fixed-frequency oscillation whose per-actuator phase alternates
 along the chain — the body wave; a traveling wave needs both quadrature components.
 - posture_error: the negative of each joint angle — straightens the chain.
@@ -322,7 +322,7 @@ along the chain — the body wave; a traveling wave needs both quadrature compon
 the wave.
 - lateral_velocity: sideways velocity weighted with alternating signs — cancels drift.
 - forward_speed_error: the forward-speed deficit applied to every actuator.""",
-    "ant": """All terms are vectors with one component per actuator (hip then ankle of each
+    "ant": """All signals are vectors with one component per actuator (hip then ankle of each
 leg).
 - phase_sin / phase_cos: a fixed-frequency oscillation whose per-actuator phase realizes the
 diagonal-leg pattern — the gait generator.
@@ -333,8 +333,8 @@ diagonal-leg pattern — the gait generator.
 - body_angle: torso roll and pitch weighted per actuator — attitude correction.
 - height_error: torso-height deficit weighted per actuator — prevents collapse.
 - forward_speed_error: target-speed deficit weighted per actuator — accelerates the gait.""",
-    "robomorph": """All terms are vectors aligned with the live MuJoCo actuator order; no
-term assumes a fixed number of legs or a fixed joint naming layout.
+    "robomorph": """All signals are vectors aligned with the live MuJoCo actuator order; no
+signal assumes a fixed number of legs or a fixed joint naming layout.
 - phase_sin / phase_cos: a fixed-frequency CPG. Mirrored limb joints receive side- and
   body-position-aware phase offsets; actuated body joints alternate by graph order.
 - posture_error / joint_velocity: position regulation and damping read through MuJoCo's
@@ -511,7 +511,7 @@ mass; higher gear strengthens every joint.""",
 
 EFFICIENCY_GUIDANCE = """Secondary objectives: minimize squared torque energy
 E = sum(dt * ||u||^2) and torque-rate jerk J = sum(dt * ||(u_t - u_{t-1})/dt||^2), and keep
-the structure compact (fewer terms). Never sacrifice survival, success, or return for a
+the structure compact (fewer structural nodes). Never sacrifice survival, success, or return for a
 small energy or complexity gain; seek Pareto improvements, and when one structure cannot
 improve everything, propose distinct variants targeting performance, energy, and
 smoothness."""

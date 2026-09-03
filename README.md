@@ -12,12 +12,16 @@ The central idea is to separate **structure discovery** from **parameter optimiz
 1. A task-specific prompt tells the LLM the environment dynamics, observation/action
    semantics, success conditions, failure modes, available feedback signals, and the
    desired return/energy/jerk trade-off.
-2. The LLM selects signal structures only; it never chooses numeric gains.
-3. Cross-Entropy Method (CEM) optimizes every gain `K` for both evolved structures and
+2. The LLM proposes free-form mathematical expressions over the available signals; it never
+   chooses numeric gains. A law is a symbolic expression tree (sums, products, unary
+   functions `tanh/sin/cos/sqrt/square/abs/exp`, pairwise `min`/`max`, and signed numeric
+   constants) with tunable `K` gain slots. Reusing a `K` name ties two places to one shared
+   scalar. Laws are capped at 16 structural nodes, depth 5, and 12 distinct `K` slots.
+3. Cross-Entropy Method (CEM) optimizes every gain `K` for both evolved expressions and
    classical baselines using the same simulation budget.
 4. EoH-inspired `E1`/`E2` exploration and crossover plus `M1`/`M2`/`M3` mutation prompts
    generate structurally diverse, failure-directed, and generalization-oriented offspring.
-5. An archive prevents duplicate structures, while retry, deterministic local mutation,
+5. An archive prevents duplicate expressions, while retry, deterministic local mutation,
    and per-generation checkpoints make long runs resumable when the model endpoint fails.
 6. Controllers are compared on held-out initial states and physical-parameter variations,
    reporting task return, success, control energy, command jerk, and complexity.
@@ -28,7 +32,7 @@ baselines without hiding the cost in actuator effort or nonsmooth commands?
 
 The variation prompts adapt the five strategies from [Evolution of Heuristics
 (EoH)](https://arxiv.org/abs/2401.02051): `E1` explores forms unlike multiple parents,
-`E2` recombines their common backbone, `M1` changes structural terms, `M2` targets an
+`E2` recombines their common backbone, `M1` changes structural signs or operators, `M2` targets an
 observed metric failure, and `M3` simplifies for generalization. LawEvo deliberately does
 not use EoH-style parameter mutation for gains: all numeric `K` values remain under the
 equal-budget CEM optimizer.
@@ -46,6 +50,33 @@ equal-budget CEM optimizer.
 - Unicycle rollout, task/energy/jerk metrics, a knowledge-augmented evolutionary loop,
   bounded belief space, no-belief ablation switch, and separate policy/barrier prompts.
 - Unit and end-to-end smoke tests.
+
+## Symbolic expression representation
+
+A controller law (or "structure") is a free-form symbolic expression over the task's
+signals, not a fixed weighted-sum term list. It is written as a compact string, for example:
+
+```
+K1*tanh(K2*angle) + K3*angle*angular_velocity + min(K4*integral_angle, K5*angular_velocity)
+```
+
+Grammar: `+`, `-`, `*`, parentheses, unary functions `tanh sin cos sqrt square abs exp`,
+pairwise `min(a, b)` / `max(a, b)`, signed numeric constants, and `K` gain tokens. Every
+`K` token names one scalar parameter slot that CEM tunes; the LLM never proposes numeric
+gains. Reusing a `K` name ties two places to one shared scalar (`K1*x + K1*y`), which is
+one of the novel free-form degrees of freedom. A law is capped at 16 structural nodes,
+depth 5, and 12 distinct `K` slots.
+
+Signals are arrays broadcast over the action dimension (one component per actuator), so the
+same law applies to any morphology. Evaluation guards against division by zero, overflow,
+and non-finite values (clamping `exp`/`square` inputs and writing `NaN`/`inf` as zero).
+
+`SymbolicExpression` (in `lawevo/pid/expression.py`) replaces the old flat `GymStructure`
+term-list genome. It provides `to_expression_string()`, a canonical order-insensitive
+`key()` for archive dedup, `parameter_count`, `complexity` (non-parameter node count), a
+NumPy `evaluate(signals, gains)` and a batched Torch `evaluate_torch(signals, gains)` for
+GPU rollouts, plus both a string parser and a JSON-tree parser. It owns an evaluator on the
+standard pipeline of classical baselines, CEM tuning, and the LLM archive.
 
 ## Quick start
 
@@ -68,10 +99,15 @@ Copy-Item .env.example .env
 Then edit only the key if the default model and endpoint are suitable:
 
 ```dotenv
-NVIDIA_API_KEY=nvapi-your-key-here
-NVIDIA_MODEL=openai/gpt-oss-120b
-NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1/chat/completions
+OPENAI_API_KEY=your-key-here
+OPENAI_BASE_URL=https://api.openlux.ai/v1
+OPENAI_MODEL=gpt-5.4-nano
 ```
+
+The experiments read the first non-empty value among `OPENAI_*` and the legacy
+`NVIDIA_*` variables (`OPENAI_*` takes priority). A base URL may be either an API
+root (`.../v1`) or a full chat-completions URL; `/chat/completions` is appended
+automatically when missing.
 
 `.env` is ignored by Git. Environment variables and CLI flags can still override these
 settings. Never commit a real API key.
@@ -416,10 +452,11 @@ cached under the system temp directory. Three template families ship:
   `reacher_precision` (7), `pusher` (6), `hopper` (8), `half_cheetah` (8), `swimmer`
   (6), and `ant` (6).
 - **Topology-changing** (count fields change the joint/actuator count and therefore the
-  observation/action dimensions; the law space is unchanged because each `GymStructure`
-  term carries one scalar gain): `swimmer_topology` (`n_links` 3..6) and `ant_topology`
-  (`n_legs` 4..6). The locomotion adapters derive their per-actuator patterns from the
-  live action dimension, and `morph_cost` penalizes count fields per added unit.
+  observation/action dimensions; the law space is unchanged because laws are expression
+  trees over vector-valued signals): `swimmer_topology` (`n_links` 3..6) and
+  `ant_topology` (`n_legs` 4..6). The locomotion adapters derive their per-actuator
+  patterns from the live action dimension, and `morph_cost` penalizes count fields per
+  added unit.
 - **Grammar-native**: `robomorph_flat`, `robomorph_ridged`, `robomorph_frozen_lake`, and
   `robomorph_beams` evolve a complete module graph rather than fields on an Ant template. A
   graph contains 1..4 serial body modules connected by rigid/roll/twist joints. Any body

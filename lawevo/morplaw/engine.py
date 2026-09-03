@@ -117,7 +117,7 @@ class MorphologyGenerator(Protocol):
 class InteractionRecord:
     generation: int
     morphology: dict[str, object]
-    law_terms: tuple[str, ...]
+    law_expression: str
     baseline_score: float
     morph_score: float
     law_score: float
@@ -129,7 +129,7 @@ class InteractionRecord:
         return {
             "generation": self.generation,
             "morphology": self.morphology,
-            "law_terms": list(self.law_terms),
+            "law_expression": self.law_expression,
             "baseline_score": self.baseline_score,
             "morph_score": self.morph_score,
             "law_score": self.law_score,
@@ -700,7 +700,7 @@ class MorpLawRunner:
         return InteractionRecord(
             generation,
             evaluation.morph_proposal.spec.to_dict(),
-            evaluation.law_proposal.structure.terms,
+            evaluation.law_proposal.structure.to_expression_string(),
             baseline.metrics.score,
             evaluation.morph_record.metrics.score,
             evaluation.law_record.metrics.score,
@@ -721,7 +721,7 @@ class MorpLawRunner:
 def _as_law_proposal(item: LawProposal | GymStructure) -> LawProposal:
     if isinstance(item, LawProposal):
         return item
-    modification = f"select law terms {', '.join(item.terms)}"
+    modification = f"set law expression {item.to_expression_string()}"[:160]
     return LawProposal(
         item,
         KnowledgeHypothesis(
@@ -828,14 +828,17 @@ def _knowledge_context(env_id: str, record: PairRecord) -> dict[str, object]:
     return {
         "task": env_id,
         "morphology": record.spec.to_dict(),
-        "law_terms": list(record.structure.terms),
+        "law_expression": record.structure.to_expression_string(),
         "metrics": record.metrics.to_dict(),
     }
 
 
 def _record_key(record: PairRecord) -> str:
     return json.dumps(
-        {"law_terms": record.structure.terms, "morphology": record.spec.to_dict()},
+        {
+            "law_expression": record.structure.to_expression_string(),
+            "morphology": record.spec.to_dict(),
+        },
         sort_keys=True,
     )
 
@@ -852,9 +855,16 @@ def _metric_deltas(child: PairMetrics, parent: PairMetrics) -> dict[str, float]:
 
 
 def _law_modification(parent: GymStructure, child: GymStructure) -> str:
-    added = [term for term in child.terms if term not in parent.terms]
-    removed = [term for term in parent.terms if term not in child.terms]
-    return (
-        f"law terms {list(parent.terms)} -> {list(child.terms)}; "
-        f"added={added or ['none']}, removed={removed or ['none']}"
-    )
+    parent_terms = set(parent.signals)
+    child_terms = set(child.signals)
+    added = sorted(child_terms - parent_terms)
+    removed = sorted(parent_terms - child_terms)
+    if added and removed:
+        return "restructured the law expression: " + " -> ".join(
+            f"{old} -> {new}" for old, new in zip(removed, added)
+        )
+    if added:
+        return f"added signals {', '.join(added)} to the law expression"
+    if removed:
+        return f"removed signals {', '.join(removed)} from the law expression"
+    return "kept the same signals and restructured the law expression operators"

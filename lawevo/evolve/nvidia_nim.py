@@ -29,6 +29,23 @@ def load_env_file(path: str | Path = ".env") -> None:
             os.environ.setdefault(key, value)
 
 
+def env_setting(*names: str, default: str = "") -> str:
+    """Return the first non-empty environment variable among *names*."""
+    for name in names:
+        value = os.environ.get(name)
+        if value and value.strip():
+            return value
+    return default
+
+
+def resolve_endpoint(base_url: str) -> str:
+    """Accept both an API root (``.../v1``) and a full chat-completions URL."""
+    base = base_url.strip().rstrip("/")
+    if base.endswith("/chat/completions"):
+        return base
+    return f"{base}/chat/completions"
+
+
 class NIMError(RuntimeError):
     pass
 

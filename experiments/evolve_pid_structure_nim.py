@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import getpass
 import json
-import os
 import re
 from pathlib import Path
 
@@ -15,7 +14,9 @@ from lawevo.evolve.nvidia_nim import (
     DEFAULT_NVIDIA_BASE_URL,
     DEFAULT_NVIDIA_MODEL,
     NVIDIAChatClient,
+    env_setting,
     load_env_file,
+    resolve_endpoint,
 )
 from lawevo.pid import (
     DISTANCE_TERMS,
@@ -180,9 +181,15 @@ def main() -> None:
     load_env_file()
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=Path("results/pid_structure_nim"))
-    parser.add_argument("--model", default=os.environ.get("NVIDIA_MODEL", DEFAULT_NVIDIA_MODEL))
     parser.add_argument(
-        "--base-url", default=os.environ.get("NVIDIA_BASE_URL", DEFAULT_NVIDIA_BASE_URL)
+        "--model",
+        default=env_setting("OPENAI_MODEL", "NVIDIA_MODEL", default=DEFAULT_NVIDIA_MODEL),
+    )
+    parser.add_argument(
+        "--base-url",
+        default=resolve_endpoint(
+            env_setting("OPENAI_BASE_URL", "NVIDIA_BASE_URL", default=DEFAULT_NVIDIA_BASE_URL)
+        ),
     )
     parser.add_argument("--generations", type=int, default=3)
     parser.add_argument("--proposals", type=int, default=5)
@@ -190,9 +197,9 @@ def main() -> None:
     parser.add_argument("--cem-population", type=int, default=32)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    api_key = os.environ.get("NVIDIA_API_KEY") or getpass.getpass("NVIDIA API key: ")
+    api_key = env_setting("OPENAI_API_KEY", "NVIDIA_API_KEY") or getpass.getpass("API key: ")
     if not api_key:
-        raise SystemExit("NVIDIA_API_KEY is required")
+        raise SystemExit("Set OPENAI_API_KEY (or NVIDIA_API_KEY) in .env")
 
     client = NVIDIAChatClient(api_key, model=args.model, endpoint=args.base_url)
     train = generate_scenarios(10, seed=20260827)

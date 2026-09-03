@@ -21,7 +21,7 @@ def test_panda_gym_adapter_features_match_action_space(adapter_key: str) -> None
         assert all(np.asarray(value).shape == (action_dim,) for value in features.values())
         assert all(np.isfinite(value).all() for value in features.values())
         for baseline in adapter.classical:
-            assert set(baseline.terms) <= set(adapter.allowed_terms)
+            assert set(baseline.signals) <= set(adapter.allowed_terms)
 
         next_observation, reward, terminated, truncated, info = env.step(
             np.zeros(action_dim, dtype=np.float32)
@@ -52,7 +52,7 @@ def test_panda_reach_runs_through_common_episode_loop() -> None:
     adapter = PANDA_GYM_ADAPTERS["panda_reach"]
     structure = adapter.classical[0]
 
-    episode = run_episode(adapter, structure, np.zeros(len(structure.terms)), seed=7)
+    episode = run_episode(adapter, structure, np.zeros(structure.parameter_count), seed=7)
 
     assert np.isfinite(episode.episode_return)
     assert isinstance(episode.success, bool)

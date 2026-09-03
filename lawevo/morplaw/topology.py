@@ -19,7 +19,8 @@ class SwimmerTopologyTemplate(MorphologyTemplate):
 
     Each extra link appends one hinge joint and one actuator, so the observation
     and action dimensions grow with the topology. The law space is unchanged:
-    GymStructure gains are scalar-per-term, so CEM adapts to the new dimension.
+    laws are free-form expressions over vector-valued signals, so CEM adapts
+    its gain slots to the new dimension.
     """
 
     env_id = "Swimmer-v5"

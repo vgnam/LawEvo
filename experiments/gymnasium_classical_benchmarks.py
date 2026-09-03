@@ -20,7 +20,9 @@ from lawevo.evolve.nvidia_nim import (
     DEFAULT_NVIDIA_MODEL,
     NIMError,
     NVIDIAChatClient,
+    env_setting,
     load_env_file,
+    resolve_endpoint,
 )
 from lawevo.pid import (
     ADAPTERS,
@@ -225,7 +227,7 @@ smooth, well-damped stabilization near upright.""",
 so the cart does not drift outside its track. Operational success target: survive the full
 horizon and finish with |pole_angle| < 0.1 rad across randomized initial conditions and
 body masses. Among equally reliable stabilizers, prefer lower force energy, smoother force
-changes, faster damping of velocities, and fewer terms. Never trade survival for a small
+changes, faster damping of velocities, and simpler expressions. Never trade survival for a small
 energy or complexity improvement.""",
     "inverted_double_pendulum": """Primary goal: keep both serial poles upright and survive
 all 500 steps while keeping the cart near the center. Operational success requires both
@@ -238,7 +240,7 @@ maximizing cumulative return over 50 steps. Operational success target: final Ca
 fingertip-target distance < 0.05 across randomized targets, initial states, and link masses.
 Once near the target, suppress overshoot, oscillation, and torque chatter. Among structures
 with comparable target accuracy and return, prefer lower torque energy, smoother torque
-changes, robust damping, and fewer terms. Do not obtain a brief fast approach at the cost
+changes, robust damping, and simpler expressions. Do not obtain a brief fast approach at the cost
 of failing to settle at the target.""",
     "hopper": """Primary goal: travel forward quickly while remaining healthy for the full
 300-step horizon. Operational success requires surviving without a fall and ending above
@@ -292,7 +294,7 @@ successful.""",
 randomized cube positions and +/-10% cube mass. Approach without overshoot, close the Panda
 gripper around the cube, and raise it above the task success height while maintaining the
 grasp. Success and shaped return dominate; among comparable controllers prefer lower OSC
-command energy, smoother command changes, faster completion, and fewer terms.""",
+command energy, smoother command changes, faster completion, and simpler expressions.""",
     "robosuite_stack": """Primary goal: complete robosuite Stack within 200 steps across
 randomized cube placements and masses. Pick cube A without disturbing cube B, lift it with
 clearance, align it over cube B, lower it, and release into a stable stack. Task success and
@@ -312,7 +314,7 @@ oscillation at the handle, and term count.""",
 terminate successfully inside the 0.05 m tolerance. Maximize dense return by reducing
 distance early, then settle without overshoot. Across comparable successful controllers,
 prefer lower normalized command energy, smoother command changes, limited integral windup,
-and fewer terms; low-energy controllers that remain far from the target are unacceptable.""",
+and simpler expressions; low-energy controllers that remain far from the target are unacceptable.""",
     "panda_push": """Primary goal: bring the cube inside the 0.05 m goal tolerance within
 50 steps. Approach the cube efficiently, establish contact on the useful side, and preserve
 contact while pushing in the cube-to-goal direction. Dense return and task success dominate;
@@ -322,7 +324,7 @@ compact structure. Reaching without moving the cube is not success.""",
 within 50 steps even though the target lies beyond direct arm reach. Reach an effective
 contact point and deliver a well-directed impulse of sufficient magnitude. Dense return and
 success dominate; among comparable shots prefer lower command energy and jerk, fewer
-repeated impacts, and fewer terms. Merely following the puck without target progress fails.""",
+repeated impacts, and simpler expressions. Merely following the puck without target progress fails.""",
     "panda_pick_and_place": """Primary goal: place the cube inside the randomized 0.05 m
 goal tolerance within 50 steps. Execute the full sequence of reach, close, lift, transport,
 align, and release while maintaining the grasp during motion. Dense return and success
@@ -338,24 +340,24 @@ steps by placing the cube inside the 0.1 m target region while keeping it on the
 First move the Panda TCP to the push pose behind the cube, then preserve contact and drive
 the cube toward the target. Dense return and success dominate; among comparable successful
 controllers prefer lower normalized delta-pose command energy, smoother changes, fewer
-impacts, and fewer terms. Touching the cube without making goal progress is not success.""",
+impacts, and simpler expressions. Touching the cube without making goal progress is not success.""",
     "maniskill_pick_cube": """Primary goal: complete ManiSkill PickCube-v1 within 50
 steps by placing the cube within 0.025 m of its randomized 3D target and settling the robot.
 Reach the cube, close securely, lift with clearance, carry it to the target, and stop without
 premature release. Dense return and task success dominate; among comparable controllers
 prefer lower normalized delta-pose command energy, smoother commands, fewer failed grasps,
-and fewer terms. A transient target crossing without a static final placement is not success.""",
+and simpler expressions. A transient target crossing without a static final placement is not success.""",
     "genesis_push_cube": """Primary goal: complete GenesisPushCube-v0 within 75 steps by
 placing the cube within 0.06 m of its randomized planar target. Approach the useful point
 behind the cube before applying goal-directed motion, then maintain contact without lifting
 or overshooting. Success and dense return dominate; among comparable GPU-batched controllers
 prefer lower normalized command energy, smoother commands, robustness across randomized
-starts, and fewer terms. Reaching the cube without producing target progress is failure.""",
+starts, and simpler expressions. Reaching the cube without producing target progress is failure.""",
     "genesis_pick_cube": """Primary goal: complete GenesisPickCube-v0 within 75 steps by
 placing the cube within 0.055 m of its randomized 3D target. Reach with the gripper open,
 close near the cube, lift above 0.10 m, and transport while preserving the grasp. Success
 and dense return dominate; among comparable GPU-batched controllers prefer lower command
-energy, smoother changes, reliable grasps across randomized starts, and fewer terms. Merely
+energy, smoother changes, reliable grasps across randomized starts, and simpler expressions. Merely
 touching the cube or moving the hand to the goal without the cube is not success.""",
 }
 
@@ -365,8 +367,8 @@ EOH_OPERATOR_GUIDANCE = (
         "E1",
         (
             "Exploration crossover: inspect at least two structurally different elite "
-            "parents, then create a controller with a clearly different form rather than "
-            "copying their union or making a cosmetic edit."
+            "parents, then create a controller with a clearly different expression form "
+            "rather than copying their union or making a cosmetic edit."
         ),
     ),
     (
@@ -374,22 +376,23 @@ EOH_OPERATOR_GUIDANCE = (
         (
             "Backbone crossover: identify the common control mechanism shared by at least "
             "two elite parents, preserve that useful backbone, and recombine it with "
-            "complementary signals that address a measured weakness."
+            "complementary signals or operators that address a measured weakness."
         ),
     ),
     (
         "M1",
         (
             "Structural mutation: choose one elite parent and make a meaningful small "
-            "mutation by adding, removing, or replacing one to three terms."
+            "mutation by adding, removing, replacing, or wrapping one to three signals or "
+            "operators in its expression."
         ),
     ),
     (
         "M2",
         (
             "Goal-directed mutation: choose one elite parent, identify its most important "
-            "return, success, energy, or jerk failure, and minimally change its terms to "
-            "target that failure. Never mutate numeric gains because CEM tunes them "
+            "return, success, energy, or jerk failure, and minimally change its expression "
+            "to target that failure. Never mutate numeric gains because CEM tunes them "
             "separately."
         ),
     ),
@@ -397,8 +400,8 @@ EOH_OPERATOR_GUIDANCE = (
         "M3",
         (
             "Generalization mutation: choose one elite parent and prune redundant, fragile, "
-            "or over-specialized terms while retaining the mechanism needed for robustness "
-            "under randomized initial states and physical parameters."
+            "or over-specialized signals or operators while retaining the mechanism needed "
+            "for robustness under randomized initial states and physical parameters."
         ),
     ),
 )
@@ -440,29 +443,50 @@ improve everything, propose distinct performance-, energy-, jerk-, and balanced 
 def fallback_structures(
     allowed: tuple[str, ...],
     elites: list[dict],
-    excluded: set[tuple[str, ...]],
+    excluded: set,
     count: int,
 ) -> list[GymStructure]:
-    """Deterministic local mutations when the remote generator returns no content."""
-    elite_keys = [tuple(item["structure"]["terms"]) for item in elites]
-    candidates = [
-        terms
-        for size in range(1, min(8, len(allowed)) + 1)
-        for terms in itertools.combinations(allowed, size)
-        if terms not in excluded
+    """Deterministic local expression mutations when the remote generator returns nothing."""
+    elite_sets = [
+        tuple(GymStructure.from_dict(item["structure"]).signals) for item in elites
+    ] or [(allowed[0],)]
+    variants: list[tuple[str, ...]] = []
+    for base in elite_sets:
+        extra = next((name for name in allowed if name not in base), None)
+        if extra:
+            variants.append((*base, extra))
+        if len(base) > 1:
+            variants.append(base[:-1])
+        if base not in variants:
+            variants.append(base)
+    fresh_pairs = [
+        pair
+        for pair in itertools.combinations(allowed, 2)
+        if all(set(pair) != set(variant) for variant in variants)
     ]
+    variants.extend(fresh_pairs)
 
-    def rank(terms: tuple[str, ...]) -> tuple[int, int, tuple[str, ...]]:
-        distance = min(
-            len(set(terms).symmetric_difference(elite)) for elite in elite_keys
-        )
-        return distance, len(terms), terms
-
-    candidates.sort(key=rank)
-    return [
-        GymStructure(f"fallback_mutation_{index + 1}", terms)
-        for index, terms in enumerate(candidates[:count])
-    ]
+    seen = set(excluded)
+    output: list[GymStructure] = []
+    for variant in variants:
+        if not variant:
+            continue
+        parts = [
+            f"K{index + 1}*tanh({name})" if index % 2 else f"K{index + 1}*{name}"
+            for index, name in enumerate(variant)
+        ]
+        expression = " + ".join(parts)
+        try:
+            structure = GymStructure("candidate", expression)
+        except ValueError:
+            continue
+        if structure.key() in seen:
+            continue
+        seen.add(structure.key())
+        output.append(structure.renamed(f"fallback_mutation_{len(output) + 1}"))
+        if len(output) == count:
+            break
+    return output
 
 
 def extract_structures(response: str, allowed: tuple[str, ...]) -> list[GymStructure]:
@@ -481,14 +505,21 @@ def extract_structures(response: str, allowed: tuple[str, ...]) -> list[GymStruc
         return output
     for index, item in enumerate(payload):
         try:
-            structure = GymStructure(
-                str(item.get("name", f"proposal_{index}"))[:50], tuple(item["terms"])
-            )
+            if "expression" in item:
+                structure = GymStructure(
+                    str(item.get("name", f"proposal_{index}"))[:50], item["expression"]
+                )
+            else:
+                structure = GymStructure(
+                    str(item.get("name", f"proposal_{index}"))[:50], tuple(item["terms"])
+                )
         except (AttributeError, KeyError, TypeError, ValueError):
             continue
-        if set(structure.terms) <= set(allowed) and structure.key() not in {
-            existing.key() for existing in output
-        }:
+        try:
+            structure.validate(allowed)
+        except ValueError:
+            continue
+        if structure.key() not in {existing.key() for existing in output}:
             output.append(structure)
     return output
 
@@ -503,7 +534,7 @@ def prompt(
     energy_weight: float,
     jerk_weight: float,
 ) -> str:
-    return f"""Generation {generation}: evolve {count} compact feedback-controller structures
+    return f"""Generation {generation}: evolve {count} compact feedback-controller laws
 specifically for {env_name}. Treat the environment description below as authoritative.
 
 Environment and task:
@@ -515,12 +546,19 @@ Control goal (what the evolved controller must accomplish):
 Control-effort and smoothness goals:
 {efficiency_goal(elites)}
 
-The structure is a weighted sum of selected basis signals. Do NOT propose gains: every K is
-tuned later by equal-budget Cross-Entropy Method. One gain multiplies each selected term;
-vector-valued terms are combined componentwise.
+The controller is a free-form mathematical expression over the allowed signals. Do NOT
+propose numeric gains: write K1, K2, ... wherever a tunable scalar belongs and every K slot
+is tuned afterward by equal-budget Cross-Entropy Method — never the numeric gains yourself.
+Expression grammar: sums (`a + b`), products (`a*b`), unary functions (`tanh(a)`, `sin(a)`,
+`cos(a)`, `sqrt(a)`, `square(a)`, `abs(a)`, `exp(a)`), pairwise `min(a, b)` / `max(a, b)`,
+parentheses, and signed numeric constants. Reusing a K name ties those places to one shared
+gain. Vector-valued signals combine componentwise. Compose nonlinearity deliberately —
+saturations like tanh, gating via min/max, multiplicative coupling like error*velocity —
+only when it serves the control goal. Limits: at most 16 structural nodes, depth 5, and
+12 distinct K slots.
 
-Allowed terms: {json.dumps(allowed)}
-Best current classical and evolved structures after CEM tuning:
+Allowed signals: {json.dumps(allowed)}
+Best current classical and evolved laws after CEM tuning:
 {json.dumps(elites, indent=2)}
 
 EoH-inspired variation plan:
@@ -528,26 +566,29 @@ EoH-inspired variation plan:
 
 Apply the operator assigned to each output slot. E1 and E2 must use multiple named elite
 parents when at least two are available; M1, M2, and M3 must each use one named elite
-parent. The evolvable genome is only the selected terms list, never the numeric gains.
+parent. The evolvable genome is only the expression structure, never the numeric gains.
 Prefix every candidate name with its operator code (for example E2_backbone_damping) so
 the variation provenance remains visible in generation logs.
 
 Exact scalar fitness is environment return - {energy_weight}*energy
-- {jerk_weight}*jerk - 0.02*term_count. Success is reported as a diagnostic, while the
-environment return is the dominant optimized quantity. Infer failure modes and trade-offs
-from the tuned metrics. Mutate/crossover strong structures, but also test task-motivated
-alternatives when the elite has poor success, excessive energy, or excessive jerk.
+- {jerk_weight}*jerk - 0.02*complexity, where complexity counts structural nodes of the
+expression (signals and operators; gain slots are free). Success is reported as a
+diagnostic, while the environment return is the dominant optimized quantity. Infer failure
+modes and trade-offs from the tuned metrics. Mutate/crossover strong laws, but also test
+task-motivated alternatives when the elite has poor success, excessive energy, or
+excessive jerk.
 
-Previously evaluated structures (never repeat an identical terms list):
+Previously evaluated laws (never repeat an identical expression):
 {json.dumps(archive, indent=2)}
 
-Return {count} genuinely novel and diverse structures. Use 1-8 unique allowed terms and
-avoid redundant signals unless their different saturation/scaling has a clear purpose.
-Before choosing each structure, reason internally about how its terms serve the control
+Return {count} genuinely novel and diverse laws. Use only allowed signals and avoid
+redundant ones unless their different saturation/scaling has a clear purpose. Before
+choosing each law, reason internally about how its signals and operators serve the control
 goal and address an observed elite failure mode. When count >= 4, include at least one
 performance-focused, energy-focused, jerk-focused, and balanced Pareto proposal; reflect
 that role in each proposal's name. Do not include the internal reasoning in output.
-Return ONLY a JSON array of exactly {count} objects with keys name and terms.
+Return ONLY a JSON array of exactly {count} objects with keys name and expression, where
+expression is a single grammar-compliant string.
 """
 
 
@@ -705,9 +746,15 @@ def main() -> None:
             "environment"
         ),
     )
-    parser.add_argument("--model", default=os.environ.get("NVIDIA_MODEL", DEFAULT_NVIDIA_MODEL))
     parser.add_argument(
-        "--base-url", default=os.environ.get("NVIDIA_BASE_URL", DEFAULT_NVIDIA_BASE_URL)
+        "--model",
+        default=env_setting("OPENAI_MODEL", "NVIDIA_MODEL", default=DEFAULT_NVIDIA_MODEL),
+    )
+    parser.add_argument(
+        "--base-url",
+        default=resolve_endpoint(
+            env_setting("OPENAI_BASE_URL", "NVIDIA_BASE_URL", default=DEFAULT_NVIDIA_BASE_URL)
+        ),
     )
     parser.add_argument("--request-timeout", type=float, default=600.0)
     parser.add_argument("--generations", type=int, default=20)
@@ -748,9 +795,9 @@ def main() -> None:
         manifest["status"] = "running"
         manifest["resumed_at"] = started_at.isoformat()
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    api_key = os.environ.get("NVIDIA_API_KEY") or getpass.getpass("NVIDIA API key: ")
+    api_key = env_setting("OPENAI_API_KEY", "NVIDIA_API_KEY") or getpass.getpass("API key: ")
     if not api_key:
-        raise SystemExit("NVIDIA_API_KEY is required")
+        raise SystemExit("Set OPENAI_API_KEY (or NVIDIA_API_KEY) in .env")
     client = NVIDIAChatClient(
         api_key,
         model=args.model,
@@ -791,7 +838,7 @@ def main() -> None:
         test_seeds = [
             90_000 + 1_000 * env_index + index for index in range(args.test_episodes)
         ]
-        evaluated: dict[tuple[str, ...], dict] = {}
+        evaluated: dict[tuple, dict] = {}
         cached_by_generation: dict[int, list[dict]] = {}
         for record in evaluation_cache.get(env_name, []):
             cached_by_generation.setdefault(int(record["generation"]), []).append(record)
@@ -801,7 +848,7 @@ def main() -> None:
                 continue
             generation_key = str(record["generation"])
             recovered = env_plans.setdefault(generation_key, [])
-            recovered_keys = {tuple(item["terms"]) for item in recovered}
+            recovered_keys = {GymStructure.from_dict(item).key() for item in recovered}
             for structure in extract_structures(record["response"], adapter.allowed_terms):
                 if structure.key() not in recovered_keys and len(recovered) < args.proposals:
                     recovered.append(structure.to_dict())
@@ -812,12 +859,11 @@ def main() -> None:
                 current = list(adapter.classical)
             elif str(generation) in env_plans:
                 current = [
-                    GymStructure(record["name"], tuple(record["terms"]))
-                    for record in env_plans[str(generation)]
+                    GymStructure.from_dict(record) for record in env_plans[str(generation)]
                 ]
             elif generation in cached_by_generation:
                 current = [
-                    GymStructure(record["structure"]["name"], tuple(record["structure"]["terms"]))
+                    GymStructure.from_dict(record["structure"])
                     for record in cached_by_generation[generation]
                 ]
             for structure in current:
@@ -827,7 +873,8 @@ def main() -> None:
                     (
                         record
                         for record in cached_by_generation.get(generation, [])
-                        if tuple(record["structure"]["terms"]) == structure.key()
+                        if GymStructure.from_dict(record["structure"]).key()
+                        == structure.key()
                     ),
                     None,
                 )
@@ -907,13 +954,13 @@ def main() -> None:
                 break
             if str(generation + 1) in env_plans:
                 current = [
-                    GymStructure(record["name"], tuple(record["terms"]))
+                    GymStructure.from_dict(record)
                     for record in env_plans[str(generation + 1)]
                 ]
                 continue
             if generation + 1 in cached_by_generation:
                 current = [
-                    GymStructure(record["structure"]["name"], tuple(record["structure"]["terms"]))
+                    GymStructure.from_dict(record["structure"])
                     for record in cached_by_generation[generation + 1]
                 ]
                 continue
