@@ -15,14 +15,13 @@ def test_prompt_assigns_all_eoh_variation_operators() -> None:
         [],
         count=5,
         generation=1,
-        energy_weight=0.01,
-        jerk_weight=0.001,
     )
 
     for operator in ("E1", "E2", "M1", "M2", "M3"):
         assert f'"operator": "{operator}"' in text
     assert "never the numeric gains" in text
     assert "Prefix every candidate name with its operator code" in text
+    assert "Exact scalar fitness is the environment return" in text
 
 
 def test_timestamped_environment_artifact_layout(tmp_path, monkeypatch) -> None:

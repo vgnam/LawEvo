@@ -108,7 +108,7 @@ def make_law_generator(
             responsive=responsive,
         )
         response = client.complete(
-            SYSTEM_PROMPT, prompt, temperature=0.8, reasoning_effort="medium"
+            SYSTEM_PROMPT, prompt, temperature=0.8, reasoning_effort=reasoning_effort
         )
         operator = "responsive_law" if responsive else "law_mutation"
         proposed = extract_law_proposals(
@@ -164,7 +164,7 @@ def make_morph_generator(
             responsive=responsive,
         )
         response = client.complete(
-            SYSTEM_PROMPT, prompt, temperature=0.8, reasoning_effort="medium"
+            SYSTEM_PROMPT, prompt, temperature=0.8, reasoning_effort=reasoning_effort
         )
         operator = "responsive_morph" if responsive else "morph_mutation"
         proposed = extract_morphology_proposals(
@@ -268,10 +268,12 @@ def plot_results(
         ("score", "Pair Score (held-out) ↑"),
         ("episode_return", "Episode Return ↑"),
         ("success_rate", "Success Rate ↑"),
+        ("sg", "Success Gap ↓"),
+        ("q", "Goal-Completion Score ↑"),
         ("energy_norm", "Normalized Energy ↓"),
     )
     colors = ["#8C8C8C", "#D55E00", "#F0E442", "#56B4E9", "#009E73", "#CC79A7", "#0072B2"]
-    fig, axes = plt.subplots(2, 2, figsize=(12.5, 8.0))
+    fig, axes = plt.subplots(2, 3, figsize=(15.5, 8.0))
     for axis, (metric, title) in zip(axes.ravel(), panels):
         means = [getattr(heldout[name], metric) for name in names]
         sems = []
@@ -292,7 +294,7 @@ def plot_results(
         fontweight="bold",
     )
     fig.text(0.5, 0.01, "Mean ± SEM over held-out episodes.", ha="center", color="#444444")
-    fig.subplots_adjust(left=0.07, right=0.99, top=0.90, bottom=0.14, hspace=0.35, wspace=0.22)
+    fig.subplots_adjust(left=0.06, right=0.99, top=0.90, bottom=0.14, hspace=0.35, wspace=0.25)
     fig.savefig(output / "morplaw_comparison.png", dpi=300, bbox_inches="tight")
     fig.savefig(output / "morplaw_comparison.pdf", bbox_inches="tight")
     plt.close(fig)
@@ -319,6 +321,11 @@ def main() -> None:
         default=resolve_endpoint(
             env_setting("OPENAI_BASE_URL", "NVIDIA_BASE_URL", default=DEFAULT_NVIDIA_BASE_URL)
         ),
+    )
+    parser.add_argument(
+        "--reasoning-effort",
+        default=env_setting("OPENAI_REASONING_EFFORT", default="low"),
+        help="LLM reasoning effort (low, medium, high); default from OPENAI_REASONING_EFFORT",
     )
     parser.add_argument("--generations", type=int, default=5)
     parser.add_argument("--proposals-per-side", type=int, default=4)
@@ -354,6 +361,7 @@ def main() -> None:
     responses: list[dict[str, object]] = []
 
     client = NVIDIAChatClient(api_key, model=args.model, endpoint=args.base_url)
+    reasoning_effort = args.reasoning_effort
     config_kwargs = {
         "generations": args.generations,
         "proposals_per_side": args.proposals_per_side,
@@ -424,6 +432,12 @@ def main() -> None:
             "episode_return": np.asarray([item.episode_return for item in episodes]),
             "success_rate": np.asarray([float(item.success) for item in episodes]),
             "energy_norm": np.asarray([item.energy for item in episodes]) / metrics.total_mass,
+            "sg": np.asarray(
+                [np.nan if item.sg is None else float(item.sg) for item in episodes]
+            ),
+            "q": np.asarray(
+                [np.nan if item.q is None else float(item.q) for item in episodes]
+            ),
         }
         entry["heldout"] = metrics.to_dict()
 

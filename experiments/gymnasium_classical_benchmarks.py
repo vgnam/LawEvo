@@ -674,8 +674,6 @@ def prompt(
     archive: list[dict],
     count: int,
     generation: int,
-    energy_weight: float,
-    jerk_weight: float,
 ) -> str:
     return f"""Generation {generation}: evolve {count} compact feedback-controller laws
 specifically for {env_name}. Treat the environment description below as authoritative.
@@ -713,13 +711,11 @@ parent. The evolvable genome is only the expression structure, never the numeric
 Prefix every candidate name with its operator code (for example E2_backbone_damping) so
 the variation provenance remains visible in generation logs.
 
-Exact scalar fitness is environment return - {energy_weight}*energy
-- {jerk_weight}*jerk - 0.02*complexity, where complexity counts structural nodes of the
-expression (signals and operators; gain slots are free). Success is reported as a
-diagnostic, while the environment return is the dominant optimized quantity. Infer failure
-modes and trade-offs from the tuned metrics. Mutate/crossover strong laws, but also test
-task-motivated alternatives when the elite has poor success, excessive energy, or
-excessive jerk.
+Exact scalar fitness is the environment return. Energy, jerk, success, and
+complexity are reported as diagnostics only and never modify fitness. Infer
+failure modes and trade-offs from the tuned metrics. Mutate/crossover strong
+laws, but also test task-motivated alternatives when the elite has poor success,
+excessive energy, or excessive jerk.
 
 Previously evaluated laws (never repeat an identical expression):
 {json.dumps(archive, indent=2)}
@@ -745,6 +741,17 @@ def evaluate_test(adapter, records: list[dict], seeds: list[int]) -> dict[str, d
             "metrics": metrics.to_dict(),
             "episode_returns": [episode.episode_return for episode in episodes],
             "success": [float(episode.success) for episode in episodes],
+            "sg": [
+                None if episode.sg is None else float(episode.sg) for episode in episodes
+            ],
+            "q": [
+                None if episode.q is None else float(episode.q) for episode in episodes
+            ],
+            "constraint_violations": [
+                episode.constraint_violations for episode in episodes
+            ],
+            "progress_predicates": [episode.progress_predicates for episode in episodes],
+            "diagnostics": [episode.diagnostics for episode in episodes],
             "energy": [episode.energy for episode in episodes],
             "jerk": [episode.jerk for episode in episodes],
         }
@@ -759,6 +766,8 @@ def write_metric_logs(all_results: dict[str, object], output: Path) -> None:
         "controller_kind",
         "return",
         "success_rate",
+        "sg",
+        "q",
         "energy",
         "jerk",
         "score",
@@ -772,6 +781,8 @@ def write_metric_logs(all_results: dict[str, object], output: Path) -> None:
         "seed",
         "return",
         "success",
+        "sg",
+        "q",
         "energy",
         "jerk",
     )
@@ -790,6 +801,8 @@ def write_metric_logs(all_results: dict[str, object], output: Path) -> None:
                         ),
                         "return": metrics["episode_return"],
                         "success_rate": metrics["success_rate"],
+                        "sg": metrics.get("sg"),
+                        "q": metrics.get("q"),
                         "energy": metrics["energy"],
                         "jerk": metrics["jerk"],
                         "score": metrics["score"],
@@ -815,6 +828,8 @@ def write_metric_logs(all_results: dict[str, object], output: Path) -> None:
                             "seed": seed,
                             "return": values["episode_returns"][index],
                             "success": values["success"][index],
+                            "sg": values["sg"][index],
+                            "q": values["q"][index],
                             "energy": values["energy"][index],
                             "jerk": values["jerk"][index],
                         }
@@ -835,18 +850,32 @@ def plot_environment(env_name: str, test_results: dict[str, dict], output: Path)
     panels = (
         ("episode_returns", "Episode Return ↑", "(a)"),
         ("success", "Success Rate (%) ↑", "(b)"),
-        ("energy", "Control Energy ↓", "(c)"),
-        ("jerk", "Control Jerk ↓", "(d)"),
+        ("sg", "Success Gap ↓", "(c)"),
+        ("q", "Goal-Completion Score ↑", "(d)"),
+        ("energy", "Control Energy ↓", "(e)"),
+        ("jerk", "Control Jerk ↓", "(f)"),
     )
     labels = list(test_results)
     colors = ["#BDBDBD", "#999999", "#777777", "#555555", "#009E73"][: len(labels)]
-    fig, axes = plt.subplots(2, 2, figsize=(11.5, 7.4))
+    fig, axes = plt.subplots(2, 3, figsize=(15.5, 7.4))
     for axis, (metric, title, panel) in zip(axes.ravel(), panels):
-        arrays = [np.asarray(test_results[label][metric]) for label in labels]
+        arrays = [
+            np.asarray(
+                [value for value in test_results[label][metric] if value is not None],
+                dtype=float,
+            )
+            for label in labels
+        ]
+        if not any(len(array) for array in arrays):
+            axis.set_visible(False)
+            continue
         if metric == "success":
             arrays = [100 * values for values in arrays]
-        means = [float(np.mean(values)) for values in arrays]
-        sems = [float(np.std(values, ddof=1) / np.sqrt(len(values))) for values in arrays]
+        means = [float(np.mean(values)) if len(values) else float("nan") for values in arrays]
+        sems = [
+            float(np.std(values, ddof=1) / np.sqrt(len(values))) if len(values) > 1 else 0.0
+            for values in arrays
+        ]
         x = np.arange(len(labels))
         axis.bar(x, means, yerr=sems, color=colors, capsize=3, edgecolor="white")
         axis.set_title(f"{panel} {title}", loc="left", fontweight="bold")
@@ -859,7 +888,7 @@ def plot_environment(env_name: str, test_results: dict[str, dict], output: Path)
         fontweight="bold",
     )
     fig.text(0.5, 0.01, "Mean ± SEM over held-out initializations.", ha="center")
-    fig.subplots_adjust(left=0.08, right=0.99, top=0.89, bottom=0.15, hspace=0.35, wspace=0.22)
+    fig.subplots_adjust(left=0.06, right=0.99, top=0.89, bottom=0.15, hspace=0.35, wspace=0.25)
     stem = env_name.lower().replace("-", "_")
     fig.savefig(output / f"{stem}_comparison.png", dpi=300, bbox_inches="tight")
     fig.savefig(output / f"{stem}_comparison.pdf", bbox_inches="tight")
@@ -899,6 +928,11 @@ def main() -> None:
         default=resolve_endpoint(
             env_setting("OPENAI_BASE_URL", "NVIDIA_BASE_URL", default=DEFAULT_NVIDIA_BASE_URL)
         ),
+    )
+    parser.add_argument(
+        "--reasoning-effort",
+        default=env_setting("OPENAI_REASONING_EFFORT", default="low"),
+        help="LLM reasoning effort (low, medium, high); default from OPENAI_REASONING_EFFORT",
     )
     parser.add_argument("--request-timeout", type=float, default=600.0)
     parser.add_argument("--generations", type=int, default=20)
@@ -948,6 +982,7 @@ def main() -> None:
         endpoint=args.base_url,
         timeout=args.request_timeout,
     )
+    reasoning_effort = args.reasoning_effort
     all_results: dict[str, object] = {}
     responses_path = state_dir / "nim_responses.json"
     cache_path = state_dir / "evaluation_cache.json"
@@ -1128,11 +1163,9 @@ def main() -> None:
                             archive,
                             args.proposals - len(proposals),
                             generation + 1,
-                            adapter.energy_weight,
-                            adapter.jerk_weight,
                         ),
                         temperature=0.8,
-                        reasoning_effort="high",
+                        reasoning_effort=reasoning_effort,
                     )
                 except NIMError as exc:
                     raw_responses.append(
@@ -1315,6 +1348,8 @@ def main() -> None:
                 f"env={result['environment']} controller={controller!r} "
                 f"return={metrics['episode_return']:.6g} "
                 f"success_rate={metrics['success_rate']:.3f} "
+                f"sg={metrics.get('sg') if metrics.get('sg') is None else format(metrics['sg'], '.3f')} "
+                f"q={metrics.get('q') if metrics.get('q') is None else format(metrics['q'], '.3f')} "
                 f"energy={metrics['energy']:.6g} jerk={metrics['jerk']:.6g}",
                 flush=True,
             )

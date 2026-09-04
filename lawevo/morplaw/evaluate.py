@@ -33,8 +33,10 @@ class PairMetrics:
     complexity: int
     morph_cost: float
     total_mass: float
+    sg: float | None = None
+    q: float | None = None
 
-    def to_dict(self) -> dict[str, float | int]:
+    def to_dict(self) -> dict[str, float | int | None]:
         return {
             "score": self.score,
             "episode_return": self.episode_return,
@@ -45,6 +47,8 @@ class PairMetrics:
             "complexity": self.complexity,
             "morph_cost": self.morph_cost,
             "total_mass": self.total_mass,
+            "sg": self.sg,
+            "q": self.q,
         }
 
 
@@ -96,9 +100,11 @@ def pair_adjust(
     mass = template.total_mass(spec)
     energy_norm = metrics.energy / max(mass, 1e-9)
     cost = morph_cost(template, spec, morph_cost_weight)
-    score = adapter.score(metrics.episode_return, energy_norm, metrics.jerk, metrics.complexity)
+    # Selection optimizes the environment return only; energy, jerk, and
+    # complexity stay reported diagnostics.
+    score = adapter.score(metrics.episode_return, metrics.energy, metrics.jerk, metrics.complexity)
     return PairMetrics(
-        score - cost,
+        score,
         metrics.episode_return,
         metrics.success_rate,
         metrics.energy,
@@ -107,6 +113,8 @@ def pair_adjust(
         metrics.complexity,
         cost,
         mass,
+        metrics.sg,
+        metrics.q,
     )
 
 

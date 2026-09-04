@@ -24,8 +24,18 @@ from __future__ import annotations
 import numpy as np
 
 from lawevo.pid.expression import SymbolicExpression
-from lawevo.pid.gym_benchmark import GymStructure  # noqa: F401 -- re-exported alias
+from lawevo.pid.gym_benchmark import (
+    EpisodeTracker,
+    GymStructure,  # noqa: F401 -- re-exported alias
+    clip_violation,
+)
 from lawevo.pid.panda_gym_benchmark import (
+    PICK_DISTANCE_SCALE,
+    PUSH_DISTANCE_SCALE,
+    REACH_DISTANCE_SCALE,
+    SLIDE_DISTANCE_SCALE,
+    STACK_POSITION_SCALE,
+    STACK_VELOCITY_SCALE,
     PandaGymAdapter,
     PandaObjectMotionAdapter,
     PandaPickAndPlaceAdapter,
@@ -41,6 +51,15 @@ PUSH_ICE_ENV_ID = "LawevoPandaPushIce-v0"
 SLIDE_GATE_ENV_ID = "LawevoPandaSlideGate-v0"
 PICK_DISTRACTOR_ENV_ID = "LawevoPandaPickDistractor-v0"
 STACK_NARROW_ENV_ID = "LawevoPandaStackNarrow-v0"
+
+# Fixed SR/SG/Q thresholds, shared by every controller class (humans, classical
+# optimization, random symbolic laws, and LawEvo). Reach/tracking tolerance and
+# the required sustained tracking rate follow the benchmark spec.
+TRACK_RADIUS = 0.05
+TRACKING_RATE_REQUIRED = 0.6
+TRACKING_RATE_INTERMEDIATE = 0.3
+TRACK_WARMUP_STEPS = 10
+GATE_MISS_SCALE = 0.15
 
 # Morphable-robot versions of the five stock tasks: identical task physics and
 # rewards, but the Panda arm itself is loaded from a rendered parametric URDF.
@@ -724,6 +743,48 @@ class _VariantAdapter(PandaGymAdapter):
         return super().make_env()
 
 
+class _ReachMovingTracker(EpisodeTracker):
+    """Post-step end-effector/goal snapshots for the orbiting-goal task."""
+
+    distance_threshold: float = 0.05
+
+    def update(self, env, observation, terminated: bool) -> None:
+        state = np.asarray(observation["observation"], dtype=float)
+        achieved = np.asarray(observation["achieved_goal"], dtype=float).reshape(-1)
+        desired = np.asarray(observation["desired_goal"], dtype=float).reshape(-1)
+        task = getattr(env.unwrapped, "task", None)
+        if task is not None and hasattr(task, "distance_threshold"):
+            self.distance_threshold = float(task.distance_threshold)
+        self.steps.append(
+            {
+                "ee": state[:3].copy(),
+                "obj": achieved.copy(),
+                "goal": desired.copy(),
+                "terminated": bool(terminated),
+            }
+        )
+
+    @property
+    def distances(self) -> np.ndarray:
+        return np.asarray(
+            [
+                float(np.linalg.norm(np.asarray(step["goal"], dtype=float) - np.asarray(step["ee"], dtype=float)))
+                for step in self.steps
+            ]
+        )
+
+    @property
+    def tracking_rate(self) -> float:
+        post = self.distances[TRACK_WARMUP_STEPS:]
+        if not len(post):
+            return 0.0
+        return float(np.mean(post <= TRACK_RADIUS))
+
+    @property
+    def final_distance(self) -> float:
+        return float(self.distances[-1]) if len(self.distances) else float("inf")
+
+
 class PandaReachMovingAdapter(_VariantAdapter):
     """Track an orbiting goal; feedforward terms can beat reactive PD."""
 
@@ -750,6 +811,32 @@ class PandaReachMovingAdapter(_VariantAdapter):
             ("goal_error", "goal_velocity", "eef_damping", "phase_sin", "phase_cos"),
         ),
     )
+
+    def make_tracker(self) -> EpisodeTracker:
+        return _ReachMovingTracker(self.horizon)
+
+    def success_constraints(self, tracker):
+        # C1: sustained post-warmup tracking; C2: finish inside the radius.
+        tracking_rate = tracker.tracking_rate
+        return {
+            "tracking_rate": clip_violation(
+                TRACKING_RATE_REQUIRED - tracking_rate, TRACKING_RATE_REQUIRED
+            ),
+            "final_distance": clip_violation(
+                tracker.final_distance - TRACK_RADIUS, REACH_DISTANCE_SCALE
+            ),
+        }
+
+    def progress_predicates(self, tracker):
+        post = tracker.distances[TRACK_WARMUP_STEPS:]
+        return {
+            "goal_acquired_once": bool(len(post) and np.any(post <= TRACK_RADIUS)),
+            "intermediate_tracking_rate": bool(
+                tracker.tracking_rate >= TRACKING_RATE_INTERMEDIATE
+            ),
+            "required_tracking_rate": bool(tracker.tracking_rate >= TRACKING_RATE_REQUIRED),
+            "finish_inside_radius": bool(tracker.final_distance <= TRACK_RADIUS),
+        }
 
     def features(self, env, observation, memory, dt):
         del env
@@ -779,6 +866,50 @@ class PandaReachMovingAdapter(_VariantAdapter):
         return memory
 
 
+class _PushIceTracker(EpisodeTracker):
+    """Object/obstacle/goal positions plus object-obstacle contacts."""
+
+    distance_threshold: float = 0.05
+
+    def update(self, env, observation, terminated: bool) -> None:
+        sim = env.unwrapped.sim
+        self.steps.append(
+            {
+                "ee": np.asarray(observation["observation"], dtype=float)[:3].copy(),
+                "obj": np.asarray(sim.get_base_position("object"), dtype=float).copy(),
+                "goal": np.asarray(observation["desired_goal"], dtype=float).reshape(-1).copy(),
+                "obstacle": np.asarray(env.unwrapped.task.obstacle_position, dtype=float).copy(),
+                "obj_speed": float(
+                    np.linalg.norm(np.asarray(sim.get_base_velocity("object"), dtype=float))
+                ),
+                "terminated": bool(terminated),
+            }
+        )
+        task = getattr(env.unwrapped, "task", None)
+        if task is not None and hasattr(task, "distance_threshold"):
+            self.distance_threshold = float(task.distance_threshold)
+
+    @property
+    def obstacle_collision(self) -> bool:
+        # The obstacle is a radius-0.03 cylinder; 0.035 m clears contact noise.
+        return any(
+            float(np.linalg.norm(np.asarray(step["obstacle"], dtype=float)[:2] - np.asarray(step["obj"], dtype=float)[:2]))
+            < 0.035 + 0.02
+            for step in self.steps
+        )
+
+    @property
+    def final_goal_distance(self) -> float:
+        if not self.steps:
+            return float("inf")
+        return float(
+            np.linalg.norm(
+                np.asarray(self.steps[-1]["goal"], dtype=float)
+                - np.asarray(self.steps[-1]["obj"], dtype=float)
+            )
+        )
+
+
 class PandaPushIceAdapter(_VariantAdapter, PandaObjectMotionAdapter):
     """Push on a near-frictionless table around a static obstacle."""
 
@@ -796,6 +927,46 @@ class PandaPushIceAdapter(_VariantAdapter, PandaObjectMotionAdapter):
         ),
     )
 
+    def make_tracker(self) -> EpisodeTracker:
+        return _PushIceTracker(self.horizon)
+
+    def success_constraints(self, tracker):
+        # The benchmark does not define collision-free completion, so SR/SG use
+        # the object-goal constraint alone.
+        return {
+            "goal_position": clip_violation(
+                tracker.final_goal_distance - tracker.distance_threshold,
+                PUSH_DISTANCE_SCALE,
+            ),
+        }
+
+    def progress_predicates(self, tracker):
+        goal = np.asarray(tracker.steps[0]["goal"], dtype=float)
+        start_obj = np.asarray(tracker.steps[0]["obj"], dtype=float)
+        tolerance = float(tracker.distance_threshold)
+        total = float(np.linalg.norm(goal - start_obj))
+        goal_distances = [
+            float(np.linalg.norm(goal - np.asarray(step["obj"], dtype=float)))
+            for step in tracker.steps
+        ]
+        ee_distances = [
+            float(np.linalg.norm(np.asarray(step["obj"], dtype=float) - np.asarray(step["ee"], dtype=float)))
+            for step in tracker.steps
+        ]
+        progress_threshold = max(0.5 * total, tolerance + 0.02)
+        return {
+            "object_contacted": min(ee_distances) <= 0.06,
+            "object_displaced_toward_goal": (total - min(goal_distances)) >= progress_threshold,
+            "object_clears_obstacle_line": bool(
+                any(
+                    np.asarray(step["obj"], dtype=float)[0]
+                    > np.asarray(step["obstacle"], dtype=float)[0] + 0.03
+                    for step in tracker.steps
+                )
+            ),
+            "object_in_goal_region": any(d <= tolerance for d in goal_distances),
+        }
+
     def features(self, env, observation, memory, dt):
         base = PandaObjectMotionAdapter.features(self, env, observation, memory, dt)
         obj = np.asarray(env.unwrapped.sim.get_base_position("object"), dtype=float)
@@ -804,6 +975,87 @@ class PandaPushIceAdapter(_VariantAdapter, PandaObjectMotionAdapter):
         away[2] = 0.0
         base["obstacle_repel"] = _normalized(away)
         return base
+
+
+class _SlideGateTracker(EpisodeTracker):
+    """Puck trajectory toward the gate plane at ``gate_x`` and the goal."""
+
+    distance_threshold: float = 0.05
+
+    def update(self, env, observation, terminated: bool) -> None:
+        sim = env.unwrapped.sim
+        task = env.unwrapped.task
+        self.steps.append(
+            {
+                "ee": np.asarray(observation["observation"], dtype=float)[:3].copy(),
+                "obj": np.asarray(sim.get_base_position("object"), dtype=float).copy(),
+                "goal": np.asarray(observation["desired_goal"], dtype=float).reshape(-1).copy(),
+                "terminated": bool(terminated),
+            }
+        )
+        if task is not None and hasattr(task, "distance_threshold"):
+            self.distance_threshold = float(task.distance_threshold)
+        self.gate_x = float(task.gate_x)
+        self.gate_width = float(task.gate_width)
+
+    gate_x: float = 0.20
+    gate_width: float = 0.09
+
+    def _opening_bounds(self) -> tuple[float, float]:
+        half = self.gate_width / 2
+        return -half, half
+
+    @property
+    def crossed_gate(self) -> bool:
+        return any(
+            np.asarray(step["obj"], dtype=float)[0] >= self.gate_x for step in self.steps
+        )
+
+    @property
+    def gate_gap(self) -> float:
+        """Minimum geometric miss distance from the valid gate opening.
+
+        For the first crossing of the gate plane, the distance from the
+        crossing point's lateral coordinate to the opening interval; zero when
+        the puck passes inside the opening. If the puck never reaches the
+        plane, the miss is measured from its closest approach plus the
+        remaining x-gap.
+        """
+        low, high = self._opening_bounds()
+        previous_x = None
+        for step in self.steps:
+            obj = np.asarray(step["obj"], dtype=float)
+            if obj[0] >= self.gate_x:
+                if previous_x is None:
+                    crossing_y = float(obj[1])
+                else:
+                    t = (self.gate_x - previous_x) / max(obj[0] - previous_x, 1e-9)
+                    previous_y = getattr(self, "_previous_y", obj[1])
+                    crossing_y = float(previous_y + t * (obj[1] - previous_y))
+                lateral_miss = max(low - crossing_y, 0.0, crossing_y - high)
+                return float(lateral_miss)
+            previous_x = float(obj[0])
+            self._previous_y = float(obj[1])
+        if not self.steps:
+            return float("inf")
+        closest = min(
+            abs(self.gate_x - float(np.asarray(step["obj"], dtype=float)[0]))
+            for step in self.steps
+        )
+        last_obj = np.asarray(self.steps[-1]["obj"], dtype=float)
+        lateral_miss = max(low - last_obj[1], 0.0, last_obj[1] - high)
+        return float(closest + lateral_miss)
+
+    @property
+    def final_goal_distance(self) -> float:
+        if not self.steps:
+            return float("inf")
+        return float(
+            np.linalg.norm(
+                np.asarray(self.steps[-1]["goal"], dtype=float)
+                - np.asarray(self.steps[-1]["obj"], dtype=float)
+            )
+        )
 
 
 class PandaSlideGateAdapter(_VariantAdapter, PandaObjectMotionAdapter):
@@ -818,6 +1070,45 @@ class PandaSlideGateAdapter(_VariantAdapter, PandaObjectMotionAdapter):
         SymbolicExpression("Through-gate P", ("through_gate", "reach_object")),
         SymbolicExpression("Through-gate PD", ("through_gate", "eef_damping")),
     )
+
+    def make_tracker(self) -> EpisodeTracker:
+        return _SlideGateTracker(self.horizon)
+
+    def success_constraints(self, tracker):
+        # C1: the puck passes through the gate opening; C2: final goal distance.
+        return {
+            "gate_crossing": clip_violation(tracker.gate_gap, GATE_MISS_SCALE),
+            "goal_position": clip_violation(
+                tracker.final_goal_distance - tracker.distance_threshold,
+                SLIDE_DISTANCE_SCALE,
+            ),
+        }
+
+    def progress_predicates(self, tracker):
+        goal = np.asarray(tracker.steps[0]["goal"], dtype=float)
+        start_obj = np.asarray(tracker.steps[0]["obj"], dtype=float)
+        tolerance = float(tracker.distance_threshold)
+        gate_x = float(tracker.gate_x)
+        goal_distances = [
+            float(np.linalg.norm(goal - np.asarray(step["obj"], dtype=float)))
+            for step in tracker.steps
+        ]
+        ee_distances = [
+            float(np.linalg.norm(np.asarray(step["obj"], dtype=float) - np.asarray(step["ee"], dtype=float)))
+            for step in tracker.steps
+        ]
+        return {
+            "puck_impacted": min(ee_distances) <= 0.07,
+            "puck_moved_toward_gate": bool(
+                max(
+                    float(np.asarray(step["obj"], dtype=float)[0]) for step in tracker.steps
+                )
+                - float(start_obj[0])
+                > 0.05
+            ),
+            "puck_through_gate": bool(tracker.crossed_gate and tracker.gate_gap <= 1e-9),
+            "puck_in_goal_region": any(d <= tolerance for d in goal_distances),
+        }
 
     def features(self, env, observation, memory, dt):
         base = PandaObjectMotionAdapter.features(self, env, observation, memory, dt)
@@ -850,6 +1141,9 @@ class PandaPickDistractorAdapter(_VariantAdapter, PandaPickAndPlaceAdapter):
         ),
     )
 
+    # SR/SG/Q come unchanged from the stock Pick adapter: every metric refers
+    # to the designated target object (achieved_goal), never the distractor.
+
     def features(self, env, observation, memory, dt):
         base = PandaPickAndPlaceAdapter.features(self, env, observation, memory, dt)
         eef, _, _, _ = self._state(observation)
@@ -878,6 +1172,10 @@ class PandaStackNarrowAdapter(_VariantAdapter, PandaStackAdapter):
             ),
         ),
     )
+
+    # SR/SG/Q come from the stock Stack adapter's tracker; it reads the
+    # variant's tightened distance_threshold and settle_speed from the task,
+    # and adds the settle constraint (C3) when a settle speed is defined.
 
     def features(self, env, observation, memory, dt):
         base = PandaStackAdapter.features(self, env, observation, memory, dt)

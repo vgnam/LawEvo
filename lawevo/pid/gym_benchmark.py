@@ -29,8 +29,10 @@ class GymMetrics:
     energy: float
     jerk: float
     complexity: int
+    sg: float | None = None
+    q: float | None = None
 
-    def to_dict(self) -> dict[str, float | int]:
+    def to_dict(self) -> dict[str, float | int | None]:
         return {
             "score": self.score,
             "episode_return": self.episode_return,
@@ -38,6 +40,8 @@ class GymMetrics:
             "energy": self.energy,
             "jerk": self.jerk,
             "complexity": self.complexity,
+            "sg": self.sg,
+            "q": self.q,
         }
 
 
@@ -47,6 +51,37 @@ class GymEpisode:
     success: bool
     energy: float
     jerk: float
+    sg: float | None = None
+    q: float | None = None
+    constraint_violations: dict[str, float] | None = None
+    progress_predicates: dict[str, bool] | None = None
+    diagnostics: dict[str, float] | None = None
+
+
+def clip_violation(excess: float, scale: float) -> float:
+    """Normalized violation in [0, 1] of a threshold that was exceeded by ``excess``."""
+    return float(np.clip(excess / max(scale, 1e-9), 0.0, 1.0))
+
+
+class EpisodeTracker:
+    """Per-episode physical-state recorder for the SR/SG/Q metric layer.
+
+    The generic engine calls ``update`` after every env step and the task
+    adapter's ``success_constraints``/``progress_predicates`` close over the
+    recorded trajectory, so all three metrics derive from raw physics instead
+    of the environment reward.
+    """
+
+    def __init__(self, horizon: int) -> None:
+        self.steps: list[dict[str, object]] = []
+        self.diagnostics: dict[str, float] = {}
+
+    def update(self, env, observation, terminated: bool) -> None:
+        """Record one (post-step) physical snapshot of the episode."""
+
+    def reset(self) -> None:
+        self.steps.clear()
+        self.diagnostics.clear()
 
 
 class BenchmarkAdapter:
@@ -76,13 +111,28 @@ class BenchmarkAdapter:
     def success(self, env, observation: np.ndarray, steps: int, terminated: bool) -> bool:
         raise NotImplementedError
 
+    def make_tracker(self) -> EpisodeTracker:
+        return EpisodeTracker(self.horizon)
+
+    def success_constraints(
+        self, tracker: EpisodeTracker
+    ) -> dict[str, float] | None:
+        """Named normalized violations in [0, 1]; 0 means the constraint holds.
+
+        Must describe exactly the same full-success specification as ``success``.
+        ``None`` disables SG for adapters without a metric definition.
+        """
+        return None
+
+    def progress_predicates(
+        self, tracker: EpisodeTracker
+    ) -> dict[str, bool] | None:
+        """Named binary subgoal achievements; ``None`` disables Q."""
+        return None
+
     def score(self, episode_return: float, energy: float, jerk: float, complexity: int) -> float:
-        return (
-            episode_return
-            - self.energy_weight * energy
-            - self.jerk_weight * jerk
-            - self.complexity_weight * complexity
-        )
+        del energy, jerk, complexity  # selection optimizes the environment return only
+        return episode_return
 
 
 class PendulumAdapter(BenchmarkAdapter):
@@ -1079,6 +1129,7 @@ def run_episode(
         previous = np.zeros(action_dim)
         terminated = False
         steps = 0
+        tracker = adapter.make_tracker()
         for steps in range(1, adapter.horizon + 1):
             features = adapter.features(env, observation, memory, dt)
             action = structure.evaluate(features, gains)
@@ -1088,13 +1139,34 @@ def run_episode(
             energy += dt * float(action @ action)
             jerk += dt * float(((action - previous) / dt) @ ((action - previous) / dt))
             previous = action.copy()
+            tracker.update(env, observation, terminated)
             if terminated or truncated:
                 break
+        violations = adapter.success_constraints(tracker)
+        predicates = adapter.progress_predicates(tracker)
+        if violations is not None:
+            # Section-10 rule: the adapter converts raw state into thresholded
+            # violations, then success is exactly "all violations == 0", so SR
+            # and SG share one full-success specification by construction.
+            sg_episode = float(np.mean(list(violations.values()))) if violations else 0.0
+            success = all(value == 0 for value in violations.values())
+        else:
+            sg_episode = None
+            success = adapter.success(env, observation, steps, terminated)
+        if predicates is not None:
+            q_episode = float(np.mean([float(bool(value)) for value in predicates.values()])) if predicates else 0.0
+        else:
+            q_episode = None
         return GymEpisode(
             total_return,
-            adapter.success(env, observation, steps, terminated),
+            bool(success),
             energy,
             jerk,
+            sg_episode,
+            q_episode,
+            violations,
+            predicates,
+            tracker.diagnostics,
         )
     finally:
         if owns_env:
@@ -1126,8 +1198,12 @@ def evaluate_gym_structure(
     success = float(np.mean([item.success for item in episodes]))
     energy = float(np.mean([item.energy for item in episodes]))
     jerk = float(np.mean([item.jerk for item in episodes]))
+    sg_values = [item.sg for item in episodes if item.sg is not None]
+    q_values = [item.q for item in episodes if item.q is not None]
+    sg = float(np.mean(sg_values)) if sg_values else None
+    q = float(np.mean(q_values)) if q_values else None
     score = adapter.score(episode_return, energy, jerk, structure.complexity)
-    return GymMetrics(score, episode_return, success, energy, jerk, structure.complexity), episodes
+    return GymMetrics(score, episode_return, success, energy, jerk, structure.complexity, sg, q), episodes
 
 
 def tune_gym_cem(
