@@ -1068,19 +1068,36 @@ def test_topology_runner_smoke() -> None:
 def test_panda_variant_templates_exist_and_match_adapters() -> None:
     from lawevo.pid.panda_gym_variants import PANDA_VARIANT_ADAPTERS
 
-    expected_fields = {
+    expected_extra_fields = {
         "panda_reach_moving": ("goal_speed",),
         "panda_push_ice": ("table_friction",),
         "panda_slide_gate": ("gate_width",),
         "panda_pick_distractor": ("cube_mass",),
         "panda_stack_narrow": ("distance_threshold", "settle_speed"),
     }
-    for key, fields in expected_fields.items():
+    for key, extra in expected_extra_fields.items():
         template = TEMPLATES[key]
         adapter = PANDA_VARIANT_ADAPTERS[TEMPLATE_ADAPTERS[key]]
         assert template.env_id == adapter.env_id
-        assert tuple(field.name for field in template.fields) == fields
+        names = tuple(field.name for field in template.fields)
+        assert names[: -len(extra)] == (
+            "base_height",
+            "upper_arm_len",
+            "forearm_len",
+            "wrist_len",
+            "shoulder_offset",
+            "mass_link1",
+            "mass_link2",
+            "mass_link3",
+            "mass_link4",
+            "mass_link5",
+            "mass_link6",
+            "mass_link7",
+            "motor_force",
+        )
+        assert names[-len(extra) :] == extra
         assert not getattr(template, "mjcf_template", True)
+        assert getattr(template, "urdf_template", False)
         assert template.default_spec().describe()
 
 
@@ -1130,6 +1147,53 @@ def test_panda_variant_morphology_parameter_is_applied() -> None:
         assert fast_env.unwrapped.task.goal_speed == pytest.approx(0.15)
     finally:
         fast_env.close()
+
+
+def test_panda_urdf_arm_shape_changes_kinematics() -> None:
+    """A longer rendered arm must place the EE farther out at identical joints."""
+    import pybullet as p
+
+    from lawevo.pid.panda_gym_variants import PANDA_VARIANT_ADAPTERS
+
+    template = TEMPLATES["panda_reach_moving"]
+    adapter = PANDA_VARIANT_ADAPTERS["panda_reach_moving"]
+    neutral = [0.00, 0.41, 0.00, -1.85, 0.00, 2.26, 0.79]
+
+    def ee_x(spec):
+        env = make_morph_env(adapter, template, spec)
+        try:
+            env.reset(seed=0)
+            client = env.unwrapped.sim.physics_client._client
+            body = env.unwrapped.robot.sim._bodies_idx["panda"]
+            for joint, angle in zip(range(7), neutral):
+                p.resetJointState(body, joint, angle, physicsClientId=client)
+            return float(p.getLinkState(body, 11, physicsClientId=client)[0][0])
+        finally:
+            env.close()
+
+    default_x = ee_x(template.default_spec())
+    values = template.defaults()
+    values.update({"upper_arm_len": 0.42, "forearm_len": 0.48})
+    long_x = ee_x(template.parse_proposal({"values": values}))
+    assert long_x > default_x + 0.05
+
+
+def test_panda_urdf_compile_gate_rejects_and_total_mass_tracks_spec() -> None:
+    template = TEMPLATES["panda_reach_moving"]
+    default_spec = template.default_spec()
+    template.compile(default_spec)
+    base_mass = template.total_mass(default_spec)
+    # Stock Panda: base 2.9 + links 2.7/2.73/2.04/2.08/3.0/1.3/0.2 + hand 0.81 + fingers 0.2.
+    assert base_mass == pytest.approx(17.96, abs=0.2)
+
+    values = template.defaults()
+    values.update({"mass_link3": 3.5, "mass_link5": 5.0})
+    heavy = template.parse_proposal({"values": values})
+    assert template.total_mass(heavy) > base_mass + 2.0
+    template.compile(heavy)
+
+    with pytest.raises(MorphologyError):
+        template.parse_proposal({"values": {**template.defaults(), "upper_arm_len": 9.9}})
 
 
 def test_panda_variant_parse_proposal_rejects_out_of_bounds() -> None:

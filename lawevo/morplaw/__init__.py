@@ -62,11 +62,11 @@ from lawevo.morplaw.morphology import (
     Walker2dTemplate,
 )
 from lawevo.morplaw.panda import (
-    PandaPickDistractorTemplate,
-    PandaPushIceTemplate,
-    PandaReachMovingTemplate,
-    PandaSlideGateTemplate,
-    PandaStackNarrowTemplate,
+    PandaPickDistractorUrdfTemplate,
+    PandaPushIceUrdfTemplate,
+    PandaReachMovingUrdfTemplate,
+    PandaSlideGateUrdfTemplate,
+    PandaStackNarrowUrdfTemplate,
 )
 from lawevo.morplaw.prompts import (
     extract_law_proposals,
@@ -95,11 +95,11 @@ TEMPLATES: dict[str, MorphologyTemplate] = {
     "swimmer_topology": topology.SwimmerTopologyTemplate(),
     "ant_topology": topology.AntTopologyTemplate(),
     **{f"robomorph_{terrain}": RoboMorphGrammarTemplate(terrain) for terrain in ROBOMORPH_TERRAINS},
-    "panda_reach_moving": PandaReachMovingTemplate(),
-    "panda_push_ice": PandaPushIceTemplate(),
-    "panda_slide_gate": PandaSlideGateTemplate(),
-    "panda_pick_distractor": PandaPickDistractorTemplate(),
-    "panda_stack_narrow": PandaStackNarrowTemplate(),
+    "panda_reach_moving": PandaReachMovingUrdfTemplate(),
+    "panda_push_ice": PandaPushIceUrdfTemplate(),
+    "panda_slide_gate": PandaSlideGateUrdfTemplate(),
+    "panda_pick_distractor": PandaPickDistractorUrdfTemplate(),
+    "panda_stack_narrow": PandaStackNarrowUrdfTemplate(),
 }
 
 TEMPLATE_ADAPTERS: dict[str, str] = {
@@ -163,11 +163,11 @@ __all__ = [
     "MorphologyTemplate",
     "PairMetrics",
     "PairRecord",
-    "PandaPickDistractorTemplate",
-    "PandaPushIceTemplate",
-    "PandaReachMovingTemplate",
-    "PandaSlideGateTemplate",
-    "PandaStackNarrowTemplate",
+    "PandaPickDistractorUrdfTemplate",
+    "PandaPushIceUrdfTemplate",
+    "PandaReachMovingUrdfTemplate",
+    "PandaSlideGateUrdfTemplate",
+    "PandaStackNarrowUrdfTemplate",
     "PrecisionReacherAdapter",
     "PusherTemplate",
     "ReacherGravityTemplate",

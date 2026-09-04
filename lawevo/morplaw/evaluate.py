@@ -53,8 +53,9 @@ def make_morph_env(
 ) -> gym.Env:
     """Create the adapter's environment with the morphology applied.
 
-    MJCF templates pass the rendered XML; PyBullet parameter templates (the
-    Panda-Gym variants) forward their fields as ``gym.make`` keyword arguments.
+    MJCF templates pass the rendered XML. URDF templates (the parametric
+    Panda) forward ``urdf_path`` plus their environment parameters. Pure
+    parameter templates forward their fields as ``gym.make`` kwargs.
     """
     import gymnasium as gym
 
@@ -66,15 +67,18 @@ def make_morph_env(
             max_episode_steps=adapter.horizon,
             **extra_kwargs,
         )
-    # PyBullet parameter templates register their env id lazily.
-    parameters = spec.to_dict() if isinstance(spec, MorphologySpec) else dict(spec.to_dict())
-    adapter.make_env()
-    return gym.make(
-        adapter.env_id,
-        max_episode_steps=adapter.horizon,
-        **extra_kwargs,
-        **parameters,
-    )
+    adapter.make_env()  # lazy env registration for PyBullet variants
+    make_kwargs = dict(extra_kwargs)
+    make_kwargs["max_episode_steps"] = adapter.horizon
+    if getattr(template, "urdf_template", False):
+        assert isinstance(spec, MorphologySpec)
+        make_kwargs["urdf_path"] = str(template.urdf_path(spec))
+        make_kwargs["motor_force"] = spec.get("motor_force")
+        make_kwargs.update(template.environment_parameters(spec))
+    else:
+        parameters = spec.to_dict() if isinstance(spec, MorphologySpec) else dict(spec.to_dict())
+        make_kwargs.update(parameters)
+    return gym.make(adapter.env_id, **make_kwargs)
 
 
 def morph_cost(template: MorphologyTemplate, spec: MorphologyGenome, weight: float = 0.05) -> float:

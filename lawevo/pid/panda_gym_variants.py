@@ -44,6 +44,73 @@ _ORBIT_AMPLITUDE = 0.05
 _REGISTERED = False
 
 
+def _morphable_panda_factory():
+    """Build a Panda robot class that loads a custom (morphed) URDF.
+
+    The stock ``Panda`` hard-codes ``franka_panda/panda.urdf``; this factory
+    subclasses it so ``make_env(urdf_path=...)`` can pass a rendered parametric
+    URDF. Joint indices, forces, and the EE link stay identical because the
+    template only substitutes link origins/masses inside the same structure.
+    """
+
+    import panda_gym  # noqa: F401 -- ensures the stock assets are importable
+
+    from panda_gym.envs.robots.panda import Panda
+
+    class MorphablePanda(Panda):
+        def __init__(self, sim, urdf_path, block_gripper=False, base_position=None, control_type="ee"):
+            self._lawevo_urdf_path = str(urdf_path)
+            super().__init__(
+                sim,
+                block_gripper=block_gripper,
+                base_position=base_position,
+                control_type=control_type,
+            )
+
+        def _load_robot(self, file_name, base_position):
+            import os
+
+            # Mesh references inside the URDF are relative to its folder.
+            previous_dir = os.getcwd()
+            os.chdir(os.path.dirname(os.path.abspath(self._lawevo_urdf_path)))
+            try:
+                self.sim.loadURDF(
+                    body_name=self.body_name,
+                    fileName=self._lawevo_urdf_path,
+                    basePosition=base_position,
+                    useFixedBase=True,
+                )
+            finally:
+                os.chdir(previous_dir)
+
+    return MorphablePanda
+
+
+def _build_panda(sim, *, urdf_path, block_gripper, base_position, control_type, motor_force=1.0):
+    """Create a Panda robot, optionally from a morphed URDF with scaled motors."""
+    from panda_gym.envs.robots.panda import Panda
+
+    if urdf_path is None:
+        robot = Panda(
+            sim,
+            block_gripper=block_gripper,
+            base_position=base_position,
+            control_type=control_type,
+        )
+    else:
+        robot = _morphable_panda_factory()(
+            sim,
+            urdf_path=urdf_path,
+            block_gripper=block_gripper,
+            base_position=base_position,
+            control_type=control_type,
+        )
+    if motor_force != 1.0:
+        # Scale the position-control motor forces: the "gear" of PyBullet.
+        robot.joint_forces = robot.joint_forces * float(motor_force)
+    return robot
+
+
 def _register_variant_environments() -> None:
     """Define and register the five variant environments (idempotent, lazy)."""
     global _REGISTERED
@@ -116,18 +183,21 @@ def _register_variant_environments() -> None:
             reward_type: str = "dense",
             control_type: str = "ee",
             goal_speed: float = 0.05,
+            urdf_path: str | None = None,
+            motor_force: float = 1.0,
             **kwargs,
         ) -> None:
-            from panda_gym.envs.robots.panda import Panda
             from panda_gym.pybullet import PyBullet
 
             del kwargs
             sim = PyBullet(render_mode=render_mode, renderer="Tiny")
-            robot = Panda(
+            robot = _build_panda(
                 sim,
+                urdf_path=urdf_path,
                 block_gripper=True,
                 base_position=np.array([-0.6, 0.0, 0.0]),
                 control_type=control_type,
+                motor_force=motor_force,
             )
             task = ReachMovingTask(
                 sim,
@@ -200,18 +270,21 @@ def _register_variant_environments() -> None:
             reward_type: str = "dense",
             control_type: str = "ee",
             table_friction: float = 0.1,
+            urdf_path: str | None = None,
+            motor_force: float = 1.0,
             **kwargs,
         ) -> None:
-            from panda_gym.envs.robots.panda import Panda
             from panda_gym.pybullet import PyBullet
 
             del kwargs
             sim = PyBullet(render_mode=render_mode, renderer="Tiny")
-            robot = Panda(
+            robot = _build_panda(
                 sim,
+                urdf_path=urdf_path,
                 block_gripper=True,
                 base_position=np.array([-0.6, 0.0, 0.0]),
                 control_type=control_type,
+                motor_force=motor_force,
             )
             task = PushIceTask(
                 sim, reward_type=reward_type, table_friction=table_friction
@@ -272,18 +345,21 @@ def _register_variant_environments() -> None:
             reward_type: str = "dense",
             control_type: str = "ee",
             gate_width: float = 0.09,
+            urdf_path: str | None = None,
+            motor_force: float = 1.0,
             **kwargs,
         ) -> None:
-            from panda_gym.envs.robots.panda import Panda
             from panda_gym.pybullet import PyBullet
 
             del kwargs
             sim = PyBullet(render_mode=render_mode, renderer="Tiny")
-            robot = Panda(
+            robot = _build_panda(
                 sim,
+                urdf_path=urdf_path,
                 block_gripper=True,
                 base_position=np.array([-0.6, 0.0, 0.0]),
                 control_type=control_type,
+                motor_force=motor_force,
             )
             task = GateSlideTask(sim, reward_type=reward_type, gate_width=gate_width)
             RobotTaskEnv.__init__(self, robot, task)
@@ -344,18 +420,21 @@ def _register_variant_environments() -> None:
             reward_type: str = "dense",
             control_type: str = "ee",
             cube_mass: float = 1.5,
+            urdf_path: str | None = None,
+            motor_force: float = 1.0,
             **kwargs,
         ) -> None:
-            from panda_gym.envs.robots.panda import Panda
             from panda_gym.pybullet import PyBullet
 
             del kwargs
             sim = PyBullet(render_mode=render_mode, renderer="Tiny")
-            robot = Panda(
+            robot = _build_panda(
                 sim,
+                urdf_path=urdf_path,
                 block_gripper=False,
                 base_position=np.array([-0.6, 0.0, 0.0]),
                 control_type=control_type,
+                motor_force=motor_force,
             )
             task = DistractorPickAndPlaceTask(
                 sim, reward_type=reward_type, cube_mass=cube_mass
@@ -395,18 +474,21 @@ def _register_variant_environments() -> None:
             control_type: str = "ee",
             distance_threshold: float = 0.025,
             settle_speed: float = 0.08,
+            urdf_path: str | None = None,
+            motor_force: float = 1.0,
             **kwargs,
         ) -> None:
-            from panda_gym.envs.robots.panda import Panda
             from panda_gym.pybullet import PyBullet
 
             del kwargs
             sim = PyBullet(render_mode=render_mode, renderer="Tiny")
-            robot = Panda(
+            robot = _build_panda(
                 sim,
+                urdf_path=urdf_path,
                 block_gripper=False,
                 base_position=np.array([-0.6, 0.0, 0.0]),
                 control_type=control_type,
+                motor_force=motor_force,
             )
             task = NarrowStackTask(
                 sim,

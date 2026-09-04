@@ -28,7 +28,17 @@ KIND_GEAR = "gear"
 KIND_COUNT = "count"
 KIND_SPEED = "speed"
 KIND_FRICTION = "friction"
-VALID_KINDS = (KIND_LENGTH, KIND_MASS, KIND_RADIUS, KIND_GEAR, KIND_COUNT, KIND_SPEED, KIND_FRICTION)
+KIND_FORCE = "force"
+VALID_KINDS = (
+    KIND_LENGTH,
+    KIND_MASS,
+    KIND_RADIUS,
+    KIND_GEAR,
+    KIND_COUNT,
+    KIND_SPEED,
+    KIND_FRICTION,
+    KIND_FORCE,
+)
 
 
 class MorphologyError(ValueError):
@@ -187,12 +197,18 @@ class MorphologyTemplate:
         )
 
     def parse_proposal(self, payload: Mapping[str, object]) -> MorphologySpec:
-        """Turn one LLM artifact into a validated parametric morphology."""
+        """Turn one LLM artifact into a validated parametric morphology.
+
+        Missing fields fall back to the template defaults, so a proposal may
+        override only the fields its hypothesis targets.
+        """
         raw = payload.get("values", payload)
         if not isinstance(raw, Mapping):
             raise MorphologyError("morphology proposal must contain a values mapping")
         try:
-            spec = MorphologySpec.of({field.name: float(raw[field.name]) for field in self.fields})
+            spec = MorphologySpec.of(
+                {field.name: float(raw.get(field.name, field.default)) for field in self.fields}
+            )
         except (KeyError, TypeError, ValueError) as exc:
             raise MorphologyError(f"invalid morphology values: {exc}") from exc
         self.check(spec)

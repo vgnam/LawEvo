@@ -544,28 +544,38 @@ pushing. Reacher task features are computed from MuJoCo's live actuator-to-joint
 body Jacobian, while Pusher exposes tip-to-object, object-to-goal, combined push, damping,
 integral, and posture terms.
 
-### PyBullet variant templates (harder Panda-Gym arms)
+### PyBullet variant templates (harder Panda-Gym arms, evolvable robot bodies)
 
 MorpLaw also co-evolves the five harder Panda-Gym variants described above
-(`lawevo/pid/panda_gym_variants.py`). These are **PyBullet parameter
-templates** (`lawevo/morplaw/panda.py`): the morphology is not rendered MJCF
-but the physical environment parameters each variant exposes —
+(`lawevo/pid/panda_gym_variants.py`). These are **PyBullet URDF templates**
+(`lawevo/morplaw/panda.py`): the morphology is the **Panda arm itself** —
+rendered per individual from a parametric URDF — plus, for the variant tasks,
+one physical environment parameter:
 
-| Template | Morphology field(s) | Bounds |
+| Template | Robot-body fields | Environment field(s) |
 |---|---|---|
-| `panda_reach_moving` | `goal_speed` | 0.02–0.15 m/s |
-| `panda_push_ice` | `table_friction` | 0.02–0.5 |
-| `panda_slide_gate` | `gate_width` | 0.06–0.20 m |
-| `panda_pick_distractor` | `cube_mass` | 1.0–3.0 kg |
-| `panda_stack_narrow` | `distance_threshold`, `settle_speed` | 0.015–0.05 m, 0.03–0.2 m/s |
+| `panda_reach_moving` | arm shape + masses + `motor_force` | `goal_speed` 0.02–0.15 m/s |
+| `panda_push_ice` | arm shape + masses + `motor_force` | `table_friction` 0.02–0.5 |
+| `panda_slide_gate` | arm shape + masses + `motor_force` | `gate_width` 0.06–0.20 m |
+| `panda_pick_distractor` | arm shape + masses + `motor_force` | `cube_mass` 1.0–3.0 kg |
+| `panda_stack_narrow` | arm shape + masses + `motor_force` | `distance_threshold` 0.015–0.05 m, `settle_speed` 0.03–0.2 m/s |
 
-`make_morph_env` detects non-MJCF templates and forwards the spec values as
-`gym.make` kwargs, so the same MorpLaw engine — law/morphology generators,
-directed knowledge channels, Navigator, CEM tuning, factorial counterfactuals,
-and the four knowledge ablations — runs unchanged. Each variant carries
-task/morphology/term-semantics prompt context in `lawevo/morplaw/tasks.py`,
-so the LLM reasons about how, for example, a lower `table_friction` shifts the
-optimal law toward braking feedback.
+The arm-shape fields are `base_height` (0.28–0.40 m), `upper_arm_len`
+(0.25–0.42 m), `forearm_len` (0.30–0.48 m), `wrist_len` (0.06–0.13 m),
+`shoulder_offset` (−0.12 to −0.05 m), per-link masses `mass_link1..7`, and
+`motor_force` (0.6–1.6×) which scales every joint's position-control force —
+PyBullet's gear. `MorphablePanda` loads the rendered URDF; the default spec
+reproduces the stock Panda exactly (total mass 17.96 kg), and longer arms
+measurably change forward kinematics, so body evolution is physically real.
+
+`make_morph_env` detects URDF templates and forwards `urdf_path`,
+`motor_force`, and the environment parameters as `gym.make` kwargs, so the
+same MorpLaw engine — law/morphology generators, directed knowledge channels,
+Navigator, CEM tuning, factorial counterfactuals, and the four knowledge
+ablations — runs unchanged. Each variant carries task/morphology/
+term-semantics prompt context in `lawevo/morplaw/tasks.py`, so the LLM
+reasons about co-design trade-offs like a longer arm needing stronger motors
+to track a faster goal.
 
 Run the PyBullet co-design tasks like any MorpLaw environment:
 

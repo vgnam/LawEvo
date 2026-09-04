@@ -12,3 +12,6 @@ results/mujoco_locomotion_goal_energy_jerk/
 
 # Automatically timestamped benchmark runs.
 results/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]/
+
+# Rendered per-spec Panda URDFs (cache; regenerate on demand).
+lawevo/morplaw/assets/assets_panda/lawevo_*.urdf

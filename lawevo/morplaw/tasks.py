@@ -635,46 +635,60 @@ mass; higher gear strengthens every joint.""",
   instability and require matched posture feedback.
 - Passive wheels may help a low robot roll between beams, but an upstream joint must load and
   steer them and the whole body must remain below the clearance envelope.""",
-    "panda_reach_moving": """Field physics (goal_speed = tangential speed of the orbiting
-goal in m/s):
-- The parameter does not change the robot; it changes the world the controller faces. A
-  faster goal stretches the tracking lag that any reactive law accumulates, shifting the
-  payoff toward feedforward and periodic anticipation terms.
-- Slower goals flatter simple proportional servos but leave less return on the table for
-  laws that can anticipate.
-- The arm, table, and orbit amplitude are fixed; only the demand on the controller moves.""",
-    "panda_push_ice": """Field physics (table_friction = lateral friction coefficient of the
-table, cube, and obstacle):
-- Lower friction makes the cube glide after every push: identical commands travel farther
-  and stop later, so braking authority (damping feedback) and early deceleration matter more
-  than pushing force.
-- Very low friction rewards gentle, repeated corrections; higher friction approaches the
-  stock pushing task where maintaining contact through the push dominates.
-- The obstacle sits between the start and goal zones with a resampled lateral offset, so
-  laws that never bend the push path collide regardless of friction.""",
-    "panda_slide_gate": """Field physics (gate_width = opening between the two static walls
-in meters):
-- A narrower gate shrinks the corridor the puck must pass through, so the impulse heading
-  must be aimed precisely; wall bounces become fatal to the episode budget.
-- A wider gate forgives heading errors but the through-gate staging signal still separates
-  gate-aware laws from straight-at-goal shots that strike the wall face.
-- The puck's low friction and the goal's placement inside the gate corridor are fixed; only
-  the corridor width moves.""",
-    "panda_pick_distractor": """Field physics (cube_mass = mass of the grasped cube in kg):
-- A heavier cube sags more under the gripper during transport: the arm droops, horizontal
-  acceleration must fall, and the grasp must close earlier and firmer or the cube slips.
-- Near the stock 1.0 kg the task approaches the standard pick-and-place; toward 3.0 kg the
-  lift clearance and gentle-transport structure of the law carry the episode.
-- The clutter box is resampled near the goal every episode; its positions are not a design
-  variable, so the law must handle the distraction, not the environment.""",
-    "panda_stack_narrow": """Field physics (distance_threshold = success distance tolerance
-in meters; settle_speed = maximum stacked-cube speed in m/s for the placement to count):
-- Both parameters tighten the placement window together: a smaller tolerance demands precise
-  horizontal alignment, while a smaller settle_speed demands a gentle, damped descent.
-- Loose settings approach the stock stack task; tight settings make dropping-from-height
-  useless because the bounce violates the settle requirement.
-- The release timing — ideally gated on the settle_velocity signal — is where a law wins or
-  loses under tight settings.""",
+    "panda_reach_moving": """Field physics — the morphology is the Panda ARM ITSELF plus one
+environment parameter (goal_speed = tangential speed of the orbiting goal in m/s):
+- base_height raises or lowers the whole arm on its pedestal: a taller base shortens the
+  vertical reach to table-level goals but brings the wrist closer to overhead targets.
+- upper_arm_len (shoulder-to-elbow) and forearm_len (elbow-to-wrist) set the workspace: a
+  longer arm reaches the far corners of the goal box without stretching, but each link's
+  inertia grows and the same motor force accelerates it more slowly.
+- wrist_len shifts the final approach segment; small changes here matter most for precise
+  terminal tracking.
+- shoulder_offset is the fixed lateral elbow spacing; keep it near the stock value unless a
+  hypothesis targets elbow clearance.
+- mass_link1..7 scale each link's inertia: heavier links carry more momentum into the target
+  and need more braking, lighter links track fast goals with less torque.
+- motor_force multiplies every joint's position-control force: stronger motors let a longer,
+  heavier arm keep up with a fast goal, weaker motors trade speed for smoother commands.
+- goal_speed sets the difficulty of the WORLD: a faster orbit stretches the tracking lag any
+  reactive law accumulates, shifting the payoff toward feedforward and anticipation terms.""",
+    "panda_push_ice": """Field physics — evolvable Panda arm plus table_friction = lateral
+friction coefficient of the table, cube, and obstacle:
+- A longer arm reaches the cube and goal from more of the table, but heavy distal links
+  push with more momentum that the near-frictionless table converts into glide.
+- motor_force sets how abruptly the arm can start and stop the push; high force with stiff
+  feedback knocks the cube into the obstacle, gentle force wastes the horizon.
+- Lower table_friction makes every push glide farther: braking authority and early
+  deceleration dominate acceleration.
+- The obstacle sits between the start and goal zones; laws that never bend the push path
+  collide regardless of friction.""",
+    "panda_slide_gate": """Field physics — evolvable Panda arm plus gate_width = opening
+between the two static walls in meters:
+- A longer arm can address the puck from farther back, but a heavy fast swing scatters the
+  impulse heading that must thread the gate.
+- base_height and link lengths move the comfortable strike pose; wrist_len fine-tunes the
+  contact height on the puck.
+- A narrower gate shrinks the corridor and makes impulse heading critical; a wider gate
+  forgives heading but the through-gate staging signal still separates gate-aware laws
+  from wall-bouncing shots.""",
+    "panda_pick_distractor": """Field physics — evolvable Panda arm plus cube_mass = mass of
+the grasped cube in kg:
+- The arm must lift and transport the cube, so distal link masses (mass_link5..7) and the
+  wrist length directly set how much the loaded gripper sags.
+- A heavier cube demands more motor_force or a gentler transport law; underpowered arms
+  with heavy cubes droop into the clutter box.
+- The clutter box is resampled near the goal every episode: the LAW must handle the
+  distraction, but the arm's reach decides which transport detours are even possible.""",
+    "panda_stack_narrow": """Field physics — evolvable Panda arm plus distance_threshold
+(success distance tolerance in meters) and settle_speed (maximum stacked-cube speed in m/s):
+- Precise placement needs a wrist the controller can servo finely: longer distal links
+  amplify small joint commands into large Cartesian motions, so wrist_len and the law's
+  near-target saturation must match.
+- motor_force and link masses decide how gently the arm can descend; heavy fast arms bounce
+  the cube out of the tight tolerance.
+- A smaller distance_threshold or settle_speed tightens the placement window: dropping
+  from height fails the settle check, so the law must lower gently and gate the release on
+  the settle_velocity signal.""",
 }
 
 EFFICIENCY_GUIDANCE = """Secondary objectives: minimize squared torque energy
