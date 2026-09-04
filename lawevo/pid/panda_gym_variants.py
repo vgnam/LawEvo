@@ -44,6 +44,55 @@ _ORBIT_AMPLITUDE = 0.05
 _REGISTERED = False
 
 
+class _QuietPyBullet:
+    """Silence pybullet's C-level stdout echo during client connects.
+
+    Every ``pybullet`` client connect prints an ``argv[0]=...`` line (and one
+    line per ``options`` entry) straight to file-descriptor 1 from the C++
+    layer, which Python-level redirection cannot intercept. Each Panda-Gym
+    environment creates one client per scene, flooding benchmark logs.
+    Context-managed fd swap fixes that.
+    """
+
+    def __enter__(self):
+        import os
+
+        self._saved = os.dup(1)
+        self._devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(self._devnull, 1)
+        return self
+
+    def __exit__(self, *exc_info):
+        import os
+
+        os.dup2(self._saved, 1)
+        os.close(self._saved)
+        os.close(self._devnull)
+        return False
+
+
+def _install_quiet_bullet_client() -> None:
+    """Monkeypatch ``panda_gym.pybullet.PyBullet`` so its connects are quiet.
+
+    The stock class passes the background-color ``options`` string to
+    ``BulletClient``, whose C++ constructor echoes each option to fd 1. The
+    wrapper below keeps identical behavior but creates the client inside an
+    fd-level stdout suppression window.
+    """
+    from panda_gym.pybullet import PyBullet
+
+    if getattr(PyBullet, "_lawevo_quiet", False):
+        return
+    original_init = PyBullet.__init__
+
+    def quiet_init(self, *args, **kwargs):
+        with _QuietPyBullet():
+            original_init(self, *args, **kwargs)
+
+    PyBullet.__init__ = quiet_init
+    PyBullet._lawevo_quiet = True
+
+
 def _morphable_panda_factory():
     """Build a Panda robot class that loads a custom (morphed) URDF.
 
@@ -117,6 +166,8 @@ def _register_variant_environments() -> None:
     if _REGISTERED:
         return
     import panda_gym  # noqa: F401 -- registers the stock Panda environments
+
+    _install_quiet_bullet_client()
 
     from gymnasium.envs.registration import register, registry
     from panda_gym.envs.core import RobotTaskEnv
