@@ -29,7 +29,7 @@ from lawevo.pid.gym_benchmark import (
 )
 from lawevo.pid.maniskill_benchmark import MANISKILL_ADAPTERS
 from lawevo.pid.panda_gym_benchmark import PANDA_GYM_ADAPTERS
-from lawevo.pid.panda_gym_variants import PANDA_VARIANT_ADAPTERS
+from lawevo.pid.panda_gym_variants import PANDA_MORPH_STOCK_ADAPTERS, PANDA_VARIANT_ADAPTERS
 from lawevo.pid.robosuite_benchmark import ROBOSUITE_ADAPTERS
 from lawevo.pid.structure import (
     DISTANCE_TERMS,
@@ -53,6 +53,7 @@ __all__ = [
     "MAX_NODES",
     "MAX_PARAMS",
     "PANDA_GYM_ADAPTERS",
+    "PANDA_MORPH_STOCK_ADAPTERS",
     "PANDA_VARIANT_ADAPTERS",
     "ROBOSUITE_ADAPTERS",
     "UNARY_FNS",

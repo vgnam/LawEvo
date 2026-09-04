@@ -33,6 +33,11 @@ _TERM_KEYS = {
     "panda_slide_gate": "panda_slide_gate",
     "panda_pick_distractor": "panda_pick_distractor",
     "panda_stack_narrow": "panda_stack_narrow",
+    "panda_reach_morph": "panda_reach_morph",
+    "panda_push_morph": "panda_push_morph",
+    "panda_slide_morph": "panda_slide_morph",
+    "panda_pick_and_place_morph": "panda_pick_and_place_morph",
+    "panda_stack_morph": "panda_stack_morph",
     "walker2d": "locomotion",
     "hopper": "locomotion",
     "half_cheetah": "locomotion",
@@ -60,13 +65,32 @@ def elite_payload(records: Sequence[PairRecord]) -> list[dict[str, object]]:
 
 
 def _context_lookup(task_key: str, kind: str) -> str:
+    """Look up prompt context, resolving template aliases to a shared entry.
+
+    Variant templates that only add environment parameters reuse the stock
+    task's description when a dedicated entry is absent; lookups fall back
+    through a small alias table so every registered template resolves.
+    """
     if kind == "terms":
         return TERM_SEMANTICS[_TERM_KEYS[task_key]]
-    return {
+    tables = {
         "task": TASK_DESCRIPTIONS,
         "goal": CONTROL_GOALS,
         "morph": MORPHOLOGY_GUIDANCE,
-    }[kind][task_key]
+    }
+    table = tables[kind]
+    if task_key in table:
+        return table[task_key]
+    alias = {
+        "panda_reach_morph": "panda_reach_moving",
+        "panda_push_morph": "panda_push_ice",
+        "panda_slide_morph": "panda_slide_gate",
+        "panda_pick_and_place_morph": "panda_pick_distractor",
+        "panda_stack_morph": "panda_stack_narrow",
+    }.get(task_key)
+    if alias is not None and alias in table:
+        return table[alias]
+    raise KeyError(task_key)
 
 
 def law_mutation_prompt(

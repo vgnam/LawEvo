@@ -29,6 +29,8 @@ from lawevo.pid.panda_gym_benchmark import (
     PandaGymAdapter,
     PandaObjectMotionAdapter,
     PandaPickAndPlaceAdapter,
+    PandaPushAdapter,
+    PandaReachAdapter,
     PandaStackAdapter,
     _action,
     _normalized,
@@ -39,6 +41,14 @@ PUSH_ICE_ENV_ID = "LawevoPandaPushIce-v0"
 SLIDE_GATE_ENV_ID = "LawevoPandaSlideGate-v0"
 PICK_DISTRACTOR_ENV_ID = "LawevoPandaPickDistractor-v0"
 STACK_NARROW_ENV_ID = "LawevoPandaStackNarrow-v0"
+
+# Morphable-robot versions of the five stock tasks: identical task physics and
+# rewards, but the Panda arm itself is loaded from a rendered parametric URDF.
+REACH_MORPH_ENV_ID = "LawevoPandaReach-v1"
+PUSH_MORPH_ENV_ID = "LawevoPandaPush-v1"
+SLIDE_MORPH_ENV_ID = "LawevoPandaSlide-v1"
+PICK_MORPH_ENV_ID = "LawevoPandaPickAndPlace-v1"
+STACK_MORPH_ENV_ID = "LawevoPandaStack-v1"
 
 _ORBIT_AMPLITUDE = 0.05
 _REGISTERED = False
@@ -549,12 +559,152 @@ def _register_variant_environments() -> None:
             )
             RobotTaskEnv.__init__(self, robot, task)
 
+    class PandaReachMorphEnv(PandaReachEnv):
+        """Stock Reach task with the arm loaded from a rendered URDF."""
+
+        def __init__(
+            self,
+            render_mode: str = "rgb_array",
+            reward_type: str = "dense",
+            control_type: str = "ee",
+            urdf_path: str | None = None,
+            motor_force: float = 1.0,
+            **kwargs,
+        ) -> None:
+            from panda_gym.pybullet import PyBullet
+
+            del kwargs
+            sim = PyBullet(render_mode=render_mode, renderer="Tiny")
+            robot = _build_panda(
+                sim,
+                urdf_path=urdf_path,
+                block_gripper=True,
+                base_position=np.array([-0.6, 0.0, 0.0]),
+                control_type=control_type,
+                motor_force=motor_force,
+            )
+            task = Reach(sim, reward_type=reward_type, get_ee_position=robot.get_ee_position)
+            RobotTaskEnv.__init__(self, robot, task)
+
+    class PandaPushMorphEnv(PandaPushEnv):
+        """Stock Push task with the arm loaded from a rendered URDF."""
+
+        def __init__(
+            self,
+            render_mode: str = "rgb_array",
+            reward_type: str = "dense",
+            control_type: str = "ee",
+            urdf_path: str | None = None,
+            motor_force: float = 1.0,
+            **kwargs,
+        ) -> None:
+            from panda_gym.pybullet import PyBullet
+
+            del kwargs
+            sim = PyBullet(render_mode=render_mode, renderer="Tiny")
+            robot = _build_panda(
+                sim,
+                urdf_path=urdf_path,
+                block_gripper=True,
+                base_position=np.array([-0.6, 0.0, 0.0]),
+                control_type=control_type,
+                motor_force=motor_force,
+            )
+            task = Push(sim, reward_type=reward_type)
+            RobotTaskEnv.__init__(self, robot, task)
+
+    class PandaSlideMorphEnv(PandaSlideEnv):
+        """Stock Slide task with the arm loaded from a rendered URDF."""
+
+        def __init__(
+            self,
+            render_mode: str = "rgb_array",
+            reward_type: str = "dense",
+            control_type: str = "ee",
+            urdf_path: str | None = None,
+            motor_force: float = 1.0,
+            **kwargs,
+        ) -> None:
+            from panda_gym.pybullet import PyBullet
+
+            del kwargs
+            sim = PyBullet(render_mode=render_mode, renderer="Tiny")
+            robot = _build_panda(
+                sim,
+                urdf_path=urdf_path,
+                block_gripper=True,
+                base_position=np.array([-0.6, 0.0, 0.0]),
+                control_type=control_type,
+                motor_force=motor_force,
+            )
+            task = Slide(sim, reward_type=reward_type)
+            RobotTaskEnv.__init__(self, robot, task)
+
+    class PandaPickAndPlaceMorphEnv(PandaPickAndPlaceEnv):
+        """Stock PickAndPlace task with the arm loaded from a rendered URDF."""
+
+        def __init__(
+            self,
+            render_mode: str = "rgb_array",
+            reward_type: str = "dense",
+            control_type: str = "ee",
+            urdf_path: str | None = None,
+            motor_force: float = 1.0,
+            **kwargs,
+        ) -> None:
+            from panda_gym.pybullet import PyBullet
+
+            del kwargs
+            sim = PyBullet(render_mode=render_mode, renderer="Tiny")
+            robot = _build_panda(
+                sim,
+                urdf_path=urdf_path,
+                block_gripper=False,
+                base_position=np.array([-0.6, 0.0, 0.0]),
+                control_type=control_type,
+                motor_force=motor_force,
+            )
+            task = PickAndPlace(sim, reward_type=reward_type)
+            RobotTaskEnv.__init__(self, robot, task)
+
+    class PandaStackMorphEnv(PandaStackEnv):
+        """Stock Stack task with the arm loaded from a rendered URDF."""
+
+        def __init__(
+            self,
+            render_mode: str = "rgb_array",
+            reward_type: str = "dense",
+            control_type: str = "ee",
+            urdf_path: str | None = None,
+            motor_force: float = 1.0,
+            **kwargs,
+        ) -> None:
+            from panda_gym.pybullet import PyBullet
+
+            del kwargs
+            sim = PyBullet(render_mode=render_mode, renderer="Tiny")
+            robot = _build_panda(
+                sim,
+                urdf_path=urdf_path,
+                block_gripper=False,
+                base_position=np.array([-0.6, 0.0, 0.0]),
+                control_type=control_type,
+                motor_force=motor_force,
+            )
+            task = Stack(sim, reward_type=reward_type)
+            RobotTaskEnv.__init__(self, robot, task)
+
     for env_id, env_class, max_steps in (
         (REACH_MOVING_ENV_ID, PandaReachMovingEnv, 50),
         (PUSH_ICE_ENV_ID, PandaPushIceEnv, 50),
         (SLIDE_GATE_ENV_ID, PandaSlideGateEnv, 50),
         (PICK_DISTRACTOR_ENV_ID, PandaPickDistractorEnv, 50),
         (STACK_NARROW_ENV_ID, PandaStackNarrowEnv, 100),
+        (REACH_MORPH_ENV_ID, PandaReachMorphEnv, 50),
+        (PUSH_MORPH_ENV_ID, PandaPushMorphEnv, 50),
+        (SLIDE_MORPH_ENV_ID, PandaSlideMorphEnv, 50),
+        (PICK_MORPH_ENV_ID, PandaPickAndPlaceMorphEnv, 50),
+        (STACK_MORPH_ENV_ID, PandaStackMorphEnv, 100),
     ):
         if env_id not in registry:
             register(
@@ -744,4 +894,85 @@ PANDA_VARIANT_ADAPTERS = {
     "panda_slide_gate": PandaSlideGateAdapter(),
     "panda_pick_distractor": PandaPickDistractorAdapter(),
     "panda_stack_narrow": PandaStackNarrowAdapter(),
+}
+
+
+class _MorphStockAdapter(_VariantAdapter):
+    """Base for morphable-robot versions of the five stock tasks.
+
+    The features and classical laws are exactly the stock adapter's; only the
+    environment id changes so the parametric-URDF arm can be injected.
+    """
+
+    _stock_adapter: type
+
+
+class PandaReachMorphAdapter(_MorphStockAdapter):
+    env_id = REACH_MORPH_ENV_ID
+    _stock_adapter = PandaReachAdapter
+
+    def __init__(self) -> None:
+        stock = PandaReachAdapter
+        self.horizon = stock.horizon
+        self.allowed_terms = stock.allowed_terms
+        self.classical = stock.classical
+        self.energy_weight, self.jerk_weight = stock.energy_weight, stock.jerk_weight
+
+    def features(self, env, observation, memory, dt):
+        return PandaReachAdapter.features(self, env, observation, memory, dt)
+
+
+class PandaPushMorphAdapter(_MorphStockAdapter):
+    env_id = PUSH_MORPH_ENV_ID
+    _stock_adapter = PandaPushAdapter
+
+    def __init__(self) -> None:
+        stock = PandaObjectMotionAdapter
+        self.horizon = stock.horizon
+        self.allowed_terms = stock.allowed_terms
+        self.classical = stock.classical
+        self.energy_weight, self.jerk_weight = stock.energy_weight, stock.jerk_weight
+
+    def features(self, env, observation, memory, dt):
+        return PandaObjectMotionAdapter.features(self, env, observation, memory, dt)
+
+
+class PandaSlideMorphAdapter(PandaPushMorphAdapter):
+    env_id = SLIDE_MORPH_ENV_ID
+
+
+class PandaPickAndPlaceMorphAdapter(_MorphStockAdapter):
+    env_id = PICK_MORPH_ENV_ID
+
+    def __init__(self) -> None:
+        stock = PandaPickAndPlaceAdapter
+        self.horizon = stock.horizon
+        self.allowed_terms = stock.allowed_terms
+        self.classical = stock.classical
+        self.energy_weight, self.jerk_weight = stock.energy_weight, stock.jerk_weight
+
+    def features(self, env, observation, memory, dt):
+        return PandaPickAndPlaceAdapter.features(self, env, observation, memory, dt)
+
+
+class PandaStackMorphAdapter(_MorphStockAdapter):
+    env_id = STACK_MORPH_ENV_ID
+
+    def __init__(self) -> None:
+        stock = PandaStackAdapter
+        self.horizon = stock.horizon
+        self.allowed_terms = stock.allowed_terms
+        self.classical = stock.classical
+        self.energy_weight, self.jerk_weight = stock.energy_weight, stock.jerk_weight
+
+    def features(self, env, observation, memory, dt):
+        return PandaStackAdapter.features(self, env, observation, memory, dt)
+
+
+PANDA_MORPH_STOCK_ADAPTERS = {
+    "panda_reach_morph": PandaReachMorphAdapter(),
+    "panda_push_morph": PandaPushMorphAdapter(),
+    "panda_slide_morph": PandaSlideMorphAdapter(),
+    "panda_pick_and_place_morph": PandaPickAndPlaceMorphAdapter(),
+    "panda_stack_morph": PandaStackMorphAdapter(),
 }

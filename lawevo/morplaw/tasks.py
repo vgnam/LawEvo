@@ -162,6 +162,41 @@ clearance constraints. The robot uses the same variable graph grammar as robomor
 Compact bodies can pass below the beams while taller bodies may need a crawling posture or
 careful contact strategy. Episodes last 300 control steps, end if the root falls, and training
 evaluations perturb body masses by +/-10%.""",
+    "panda_reach": """A seven-joint Franka Panda arm with a blocked gripper stands beside a
+table and must bring its end effector to a randomized Cartesian target. The episode lasts
+50 control steps and the command is a bounded Cartesian displacement of the end effector.
+The dense reward is negative end-effector-to-goal distance and success requires ending
+within 0.05 m. Link lengths, link masses, base height, and joint motor strength are design
+variables, so reach and acceleration can be tuned to the goal distribution; a longer arm
+reaches farther but carries more inertia that the same motor force accelerates more slowly.
+Training evaluations resample the target every episode.""",
+    "panda_push": """A seven-joint Franka Panda arm with a blocked gripper must slide a cube
+across a table to a randomized goal. The episode lasts 50 control steps with a bounded
+Cartesian displacement command; the dense reward is negative cube-to-goal distance and
+success requires the cube within 0.05 m of the goal. Arm geometry and strength are design
+variables: a longer arm addresses the cube from more of the table, but the push must stay
+controlled or the cube overshoots. Training evaluations resample the cube and goal.""",
+    "panda_slide": """A seven-joint Franka Panda arm with a blocked gripper must strike a
+low-friction puck toward a target beyond the arm's direct reach. The episode lasts 50
+control steps with a bounded Cartesian displacement command; the dense reward is negative
+puck-to-goal distance and success requires the puck within 0.05 m of the goal. Arm reach
+decides where the strike can be set up, while link masses and motor strength decide how
+hard and how controllable the impulse is; a heavier fast arm hits farther but with less
+precision. Training evaluations resample the puck and target.""",
+    "panda_pick_and_place": """A seven-joint Franka Panda arm with a two-finger gripper must
+pick up a cube and carry it to a randomized three-dimensional goal. The episode lasts 50
+control steps; the command is a bounded Cartesian displacement plus gripper displacement,
+and the dense reward is negative cube-to-goal distance with success within 0.05 m. Arm
+segment lengths and masses set the workspace and the load the gripper must carry without
+sag; wrist length fine-tunes the approach to the grasp. Premature release and dropping the
+cube are the characteristic failures. Training evaluations resample the cube and goal.""",
+    "panda_stack": """A seven-joint Franka Panda arm with a two-finger gripper must stack the
+first of two cubes stably on top of the second within 100 control steps. The command is a
+bounded Cartesian displacement plus gripper displacement, the dense reward combines both
+cube-goal distances, and success requires both within 0.05 m. Precision placement rewards a
+short, light wrist whose small joint commands map to small Cartesian motions, while reach
+and lift clearance scale with the arm's segment lengths and motor strength. Training
+evaluations resample both cube placements.""",
     "panda_reach_moving": """A seven-joint Franka Panda arm with a two-finger gripper stands
 beside a table and must track a target sphere that never stops moving. The target orbits a
 randomized center on a smooth periodic path; the orbit speed is a design parameter of the
@@ -313,6 +348,38 @@ while remaining healthy for all 300 steps. Favor a compatible resting height, co
 envelope, and a gait that preserves clearance as it moves. Reject designs that gain speed on
 open ground but repeatedly strike or become trapped by beams. Among similarly capable designs,
 prefer lower mass-normalized torque energy, smoother commands, and lower complexity.""",
+    "panda_reach": """Primary goal: bring the end effector inside the 0.05 m goal tolerance
+within 50 steps and maximize the dense return by closing distance early. For THIS arm,
+longer links trade reach against inertia: they make distant goals reachable but demand more
+braking from the law near the target, while heavier links raise the momentum the same motor
+force must stop. Match proportional, integral, and damping structure to the arm the
+morphology proposes; among comparable controllers prefer lower command energy, smoother
+commands, and fewer terms.""",
+    "panda_push": """Primary goal: slide the cube into the 0.05 m goal tolerance within 50
+steps. Establish contact on the useful side and preserve it while pushing in the goal
+direction. For THIS arm, reach decides where contact can be established and motor strength
+sets how abruptly the push can start and stop; long heavy arms push with momentum that
+overshoots the goal unless the law brakes early. Success and dense return dominate; then
+prefer low command energy, smooth commands, and compact laws.""",
+    "panda_slide": """Primary goal: strike the puck so it ends inside the 0.05 m goal
+tolerance within 50 steps despite the target lying beyond direct reach. Set up the contact
+point with the arm's reach, then deliver one directed impulse. For THIS arm, heavier distal
+links and stronger motors hit farther but scatter the impulse heading; light wrists trade
+range for precision. Among comparable shots prefer lower command energy, fewer repeated
+impacts, a smoother approach, and simpler expressions.""",
+    "panda_pick_and_place": """Primary goal: place the cube inside the 0.05 m goal tolerance
+within 50 steps while maintaining the grasp through lift and transport. For THIS arm, wrist
+length and distal masses decide how the loaded gripper sags, and motor force decides how
+fast the lift can be without losing the cube. Close firmly and early, lift with clearance,
+transport smoothly, and release only near the goal. Success and dense return dominate; then
+minimize command energy, jerk, failed grasps, and unnecessary terms.""",
+    "panda_stack": """Primary goal: complete the two-cube stack within 100 steps, with both
+cube positions inside their 0.05 m tolerances. For THIS arm, precise placement favors a
+compact wrist whose small joint commands map to small Cartesian motions; long or heavy
+distal links amplify every command and bounce the placed cube. Lift with clearance, align
+above the fixed cube, lower gently, and release without knocking the stack. Success and
+dense return dominate; then minimize command energy, jerk, collisions, regrasping, and
+structural complexity.""",
     "panda_reach_moving": """Primary goal: track the orbiting goal with minimal sustained
 error across all 50 steps and finish inside the 0.05 m tolerance. The goal_velocity signal
 measures the orbit directly, so a K-weighted feedforward term can cancel the phase lag that
@@ -433,6 +500,42 @@ end-effector action, except the phase pair which is scalar-like.
   periodic orbit.
 - eef_damping: negative end-effector velocity — smooths the pursuit and prevents chatter.
 - tanh_goal_error: saturated error — strong bounded feedback near the goal.""",
+    "panda_reach_morph": """All signals are three-vectors aligned with the Cartesian action.
+- goal_error: end-effector-to-goal offset — the proportional term.
+- normalized_goal_error: unit-direction version; constant magnitude can chatter at the goal.
+- integral_goal_error: clipped error integral — removes persistent offset but can wind up.
+- eef_damping: negative end-effector velocity — braking that long or heavy arms need more of.
+- tanh_goal_error: saturated error — strong bounded feedback near the target.""",
+    "panda_push_morph": """All signals are three-vectors aligned with the Cartesian action.
+- reach_object: cube-to-end-effector offset — acquires contact.
+- normalized_reach_object: unit-direction reach.
+- object_goal_error: goal-to-cube offset — the push direction once contact is established.
+- normalized_object_goal_error: unit push direction.
+- contact_then_goal: reaches the cube until it is near, then switches to the push direction.
+- eef_damping: negative end-effector velocity — the brake for a heavy arm's push.""",
+    "panda_slide_morph": """All signals are three-vectors aligned with the Cartesian action.
+- reach_object: puck-to-end-effector offset — positions the strike.
+- normalized_reach_object: unit-direction approach.
+- object_goal_error: goal-to-puck offset — the shot direction once contact is made.
+- normalized_object_goal_error: unit shot direction.
+- contact_then_goal: staged approach toward the puck, then the target.
+- eef_damping: negative end-effector velocity — stabilizes the wind-up before the impulse.""",
+    "panda_pick_and_place_morph": """All signals are four-vectors (Cartesian xyz plus gripper).
+- reach_object: cube-to-end-effector offset plus neutral gripper — approach.
+- object_goal_error: goal-to-cube offset — the transport direction.
+- eef_damping: negative end-effector velocity — damps the sag of the loaded gripper.
+- grasp_close: closes the gripper around the cube.
+- lift_then_transport: raises above the sag height before horizontal motion.
+- release_on_target: opens the gripper only near the goal.
+- pick_place_sequence: the full staged reach-grasp-lift-transport-release sequence.""",
+    "panda_stack_morph": """All signals are four-vectors (Cartesian xyz plus gripper).
+- reach_cube_one: movable-cube-to-end-effector offset — approach.
+- cube_one_goal_error: stack-goal-to-cube offset — the placement direction.
+- eef_damping: negative end-effector velocity — smooths the final descent.
+- grasp_close: closes the gripper around the movable cube.
+- lift_then_stack: raises to the stack clearance height before horizontal alignment.
+- release_on_stack: opens the gripper once aligned above the fixed cube.
+- stack_sequence: the staged reach-grasp-lift-align-lower-release sequence.""",
     "panda_push_ice": """All signals are three-vectors aligned with the Cartesian action.
 - reach_object: cube-to-end-effector offset — acquires contact.
 - normalized_reach_object: unit-direction reach — constant-magnitude approach.
@@ -652,6 +755,53 @@ environment parameter (goal_speed = tangential speed of the orbiting goal in m/s
   heavier arm keep up with a fast goal, weaker motors trade speed for smoother commands.
 - goal_speed sets the difficulty of the WORLD: a faster orbit stretches the tracking lag any
   reactive law accumulates, shifting the payoff toward feedforward and anticipation terms.""",
+    "panda_reach": """Field physics — the morphology is the Panda ARM ITSELF (no environment
+parameters; the task targets are randomized as usual):
+- base_height raises or lowers the whole arm on its pedestal: a taller base shortens the
+  vertical reach to table-level goals but brings the wrist closer to overhead targets.
+- upper_arm_len and forearm_len set the workspace radius: longer links make distant targets
+  reachable but add inertia the same motor force accelerates more slowly, and the damping
+  feedback must work harder to stop cleanly at the target.
+- wrist_len shifts the final approach segment; small changes matter most for terminal
+  precision.
+- shoulder_offset is the fixed lateral elbow spacing; keep it near the stock value unless a
+  hypothesis targets elbow clearance.
+- mass_link1..7 scale each link's inertia: heavier links carry momentum into the target and
+  need braking; lighter links respond faster but bounce more under high gains.
+- motor_force multiplies every joint's position-control force: stronger motors buy faster
+  approach for a heavy arm, weaker motors trade speed for smooth, low-energy commands.""",
+    "panda_push": """Field physics — the morphology is the Panda ARM ITSELF for the stock
+pushing task:
+- Reach decides where contact can be established: longer arms address the cube from more of
+  the table, shorter arms must approach from a narrower set of angles.
+- mass_link5..7 and wrist_len set the momentum the arm transmits through the cube; a heavy
+  fast push glides the cube farther and overshoots unless the law brakes early.
+- motor_force sets how abruptly the push can start and stop; high force with stiff feedback
+  knocks the cube past the goal, gentle force may never establish a useful push.""",
+    "panda_slide": """Field physics — the morphology is the Panda ARM ITSELF for the striking
+task:
+- Reach decides where the strike can be set up relative to the puck and the target beyond
+  the arm; longer arms have more setup freedom but heavier distal chains swing slower.
+- mass_link5..7 and motor_force set the impulse magnitude and controllability: a heavier,
+  stronger arm hits farther but scatters the heading; light wrists trade range for precision.
+- base_height and upper/forearm lengths move the comfortable strike pose toward or away from
+  the table edge.""",
+    "panda_pick_and_place": """Field physics — the morphology is the Panda ARM ITSELF for the
+grasp-and-transport task:
+- The loaded gripper sags under the cube: mass_link5..7 and wrist_len directly set how much
+  the transport path droops and how much clearance the lift phase needs.
+- motor_force decides how fast the lift can be without dropping the cube; underpowered arms
+  with heavy distal links sag into obstacles.
+- Longer arms widen the workspace of possible grasp approaches but amplify small joint
+  commands into large Cartesian motions, so terminal precision demands a gentler law.""",
+    "panda_stack": """Field physics — the morphology is the Panda ARM ITSELF for the
+precision-placement task:
+- Precise placement favors a compact, light wrist: wrist_len and mass_link6..7 decide how
+  small joint commands map to small Cartesian motions above the fixed cube.
+- Long or heavy distal links amplify every command and bounce the placed cube out of
+  tolerance; braking through eef_damping must match the momentum the arm carries.
+- motor_force and base_height set the lift clearance available above the fixed cube; low
+  bases with short arms may struggle to reach the stack height cleanly.""",
     "panda_push_ice": """Field physics — evolvable Panda arm plus table_friction = lateral
 friction coefficient of the table, cube, and obstacle:
 - A longer arm reaches the cube and goal from more of the table, but heavy distal links

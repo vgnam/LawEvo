@@ -580,12 +580,24 @@ to track a faster goal.
 Run the PyBullet co-design tasks like any MorpLaw environment:
 
 ```powershell
+# ===== The five harder variants (arm shape + environment parameter + law) =====
 py -m experiments.evolve_morplaw --environment panda_reach_moving
 py -m experiments.evolve_morplaw --environment panda_push_ice
 py -m experiments.evolve_morplaw --environment panda_slide_gate
 py -m experiments.evolve_morplaw --environment panda_pick_distractor
 py -m experiments.evolve_morplaw --environment panda_stack_narrow
+
+# ===== Morphable-robot versions of the five stock tasks (arm shape + law) =====
+py -m experiments.evolve_morplaw --environment panda_reach_morph
+py -m experiments.evolve_morplaw --environment panda_push_morph
+py -m experiments.evolve_morplaw --environment panda_slide_morph
+py -m experiments.evolve_morplaw --environment panda_pick_and_place_morph
+py -m experiments.evolve_morplaw --environment panda_stack_morph
 ```
+
+The `*_morph` environments replay the stock Reach/Push/Slide/PickAndPlace/Stack
+tasks unchanged but load the arm from the same parametric URDF, so all ten
+Panda tasks co-evolve the robot body alongside the control law.
 
 Quick validation of one variant before the full protocol:
 

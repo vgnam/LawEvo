@@ -62,11 +62,16 @@ from lawevo.morplaw.morphology import (
     Walker2dTemplate,
 )
 from lawevo.morplaw.panda import (
+    PandaPickAndPlaceUrdfTemplate,
     PandaPickDistractorUrdfTemplate,
     PandaPushIceUrdfTemplate,
+    PandaPushUrdfTemplate,
     PandaReachMovingUrdfTemplate,
+    PandaReachUrdfTemplate,
     PandaSlideGateUrdfTemplate,
+    PandaSlideUrdfTemplate,
     PandaStackNarrowUrdfTemplate,
+    PandaStackUrdfTemplate,
 )
 from lawevo.morplaw.prompts import (
     extract_law_proposals,
@@ -100,6 +105,11 @@ TEMPLATES: dict[str, MorphologyTemplate] = {
     "panda_slide_gate": PandaSlideGateUrdfTemplate(),
     "panda_pick_distractor": PandaPickDistractorUrdfTemplate(),
     "panda_stack_narrow": PandaStackNarrowUrdfTemplate(),
+    "panda_reach_morph": PandaReachUrdfTemplate(),
+    "panda_push_morph": PandaPushUrdfTemplate(),
+    "panda_slide_morph": PandaSlideUrdfTemplate(),
+    "panda_pick_and_place_morph": PandaPickAndPlaceUrdfTemplate(),
+    "panda_stack_morph": PandaStackUrdfTemplate(),
 }
 
 TEMPLATE_ADAPTERS: dict[str, str] = {
@@ -121,6 +131,11 @@ TEMPLATE_ADAPTERS: dict[str, str] = {
     "panda_slide_gate": "panda_slide_gate",
     "panda_pick_distractor": "panda_pick_distractor",
     "panda_stack_narrow": "panda_stack_narrow",
+    "panda_reach_morph": "panda_reach_morph",
+    "panda_push_morph": "panda_push_morph",
+    "panda_slide_morph": "panda_slide_morph",
+    "panda_pick_and_place_morph": "panda_pick_and_place_morph",
+    "panda_stack_morph": "panda_stack_morph",
 }
 
 __all__ = [
@@ -163,11 +178,16 @@ __all__ = [
     "MorphologyTemplate",
     "PairMetrics",
     "PairRecord",
+    "PandaPickAndPlaceUrdfTemplate",
     "PandaPickDistractorUrdfTemplate",
     "PandaPushIceUrdfTemplate",
+    "PandaPushUrdfTemplate",
     "PandaReachMovingUrdfTemplate",
+    "PandaReachUrdfTemplate",
     "PandaSlideGateUrdfTemplate",
+    "PandaSlideUrdfTemplate",
     "PandaStackNarrowUrdfTemplate",
+    "PandaStackUrdfTemplate",
     "PrecisionReacherAdapter",
     "PusherTemplate",
     "ReacherGravityTemplate",

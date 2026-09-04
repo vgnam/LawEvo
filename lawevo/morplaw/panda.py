@@ -228,3 +228,33 @@ class PandaStackNarrowUrdfTemplate(PandaUrdfTemplate):
         MorphologyField("distance_threshold", KIND_LENGTH, 0.025, (0.015, 0.05), "m"),
         MorphologyField("settle_speed", KIND_SPEED, 0.08, (0.03, 0.2), "m/s"),
     )
+
+
+class PandaReachUrdfTemplate(PandaUrdfTemplate):
+    """Stock Reach with the evolvable Panda arm (no extra environment field)."""
+
+    env_id = "LawevoPandaReach-v1"
+
+
+class PandaPushUrdfTemplate(PandaUrdfTemplate):
+    """Stock Push with the evolvable Panda arm."""
+
+    env_id = "LawevoPandaPush-v1"
+
+
+class PandaSlideUrdfTemplate(PandaUrdfTemplate):
+    """Stock Slide with the evolvable Panda arm."""
+
+    env_id = "LawevoPandaSlide-v1"
+
+
+class PandaPickAndPlaceUrdfTemplate(PandaUrdfTemplate):
+    """Stock PickAndPlace with the evolvable Panda arm."""
+
+    env_id = "LawevoPandaPickAndPlace-v1"
+
+
+class PandaStackUrdfTemplate(PandaUrdfTemplate):
+    """Stock Stack with the evolvable Panda arm."""
+
+    env_id = "LawevoPandaStack-v1"

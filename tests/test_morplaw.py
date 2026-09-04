@@ -1262,3 +1262,73 @@ def test_panda_variant_pair_tune_and_evaluate(tmp_path) -> None:
         adapter, template, template.default_spec(), structure, gains, [0, 1]
     )
     assert np.isfinite(final.score)
+
+
+def test_panda_stock_morph_templates_and_adapters() -> None:
+    """The five stock tasks gain arm-shape co-design with no env parameters."""
+    from lawevo.pid.panda_gym_variants import PANDA_MORPH_STOCK_ADAPTERS
+
+    arm_fields = (
+        "base_height",
+        "upper_arm_len",
+        "forearm_len",
+        "wrist_len",
+        "shoulder_offset",
+        "mass_link1",
+        "mass_link2",
+        "mass_link3",
+        "mass_link4",
+        "mass_link5",
+        "mass_link6",
+        "mass_link7",
+        "motor_force",
+    )
+    for key in (
+        "panda_reach_morph",
+        "panda_push_morph",
+        "panda_slide_morph",
+        "panda_pick_and_place_morph",
+        "panda_stack_morph",
+    ):
+        template = TEMPLATES[key]
+        adapter = PANDA_MORPH_STOCK_ADAPTERS[TEMPLATE_ADAPTERS[key]]
+        assert template.env_id == adapter.env_id
+        assert tuple(field.name for field in template.fields) == arm_fields
+        spec = template.default_spec()
+        assert template.total_mass(spec) == pytest.approx(17.96, abs=0.2)
+        template.compile(spec)
+
+        env = make_morph_env(adapter, template, spec)
+        try:
+            observation, _ = env.reset(seed=0)
+            action_dim = int(np.prod(env.action_space.shape))
+            memory = adapter.reset_controller(action_dim)
+            features = adapter.features(env, observation, memory, env.unwrapped.sim.dt)
+            assert set(features) == set(adapter.allowed_terms)
+            assert all(np.isfinite(v).all() for v in features.values())
+        finally:
+            env.close()
+
+
+def test_panda_stock_morph_pair_tune_and_evaluate() -> None:
+    from lawevo.pid.panda_gym_variants import PANDA_MORPH_STOCK_ADAPTERS
+
+    template = TEMPLATES["panda_reach_morph"]
+    adapter = PANDA_MORPH_STOCK_ADAPTERS["panda_reach_morph"]
+    structure = adapter.classical[0]
+    gains, metrics, episodes = tune_pair_cem(
+        adapter,
+        template,
+        template.default_spec(),
+        structure,
+        [0, 1],
+        iterations=1,
+        population_size=2,
+    )
+    assert episodes == 6
+    assert gains.shape == (structure.parameter_count,)
+    assert np.isfinite(metrics.score)
+    final, _ = evaluate_pair(
+        adapter, template, template.default_spec(), structure, gains, [0, 1]
+    )
+    assert np.isfinite(final.score)
