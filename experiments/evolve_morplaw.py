@@ -37,6 +37,7 @@ from lawevo.morplaw import (
 )
 from lawevo.morplaw.morphology import MorphologySpec, MorphologyTemplate
 from lawevo.pid.gym_benchmark import ADAPTERS, LOCOMOTION_ADAPTERS
+from lawevo.pid.panda_gym_variants import PANDA_VARIANT_ADAPTERS
 
 SYSTEM_PROMPT = (
     "You are an expert control researcher co-designing robot morphologies and compact "
@@ -48,6 +49,7 @@ ENV_ADAPTERS = {
     **ADAPTERS,
     **LOCOMOTION_ADAPTERS,
     **ARM_ADAPTERS,
+    **PANDA_VARIANT_ADAPTERS,
     "robomorph": ROBOMORPH_ADAPTER,
 }
 

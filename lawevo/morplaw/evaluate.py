@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from lawevo.morplaw.morphology import MorphologyGenome, MorphologyTemplate
+from lawevo.morplaw.morphology import MorphologyGenome, MorphologySpec, MorphologyTemplate
 from lawevo.pid.gym_benchmark import (
     BenchmarkAdapter,
     GymEpisode,
@@ -51,15 +51,29 @@ class PairMetrics:
 def make_morph_env(
     adapter: BenchmarkAdapter, template: MorphologyTemplate, spec: MorphologyGenome
 ) -> gym.Env:
-    """Create the adapter's environment with the morphology's rendered MJCF."""
+    """Create the adapter's environment with the morphology applied.
+
+    MJCF templates pass the rendered XML; PyBullet parameter templates (the
+    Panda-Gym variants) forward their fields as ``gym.make`` keyword arguments.
+    """
     import gymnasium as gym
 
     extra_kwargs = adapter.morph_env_kwargs() if hasattr(adapter, "morph_env_kwargs") else {}
+    if getattr(template, "mjcf_template", True):
+        return gym.make(
+            adapter.env_id,
+            xml_file=str(template.xml_path(spec)),
+            max_episode_steps=adapter.horizon,
+            **extra_kwargs,
+        )
+    # PyBullet parameter templates register their env id lazily.
+    parameters = spec.to_dict() if isinstance(spec, MorphologySpec) else dict(spec.to_dict())
+    adapter.make_env()
     return gym.make(
         adapter.env_id,
-        xml_file=str(template.xml_path(spec)),
         max_episode_steps=adapter.horizon,
         **extra_kwargs,
+        **parameters,
     )
 
 

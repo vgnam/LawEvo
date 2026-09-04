@@ -43,10 +43,12 @@ from lawevo.morplaw.knowledge import (
 from lawevo.morplaw.morphology import (
     ASSET_DIR,
     KIND_COUNT,
+    KIND_FRICTION,
     KIND_GEAR,
     KIND_LENGTH,
     KIND_MASS,
     KIND_RADIUS,
+    KIND_SPEED,
     AntTemplate,
     HalfCheetahTemplate,
     HopperTemplate,
@@ -58,6 +60,13 @@ from lawevo.morplaw.morphology import (
     ReacherTemplate,
     SwimmerTemplate,
     Walker2dTemplate,
+)
+from lawevo.morplaw.panda import (
+    PandaPickDistractorTemplate,
+    PandaPushIceTemplate,
+    PandaReachMovingTemplate,
+    PandaSlideGateTemplate,
+    PandaStackNarrowTemplate,
 )
 from lawevo.morplaw.prompts import (
     extract_law_proposals,
@@ -86,6 +95,11 @@ TEMPLATES: dict[str, MorphologyTemplate] = {
     "swimmer_topology": topology.SwimmerTopologyTemplate(),
     "ant_topology": topology.AntTopologyTemplate(),
     **{f"robomorph_{terrain}": RoboMorphGrammarTemplate(terrain) for terrain in ROBOMORPH_TERRAINS},
+    "panda_reach_moving": PandaReachMovingTemplate(),
+    "panda_push_ice": PandaPushIceTemplate(),
+    "panda_slide_gate": PandaSlideGateTemplate(),
+    "panda_pick_distractor": PandaPickDistractorTemplate(),
+    "panda_stack_narrow": PandaStackNarrowTemplate(),
 }
 
 TEMPLATE_ADAPTERS: dict[str, str] = {
@@ -102,16 +116,23 @@ TEMPLATE_ADAPTERS: dict[str, str] = {
     "swimmer_topology": "swimmer",
     "ant_topology": "ant",
     **{f"robomorph_{terrain}": "robomorph" for terrain in ROBOMORPH_TERRAINS},
+    "panda_reach_moving": "panda_reach_moving",
+    "panda_push_ice": "panda_push_ice",
+    "panda_slide_gate": "panda_slide_gate",
+    "panda_pick_distractor": "panda_pick_distractor",
+    "panda_stack_narrow": "panda_stack_narrow",
 }
 
 __all__ = [
     "ARM_ADAPTERS",
     "ASSET_DIR",
     "KIND_COUNT",
+    "KIND_FRICTION",
     "KIND_GEAR",
     "KIND_LENGTH",
     "KIND_MASS",
     "KIND_RADIUS",
+    "KIND_SPEED",
     "KNOWLEDGE_MODES",
     "PRECISION_REACHER_ADAPTER",
     "ROBOMORPH_ADAPTER",
@@ -142,6 +163,11 @@ __all__ = [
     "MorphologyTemplate",
     "PairMetrics",
     "PairRecord",
+    "PandaPickDistractorTemplate",
+    "PandaPushIceTemplate",
+    "PandaReachMovingTemplate",
+    "PandaSlideGateTemplate",
+    "PandaStackNarrowTemplate",
     "PrecisionReacherAdapter",
     "PusherTemplate",
     "ReacherGravityTemplate",

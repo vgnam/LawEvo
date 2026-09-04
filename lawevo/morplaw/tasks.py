@@ -162,6 +162,48 @@ clearance constraints. The robot uses the same variable graph grammar as robomor
 Compact bodies can pass below the beams while taller bodies may need a crawling posture or
 careful contact strategy. Episodes last 300 control steps, end if the root falls, and training
 evaluations perturb body masses by +/-10%.""",
+    "panda_reach_moving": """A seven-joint Franka Panda arm with a two-finger gripper stands
+beside a table and must track a target sphere that never stops moving. The target orbits a
+randomized center on a smooth periodic path; the orbit speed is a design parameter of the
+environment. The episode lasts 50 control steps. The end-effector command is a bounded
+Cartesian displacement. Success requires ending within 0.05 m of the moving goal, and the
+dense reward measures instantaneous tracking error, so sustained lag drives the score. A
+fast-moving goal punishes purely reactive feedback: the controller must anticipate the
+orbit. Training evaluations resample the orbit center and phase every episode.""",
+    "panda_push_ice": """A seven-joint Franka Panda arm with a blocked gripper must push a
+cube across a table whose lateral friction is a design parameter (default near frictionless).
+A fixed cylindrical obstacle stands on the straight path between the cube's start zone and
+the goal zone, with a resampled lateral offset every episode. The episode lasts 50 control
+steps and the command is a bounded end-effector displacement. Success requires the cube to
+finish within 0.05 m of the goal. Low friction means every push keeps sliding: braking,
+side-stepping the obstacle, and contact maintenance dominate. Training evaluations resample
+the cube, goal, and obstacle placements.""",
+    "panda_slide_gate": """A seven-joint Franka Panda arm with a blocked gripper must strike
+a low-friction puck through a narrow gate formed by two static walls; the gate opening width
+is a design parameter. The goal lies beyond the gate and inside its corridor, out of the
+arm's direct reach. The episode lasts 50 control steps with a bounded end-effector
+displacement command. Success requires the puck within 0.05 m of the goal. The puck must
+pass through the gate first: shots aimed straight at the goal bounce off the walls. The
+controller should stage its approach, aim the impulse through the gate center, and avoid
+wasting the short horizon on repeated weak strikes. Training evaluations resample the puck,
+gate-relative goal, and contact conditions.""",
+    "panda_pick_distractor": """A seven-joint Franka Panda arm with a two-finger gripper must
+pick up a cube whose mass is a design parameter (heavier than the stock 1.0 kg) and place it
+at a randomized goal, while a separate clutter box is resampled near the goal region every
+episode. The episode lasts 50 control steps; the command is a bounded end-effector
+displacement plus gripper displacement. Success requires the cube within 0.05 m of the goal.
+A heavier cube sags during transport, so the grasp must close firmly and lift with extra
+clearance, and the transport path must avoid knocking the clutter into the goal. Premature
+release under load is the characteristic failure. Training evaluations resample the cube,
+goal, and clutter placements.""",
+    "panda_stack_narrow": """A seven-joint Franka Panda arm with a two-finger gripper must
+stack one cube stably on top of another within 100 control steps. Two design parameters
+govern the environment: the success distance tolerance (tighter than the stock task) and
+the settle speed below which the stacked cube counts as at rest. A drop that lands inside
+tolerance while still moving fails; the controller must lower gently and release only when
+the cube is quiet. The command is a bounded end-effector displacement plus gripper
+displacement, and the dense reward combines both cube-goal distances. Training evaluations
+resample both cube placements.""",
 }
 
 CONTROL_GOALS = {
@@ -271,6 +313,41 @@ while remaining healthy for all 300 steps. Favor a compatible resting height, co
 envelope, and a gait that preserves clearance as it moves. Reject designs that gain speed on
 open ground but repeatedly strike or become trapped by beams. Among similarly capable designs,
 prefer lower mass-normalized torque energy, smoother commands, and lower complexity.""",
+    "panda_reach_moving": """Primary goal: track the orbiting goal with minimal sustained
+error across all 50 steps and finish inside the 0.05 m tolerance. The goal_velocity signal
+measures the orbit directly, so a K-weighted feedforward term can cancel the phase lag that
+pure proportional tracking accumulates; the phase signals offer a second, model-free route.
+For THIS environment, a faster goal orbit (larger goal_speed) widens the lag that reactive
+laws suffer and shifts the payoff toward anticipation; slower orbits reward gentle, smooth
+servos. Prefer lower command energy, smoother commands, and fewer signals once accuracy
+holds.""",
+    "panda_push_ice": """Primary goal: bring the cube inside the 0.05 m goal tolerance within
+50 steps while never hitting the obstacle. For THIS environment, a lower table_friction makes
+every push glide farther, so braking through damping and early deceleration dominate
+acceleration; a higher friction approaches the stock pushing task where contact staging
+matters more. The obstacle_repel signal should bend the push path around the cylinder.
+Success and dense return dominate; then prefer low command energy, smooth commands,
+obstacle-free paths, and compact laws.""",
+    "panda_slide_gate": """Primary goal: slide the puck through the gate and inside the
+0.05 m goal tolerance within 50 steps. For THIS environment, a narrower gate (smaller
+gate_width) demands a precisely aimed impulse and punishes wall bounces; a wider gate
+forgives sloppy heading but still requires staging through the opening. Use the
+through_gate signal to aim at the gate first and the goal after crossing. Among comparable
+shots prefer lower command energy, fewer impacts, a smoother approach, and simpler laws.""",
+    "panda_pick_distractor": """Primary goal: place the cube inside the 0.05 m goal tolerance
+within 50 steps while keeping the clutter box clear of the goal. For THIS environment, a
+heavier cube (larger cube_mass) sags more during transport, demanding a firmer grasp, higher
+lift clearance, and gentler horizontal acceleration; a lighter cube approaches the stock
+pick-and-place. Use distractor_error to steer the transport path around the clutter. Success
+and dense return dominate; then minimize command energy, jerk, failed grasps, premature
+releases under load, and unnecessary terms.""",
+    "panda_stack_narrow": """Primary goal: stack the cube satisfying both the tightened
+distance tolerance and the at-rest settle requirement within 100 steps. For THIS
+environment, a smaller distance_threshold or a smaller settle_speed tightens the placement
+window: the controller must lower gently through the final centimeters and gate the release
+on the settle_velocity signal. A drop that lands inside tolerance while still moving is not
+a success. Success and dense return dominate; then minimize command energy, jerk,
+collisions with the fixed cube, regrasping, and structural complexity.""",
 }
 
 TERM_SEMANTICS = {
@@ -344,6 +421,57 @@ signal assumes a fixed number of legs or a fixed joint naming layout.
 - body_angle: root roll/pitch projected onto side/front correction patterns for each motor.
 - height_error: root-height deficit broadcast to every actuator.
 - forward_speed_error: target-speed deficit with graph-order gait signs.""",
+    "panda_reach_moving": """All signals are three-vectors broadcast over the Cartesian
+end-effector action, except the phase pair which is scalar-like.
+- goal_error: instantaneous end-effector-to-goal offset — the proportional tracking term.
+- normalized_goal_error: unit-direction version; useful for constant-speed pursuit.
+- integral_goal_error: clipped error integral — removes steady lag but winds up on a moving
+  goal if unsaturated.
+- goal_velocity: measured goal motion per control step — the feedforward term that reactive
+  laws lack; on a periodic orbit it is itself nearly periodic.
+- phase_sin / phase_cos: elapsed-time oscillators — a model-free anticipation channel for the
+  periodic orbit.
+- eef_damping: negative end-effector velocity — smooths the pursuit and prevents chatter.
+- tanh_goal_error: saturated error — strong bounded feedback near the goal.""",
+    "panda_push_ice": """All signals are three-vectors aligned with the Cartesian action.
+- reach_object: cube-to-end-effector offset — acquires contact.
+- normalized_reach_object: unit-direction reach — constant-magnitude approach.
+- object_goal_error: goal-to-cube offset — the push direction once contact is established.
+- normalized_object_goal_error: unit push direction.
+- contact_then_goal: reaches the cube until it is near, then switches to the push direction
+  — the staged sequential term.
+- obstacle_repel: unit vector from the obstacle toward the cube — bends the push path around
+  the cylinder; on a low-friction table even a slight heading error becomes a large miss.
+- eef_damping: negative end-effector velocity — the only brake the controller has, since the
+  table friction is near zero.""",
+    "panda_slide_gate": """All signals are three-vectors aligned with the Cartesian action.
+- reach_object: puck-to-end-effector offset — positions the strike.
+- object_goal_error: goal-to-puck offset — the naive shot direction that ignores the gate.
+- contact_then_goal: staged approach toward the puck, then the goal.
+- through_gate: points from the puck to the gate center before the puck crosses the gate
+  line and to the goal after — the staging signal that separates gate-aware laws from
+  wall-bouncing ones.
+- eef_damping: negative end-effector velocity — stabilizes the wind-up before the impulse.""",
+    "panda_pick_distractor": """All signals are four-vectors (Cartesian xyz plus gripper).
+- reach_object: cube-to-end-effector offset plus neutral gripper — approach.
+- object_goal_error: goal-to-cube offset — the transport direction.
+- eef_damping: negative end-effector velocity — damps the sag-induced sway of a heavy cube.
+- grasp_close: closes the gripper; a heavier cube (cube_mass) needs a firm, early closure.
+- lift_then_transport: raises above the sag height before horizontal motion.
+- release_on_target: opens the gripper only near the goal.
+- pick_place_sequence: the full staged sequence.
+- distractor_error: end-effector-to-clutter offset — lets the law steer the transport path
+  away from the clutter box instead of knocking it into the goal.""",
+    "panda_stack_narrow": """All signals are four-vectors (Cartesian xyz plus gripper).
+- reach_cube_one: movable-cube-to-end-effector offset — approach.
+- cube_one_goal_error: stack-goal-to-cube offset — the placement direction.
+- eef_damping: negative end-effector velocity — smooths the final descent.
+- grasp_close: closes the gripper around the movable cube.
+- lift_then_stack: raises to the stack clearance height before horizontal alignment.
+- release_on_stack: opens the gripper once aligned above the fixed cube.
+- stack_sequence: the staged reach-grasp-lift-align-lower-release sequence.
+- settle_velocity: negative stacked-cube velocity — gates the release on the at-rest
+  requirement; with a tight distance_threshold, only gentle placement survives.""",
 }
 
 MORPHOLOGY_GUIDANCE = {
@@ -507,6 +635,46 @@ mass; higher gear strengthens every joint.""",
   instability and require matched posture feedback.
 - Passive wheels may help a low robot roll between beams, but an upstream joint must load and
   steer them and the whole body must remain below the clearance envelope.""",
+    "panda_reach_moving": """Field physics (goal_speed = tangential speed of the orbiting
+goal in m/s):
+- The parameter does not change the robot; it changes the world the controller faces. A
+  faster goal stretches the tracking lag that any reactive law accumulates, shifting the
+  payoff toward feedforward and periodic anticipation terms.
+- Slower goals flatter simple proportional servos but leave less return on the table for
+  laws that can anticipate.
+- The arm, table, and orbit amplitude are fixed; only the demand on the controller moves.""",
+    "panda_push_ice": """Field physics (table_friction = lateral friction coefficient of the
+table, cube, and obstacle):
+- Lower friction makes the cube glide after every push: identical commands travel farther
+  and stop later, so braking authority (damping feedback) and early deceleration matter more
+  than pushing force.
+- Very low friction rewards gentle, repeated corrections; higher friction approaches the
+  stock pushing task where maintaining contact through the push dominates.
+- The obstacle sits between the start and goal zones with a resampled lateral offset, so
+  laws that never bend the push path collide regardless of friction.""",
+    "panda_slide_gate": """Field physics (gate_width = opening between the two static walls
+in meters):
+- A narrower gate shrinks the corridor the puck must pass through, so the impulse heading
+  must be aimed precisely; wall bounces become fatal to the episode budget.
+- A wider gate forgives heading errors but the through-gate staging signal still separates
+  gate-aware laws from straight-at-goal shots that strike the wall face.
+- The puck's low friction and the goal's placement inside the gate corridor are fixed; only
+  the corridor width moves.""",
+    "panda_pick_distractor": """Field physics (cube_mass = mass of the grasped cube in kg):
+- A heavier cube sags more under the gripper during transport: the arm droops, horizontal
+  acceleration must fall, and the grasp must close earlier and firmer or the cube slips.
+- Near the stock 1.0 kg the task approaches the standard pick-and-place; toward 3.0 kg the
+  lift clearance and gentle-transport structure of the law carry the episode.
+- The clutter box is resampled near the goal every episode; its positions are not a design
+  variable, so the law must handle the distraction, not the environment.""",
+    "panda_stack_narrow": """Field physics (distance_threshold = success distance tolerance
+in meters; settle_speed = maximum stacked-cube speed in m/s for the placement to count):
+- Both parameters tighten the placement window together: a smaller tolerance demands precise
+  horizontal alignment, while a smaller settle_speed demands a gentle, damped descent.
+- Loose settings approach the stock stack task; tight settings make dropping-from-height
+  useless because the bounce violates the settle requirement.
+- The release timing — ideally gated on the settle_velocity signal — is where a law wins or
+  loses under tight settings.""",
 }
 
 EFFICIENCY_GUIDANCE = """Secondary objectives: minimize squared torque energy

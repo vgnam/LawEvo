@@ -544,6 +544,45 @@ pushing. Reacher task features are computed from MuJoCo's live actuator-to-joint
 body Jacobian, while Pusher exposes tip-to-object, object-to-goal, combined push, damping,
 integral, and posture terms.
 
+### PyBullet variant templates (harder Panda-Gym arms)
+
+MorpLaw also co-evolves the five harder Panda-Gym variants described above
+(`lawevo/pid/panda_gym_variants.py`). These are **PyBullet parameter
+templates** (`lawevo/morplaw/panda.py`): the morphology is not rendered MJCF
+but the physical environment parameters each variant exposes —
+
+| Template | Morphology field(s) | Bounds |
+|---|---|---|
+| `panda_reach_moving` | `goal_speed` | 0.02–0.15 m/s |
+| `panda_push_ice` | `table_friction` | 0.02–0.5 |
+| `panda_slide_gate` | `gate_width` | 0.06–0.20 m |
+| `panda_pick_distractor` | `cube_mass` | 1.0–3.0 kg |
+| `panda_stack_narrow` | `distance_threshold`, `settle_speed` | 0.015–0.05 m, 0.03–0.2 m/s |
+
+`make_morph_env` detects non-MJCF templates and forwards the spec values as
+`gym.make` kwargs, so the same MorpLaw engine — law/morphology generators,
+directed knowledge channels, Navigator, CEM tuning, factorial counterfactuals,
+and the four knowledge ablations — runs unchanged. Each variant carries
+task/morphology/term-semantics prompt context in `lawevo/morplaw/tasks.py`,
+so the LLM reasons about how, for example, a lower `table_friction` shifts the
+optimal law toward braking feedback.
+
+Run the PyBullet co-design tasks like any MorpLaw environment:
+
+```powershell
+py -m experiments.evolve_morplaw --environment panda_reach_moving
+py -m experiments.evolve_morplaw --environment panda_push_ice
+py -m experiments.evolve_morplaw --environment panda_slide_gate
+py -m experiments.evolve_morplaw --environment panda_pick_distractor
+py -m experiments.evolve_morplaw --environment panda_stack_narrow
+```
+
+Quick validation of one variant before the full protocol:
+
+```powershell
+py -m experiments.evolve_morplaw --environment panda_reach_moving --generations 1 --proposals-per-side 1 --responsive-per-side 0 --cem-iterations 1 --cem-population 4 --train-episodes 2 --test-episodes 3 --variants no_knowledge
+```
+
 ### Running
 
 ```powershell

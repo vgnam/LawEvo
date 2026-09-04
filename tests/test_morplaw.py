@@ -1060,3 +1060,141 @@ def test_topology_runner_smoke() -> None:
     assert any(
         item.hypothesis.direction == "law_to_morph" for item in runner.knowledge.items.values()
     )
+
+
+# --- PyBullet variant templates (harder Panda-Gym arms) ---------------------
+
+
+def test_panda_variant_templates_exist_and_match_adapters() -> None:
+    from lawevo.pid.panda_gym_variants import PANDA_VARIANT_ADAPTERS
+
+    expected_fields = {
+        "panda_reach_moving": ("goal_speed",),
+        "panda_push_ice": ("table_friction",),
+        "panda_slide_gate": ("gate_width",),
+        "panda_pick_distractor": ("cube_mass",),
+        "panda_stack_narrow": ("distance_threshold", "settle_speed"),
+    }
+    for key, fields in expected_fields.items():
+        template = TEMPLATES[key]
+        adapter = PANDA_VARIANT_ADAPTERS[TEMPLATE_ADAPTERS[key]]
+        assert template.env_id == adapter.env_id
+        assert tuple(field.name for field in template.fields) == fields
+        assert not getattr(template, "mjcf_template", True)
+        assert template.default_spec().describe()
+
+
+@pytest.mark.parametrize(
+    "task_key",
+    (
+        "panda_reach_moving",
+        "panda_push_ice",
+        "panda_slide_gate",
+        "panda_pick_distractor",
+        "panda_stack_narrow",
+    ),
+)
+def test_panda_variant_pair_reset_step_and_features(task_key: str) -> None:
+    from lawevo.pid.panda_gym_variants import PANDA_VARIANT_ADAPTERS
+
+    template = TEMPLATES[task_key]
+    adapter = PANDA_VARIANT_ADAPTERS[task_key]
+    env = make_morph_env(adapter, template, template.default_spec())
+    try:
+        observation, _ = env.reset(seed=0)
+        action_dim = int(np.prod(env.action_space.shape))
+        memory = adapter.reset_controller(action_dim)
+        features = adapter.features(env, observation, memory, env.unwrapped.sim.dt)
+        assert set(features) == set(adapter.allowed_terms)
+        assert all(np.asarray(v).shape == (action_dim,) for v in features.values())
+        assert all(np.isfinite(v).all() for v in features.values())
+        observation, reward, _, _, _ = env.step(np.zeros(action_dim, dtype=np.float32))
+        assert np.isfinite(reward)
+    finally:
+        env.close()
+
+
+def test_panda_variant_morphology_parameter_is_applied() -> None:
+    from lawevo.pid.panda_gym_variants import PANDA_VARIANT_ADAPTERS
+
+    template = TEMPLATES["panda_reach_moving"]
+    adapter = PANDA_VARIANT_ADAPTERS["panda_reach_moving"]
+    default_env = make_morph_env(adapter, template, template.default_spec())
+    try:
+        assert default_env.unwrapped.task.goal_speed == pytest.approx(0.05)
+    finally:
+        default_env.close()
+    fast = template.parse_proposal({"values": {"goal_speed": 0.15}})
+    fast_env = make_morph_env(adapter, template, fast)
+    try:
+        assert fast_env.unwrapped.task.goal_speed == pytest.approx(0.15)
+    finally:
+        fast_env.close()
+
+
+def test_panda_variant_parse_proposal_rejects_out_of_bounds() -> None:
+    template = TEMPLATES["panda_push_ice"]
+    with pytest.raises(MorphologyError):
+        template.parse_proposal({"values": {"table_friction": 5.0}})
+    spec = template.parse_proposal({"values": {"table_friction": 0.05}})
+    assert spec.get("table_friction") == pytest.approx(0.05)
+
+
+def test_panda_variant_prompts_have_complete_task_specific_context() -> None:
+    from lawevo.pid.panda_gym_variants import PANDA_VARIANT_ADAPTERS
+
+    directive = SearchDirective(1, "explore", "test", "vary law", "vary body", "pair them")
+    knowledge = DirectedKnowledgeBase("full")
+    metrics = PairMetrics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1, 0.0, 1.0)
+    expected = (
+        "panda_reach_moving",
+        "panda_push_ice",
+        "panda_slide_gate",
+        "panda_pick_distractor",
+        "panda_stack_narrow",
+    )
+    for task_key in expected:
+        template = TEMPLATES[task_key]
+        adapter = PANDA_VARIANT_ADAPTERS[task_key]
+        structure = adapter.classical[0]
+        incumbent = PairRecord(
+            template.default_spec(),
+            structure,
+            np.zeros(structure.parameter_count),
+            metrics,
+            0,
+        )
+        law_prompt = law_mutation_prompt(
+            task_key, adapter, incumbent, knowledge, [], directive, [], 1, 1
+        )
+        morph_prompt = morphology_mutation_prompt(
+            task_key, template, incumbent, knowledge, [], directive, [], 1, 1
+        )
+        assert "TASK AND ENVIRONMENT" in law_prompt
+        assert "MORPHOLOGY / TOPOLOGY PHYSICS" in morph_prompt
+        assert len(law_prompt) > 1000
+        assert len(morph_prompt) > 1000
+
+
+def test_panda_variant_pair_tune_and_evaluate(tmp_path) -> None:
+    from lawevo.pid.panda_gym_variants import PANDA_VARIANT_ADAPTERS
+
+    template = TEMPLATES["panda_push_ice"]
+    adapter = PANDA_VARIANT_ADAPTERS["panda_push_ice"]
+    structure = adapter.classical[0]
+    gains, metrics, episodes = tune_pair_cem(
+        adapter,
+        template,
+        template.default_spec(),
+        structure,
+        [0, 1],
+        iterations=1,
+        population_size=2,
+    )
+    assert episodes == 6  # 1 initial + 1 iteration x population 2 x 2 seeds
+    assert gains.shape == (structure.parameter_count,)
+    assert np.isfinite(metrics.score)
+    final, _ = evaluate_pair(
+        adapter, template, template.default_spec(), structure, gains, [0, 1]
+    )
+    assert np.isfinite(final.score)
