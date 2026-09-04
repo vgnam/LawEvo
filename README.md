@@ -272,6 +272,11 @@ py -m experiments.gymnasium_classical_benchmarks `
 | `PandaSlideDense-v3` | Reach P/PD, Object Goal P, Contact+Goal PD |
 | `PandaPickAndPlaceDense-v3` | Reach P/PD, Pick+Place, Pick+Place PD |
 | `PandaStackDense-v3` | Reach P/PD, Pick+Stack, Pick+Stack PD |
+| `LawevoPandaReachMoving-v0` | Task P/PD, Feedforward P, Tracking PD |
+| `LawevoPandaPushIce-v0` | Reach PD, Contact+Goal PD, Obstacle-aware PD |
+| `LawevoPandaSlideGate-v0` | Reach PD, Object Goal P, Through-gate P/PD |
+| `LawevoPandaPickDistractor-v0` | Reach P/PD, Pick+Place, Selective Pick PD |
+| `LawevoPandaStackNarrow-v0` | Reach P/PD, Pick+Stack, Settle PD |
 | `RobosuiteLift-v0` | Reach P/PD, Pick+Lift, Pick+Lift PD |
 | `RobosuiteStack-v0` | Reach P/PD, Pick+Stack, Pick+Stack PD |
 | `RobosuiteNutAssemblySquare-v0` | Reach P/PD, Pick+Insert, Pick+Insert PD |
@@ -376,6 +381,57 @@ py -m experiments.gymnasium_classical_benchmarks --environment PandaPickAndPlace
 
 # Stack
 py -m experiments.gymnasium_classical_benchmarks --environment PandaStackDense-v3 --generations 20 --train-episodes 6 --test-episodes 30
+```
+
+### Harder Panda-Gym arm variants
+
+Beyond the five stock tasks above, LawEvo ships five difficulty-graded variants
+(`lawevo/pid/panda_gym_variants.py`). Each variant subclasses a Panda-Gym
+task/environment with one exposed physical parameter, so tuned classical
+baselines stay honest while evolved laws gain structure to exploit:
+
+| Variant | Environment id | Exposed parameter | What it changes |
+|---|---|---|---|
+| Reach-MovingGoal | `LawevoPandaReachMoving-v0` | `goal_speed` | The goal orbits a resampled center; success tracks the moving goal. Feedforward (`goal_velocity`, phase oscillators) beats reactive PD. |
+| Push-IceObstacle | `LawevoPandaPushIce-v0` | `table_friction` (default 0.1) | Near-frictionless table plus a static obstacle between the cube's start zone and the goal zone. `obstacle_repel` bends push paths. |
+| Slide-Gate | `LawevoPandaSlideGate-v0` | `gate_width` (default 0.09 m) | Two walls gate the straight path; the puck must pass through before the goal. `through_gate` stages the shot. |
+| Pick-HeavyDistractor | `LawevoPandaPickDistractor-v0` | `cube_mass` (default 1.5 kg) | A heavier cube sags under transport while a resampled clutter box sits near the goal. `distractor_error` steers around it. |
+| Stack-NarrowSettle | `LawevoPandaStackNarrow-v0` | `distance_threshold` (0.025 m) + `settle_speed` (0.08 m/s) | Tight tolerance plus an at-rest requirement: a dropped-in-place cube that is still moving fails. `settle_velocity` gates release. |
+
+Each variant's adapter adds its new signals to the stock adapter's term list and
+ships its own tuned classical baselines (for example a feedforward Tracking PD
+for Reach-MovingGoal and a velocity-gated Settle PD for Stack-NarrowSettle), so
+the same 20/6/30 protocol compares against classical laws that already use the
+new physics. The variant env id and parameter defaults live in the adapter
+constructors; pass custom values through `gym.make` kwargs if needed.
+
+Run each variant with the standard protocol:
+
+```powershell
+# Reach-MovingGoal: track an orbiting goal
+py -m experiments.gymnasium_classical_benchmarks --environment LawevoPandaReachMoving-v0 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Push-IceObstacle: low-friction table plus an obstacle
+py -m experiments.gymnasium_classical_benchmarks --environment LawevoPandaPushIce-v0 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Slide-Gate: strike the puck through a gated wall pair
+py -m experiments.gymnasium_classical_benchmarks --environment LawevoPandaSlideGate-v0 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Pick-HeavyDistractor: heavier cube plus clutter near the goal
+py -m experiments.gymnasium_classical_benchmarks --environment LawevoPandaPickDistractor-v0 --generations 20 --train-episodes 6 --test-episodes 30
+
+# Stack-NarrowSettle: tight tolerance plus an at-rest requirement
+py -m experiments.gymnasium_classical_benchmarks --environment LawevoPandaStackNarrow-v0 --generations 20 --train-episodes 6 --test-episodes 30
+```
+
+Quick validation of one variant before the full protocol:
+
+```powershell
+py -m experiments.gymnasium_classical_benchmarks `
+  --environment LawevoPandaReachMoving-v0 `
+  --generations 2 --proposals 2 `
+  --cem-iterations 2 --cem-population 8 `
+  --train-episodes 2 --test-episodes 5
 ```
 
 The robosuite tasks use a Panda robot with the `BASIC` operational-space controller. Their

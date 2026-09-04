@@ -30,6 +30,7 @@ from lawevo.pid import (
     LOCOMOTION_ADAPTERS,
     MANISKILL_ADAPTERS,
     PANDA_GYM_ADAPTERS,
+    PANDA_VARIANT_ADAPTERS,
     ROBOSUITE_ADAPTERS,
     GymMetrics,
     GymStructure,
@@ -184,6 +185,85 @@ above the second cube within 100 PyBullet control steps. Dense reward combines t
 cube-goal distances and success requires both to be within 0.05 m. The four-dimensional
 action commands end-effector xyz and gripper displacement. Signals implement reaching,
 grasping, lifting, alignment, release, and a gated sequential stack motion.""",
+    "panda_reach_moving": """Task: track a goal sphere that orbits a randomized center on a
+slow Lissajous path across the Panda workspace for 50 PyBullet control steps. Dense reward
+is negative instantaneous end-effector-to-goal distance and success requires being inside
+0.05 m of the MOVING goal. The three-dimensional action commands bounded end-effector
+displacement. Signals add a measured goal velocity (finite difference of the moving goal),
+elapsed-time phase oscillators, clipped integral correction, damping, and saturated error.
+Purely reactive PD lags a moving target; the orbit velocity is predictable, so structures
+that add a velocity feedforward or periodic component can track with a smaller error.""",
+    "panda_push_ice": """Task: push a cube across a nearly frictionless table (lateral
+friction 0.1) past a static cylindrical obstacle placed between the start zone and the goal
+zone, within 50 PyBullet control steps. The cube starts left of center, the goal right of
+center, and the obstacle sits on the straight path with a resampled lateral offset. Dense
+reward is negative cube-to-goal distance; success requires distance below 0.05 m. On ice a
+small push travels far, so contact maintenance, braking through damping, and an
+obstacle-repulsion direction signal let structures avoid pushing the cube into the
+obstacle; a fixed high-gain push either overshoots or gets stuck.""",
+    "panda_slide_gate": """Task: strike a low-friction puck through a narrow gate formed by
+two walls (default 0.09 m opening) positioned before the goal zone, then let it slide to a
+target beyond the Panda arm's reach, within 50 PyBullet control steps. The goal always sits
+behind the gate line and inside the gate corridor. Dense reward is negative puck-to-goal
+distance; success requires distance below 0.05 m. The through_gate signal points from the
+puck to the gate center before the puck crosses and to the goal after it; structures that
+aim the impulse through the gate instead of straight at the goal avoid bouncing off the
+walls, while repeated weak strikes waste the short horizon.""",
+    "panda_pick_distractor": """Task: pick up a heavier cube (default 1.5 kg) with the
+Panda gripper and move it to a randomized target while a second clutter box is resampled
+near the goal region every episode, within 50 PyBullet control steps. Dense reward is
+negative cube-to-goal distance and success requires distance below 0.05 m. The heavier
+cube makes the arm sag and requires firm grasping; the distractor_error signal points from
+the end effector to the clutter box so structures can steer around it instead of knocking
+it into the goal. Premature release under load or kicking the distractor onto the target
+are the characteristic failures.""",
+    "panda_stack_narrow": """Task: grasp the first of two cubes and stack it stably on the
+second cube within 100 PyBullet control steps under a tightened 0.025 m success tolerance
+and an at-rest settle requirement (the stacked cube must end below a small speed). Dense
+reward combines the two cube-goal distances. Signals add settle_velocity (negative
+cube-one velocity) so structures can close the loop on release: dropping the cube from
+height bounces it out of tolerance, and a controller that keeps pushing after contact
+fails the settle check. Gentle placement with velocity feedback beats aggressive
+transport.""",
+    "panda_reach_moving": """Task: track a Cartesian goal that orbits a randomized center on
+a Lissajous path with speed parameter goal_speed (m/s tangential) for 50 PyBullet control
+steps. The dense reward is negative end-effector-to-goal distance evaluated every step, so
+sustained tracking error, not just the final position, drives the return; success requires
+ending within 0.05 m of the moving goal. A proportional law alone lags the orbit by a
+nearly constant phase; goal_velocity feedforward, periodic phase_sin/phase_cos terms, or
+integral correction can cancel that lag. The normalized three-dimensional action commands
+bounded end-effector displacement.""",
+    "panda_push_ice": """Task: push a cube across a near-frictionless table (table_friction
+parameter, default 0.1 lateral friction) around a fixed cylindrical obstacle standing between
+the cube's start zone and the goal zone, within 50 PyBullet control steps. Dense reward is
+negative cube-to-goal distance; success requires distance below 0.05 m. The low friction
+makes the cube glide after each push, so braking and direction control matter as much as
+acceleration; the obstacle punishes straight-line strategies that knock the cube into it.
+Signals include reach, contact staging, goal error, damping, and an obstacle-repulsion
+direction. The blocked-gripper action commands end-effector displacement.""",
+    "panda_slide_gate": """Task: strike a low-friction puck through a narrow gate (gate_width
+parameter, wall gap in meters) formed by two static walls before the randomized goal, within
+50 PyBullet control steps. The puck must pass through the gate before entering the goal
+region; dense reward is negative puck-to-goal distance and success requires distance below
+0.05 m. The through_gate signal points at the gate until the puck passes it, then at the
+goal, staging the shot. Undirected impulses bounce the puck off the walls away from the
+gate. The blocked-gripper action commands end-effector displacement.""",
+    "panda_pick_distractor": """Task: pick up a heavier cube (cube_mass parameter in kg,
+default 1.5 versus the standard 1.0) and place it at a randomized Cartesian goal while a
+static clutter box sits near the goal region, within 50 PyBullet control steps. Dense reward
+is negative cube-to-goal distance and success requires distance below 0.05 m. The heavier
+cube sags more during transport, so the grasp must close harder and lift with extra
+clearance; the distractor_error signal points from the end effector to the clutter box so
+structures can steer around it. The action is bounded end-effector xyz displacement plus
+gripper displacement.""",
+    "panda_stack_narrow": """Task: stack cube one directly above cube two within 100
+PyBullet control steps, but with a tightened success tolerance (distance_threshold parameter,
+default 0.025 m versus the standard 0.1 m) and a settle-speed requirement: the stacked cube
+must be nearly at rest for the placement to count. Dense reward combines the two cube-goal
+distances. Signals add the stacked cube's velocity (settle_velocity) so a structure can gate
+release on low speed. Dropping the cube from height, or placing it accurately but still
+moving, both fail. The four-dimensional action commands end-effector xyz and gripper
+displacement.""",
     "maniskill_push_cube": """Task: use a simulated Panda arm to push a cube into a
 0.1 m-radius target region within 50 ManiSkill control steps. The normalized action is a
 seven-dimensional end-effector delta pose [delta_xyz, delta_axis_angle, gripper], while
@@ -335,6 +415,69 @@ achieved cube positions inside their 0.05 m goal tolerances. Reach and grasp the
 cube, lift with clearance, align above the fixed cube, lower, and release into a stable
 stack. Success and dense return dominate; then minimize command energy, jerk, collisions,
 regrasping, and unnecessary structural complexity.""",
+    "panda_reach_moving": """Primary goal: track the orbiting goal with minimal sustained
+error across all 50 steps and finish inside the 0.05 m tolerance. The goal velocity is
+measured directly by the goal_velocity signal, so a K-weighted feedforward term can cancel
+the tracking lag that pure proportional feedback accumulates; phase_sin/phase_cos offer a
+second, model-free route to anticipate the orbit. Among comparable trackers prefer lower
+normalized command energy, smoother commands, limited integral windup, and simpler
+expressions; high-frequency chattering around the moving goal is a failure mode.""",
+    "panda_push_ice": """Primary goal: bring the cube inside the 0.05 m goal tolerance
+within 50 steps on a nearly frictionless table while never hitting the obstacle. Establish
+contact on the useful side, push in the goal direction, and brake the glide early —
+eef_damping and contact staging do the braking that friction cannot. The obstacle_repel
+signal should bend the push path around the cylinder. Success and dense return dominate;
+then prefer low command energy, smooth command changes, obstacle-free paths, and compact
+structures over brute-force straight pushes.""",
+    "panda_slide_gate": """Primary goal: slide the puck through the gate and inside the
+0.05 m goal tolerance within 50 steps. Use through_gate to stage the shot: approach the
+puck, aim the impulse through the gate center, and only after the puck crosses the gate
+line steer toward the goal. A directed impulse of sufficient magnitude beats repeated weak
+strikes that bounce off the walls. Among comparable shots prefer lower command energy,
+fewer impacts, a smoother approach to the puck, and simpler expressions.""",
+    "panda_pick_distractor": """Primary goal: place the heavier cube inside the 0.05 m
+goal tolerance within 50 steps while keeping the clutter box clear of the goal. Close the
+gripper firmly and lift with extra clearance to counter sag; use distractor_error to steer
+the transport path around the box. Success and dense return dominate; then minimize
+command energy, jerk, failed grasps, premature releases under load, and unnecessary
+structural terms.""",
+    "panda_stack_narrow": """Primary goal: stack cube one above cube two within 100 steps
+satisfying both the tightened 0.025 m tolerance and the at-rest settle requirement. Use
+settle_velocity to gate the release on low cube speed, lower gently through the final
+centimeters, and only open the gripper when the stack is quiet. Success and dense return
+dominate; then minimize command energy, jerk, collisions with the fixed cube, regrasping,
+and structural complexity. A drop that lands inside tolerance while still moving is not a
+success.""",
+    "panda_reach_moving": """Primary goal: track the orbiting goal with minimal sustained
+error across all 50 steps and finish inside the 0.05 m tolerance. Feedforward terms
+(goal_velocity, phase_sin/phase_cos) or clipped integral action should remove the constant
+phase lag that pure proportional tracking suffers. Among comparable trackers prefer lower
+normalized command energy, smoother commands, and fewer signals; high-frequency chattering
+around the moving goal is a failure mode, not a solution.""",
+    "panda_push_ice": """Primary goal: bring the cube inside the 0.05 m goal tolerance
+within 50 steps despite near-frictionless sliding and the obstacle between start and goal.
+Establish contact on the useful side, push toward the goal, and brake the glide early
+enough to stop inside tolerance without hitting the obstacle. The obstacle_repel signal
+should bend the push path around the cylinder. Success and dense return dominate; then
+prefer low command energy, smooth changes, and obstacle-free paths over brute-force
+straight pushes.""",
+    "panda_slide_gate": """Primary goal: slide the puck through the gate and inside the
+0.05 m goal tolerance within 50 steps. Use the through_gate signal to stage the shot: aim
+at the gate first, then at the goal once the puck has passed through. Deliver a directed
+impulse with the right heading; repeated blind strikes that bounce off the walls waste the
+episode. Among comparable shots prefer lower command energy, fewer impacts, smoother
+approach to the puck, and simpler expressions.""",
+    "panda_pick_distractor": """Primary goal: place the heavier cube inside the 0.05 m goal
+tolerance within 50 steps without disturbing or resting on the clutter box. Close the
+gripper harder and lift with extra clearance to counter the sag of the heavier cube; use
+distractor_error to keep the transport path clear. Success and dense return dominate; then
+minimize command energy, jerk, failed grasps, premature releases, and unnecessary terms.""",
+    "panda_stack_narrow": """Primary goal: stack cube one above cube two within 100 steps
+satisfying both the tightened 0.025 m tolerance and the settle-speed requirement: the
+placed cube must be nearly at rest. Use settle_velocity to gate the release on low speed,
+lower the cube gently instead of dropping it, and only open the gripper when velocity is
+small. Success and dense return dominate; then minimize command energy, jerk, collisions
+with the fixed cube, regrasping, and structural complexity.""",
     "maniskill_push_cube": """Primary goal: complete ManiSkill PushCube-v1 within 50
 steps by placing the cube inside the 0.1 m target region while keeping it on the table.
 First move the Panda TCP to the push pose behind the cube, then preserve contact and drive
@@ -733,6 +876,7 @@ def main() -> None:
             **LOCOMOTION_ADAPTERS,
             **MANISKILL_ADAPTERS,
             **PANDA_GYM_ADAPTERS,
+            **PANDA_VARIANT_ADAPTERS,
             **ROBOSUITE_ADAPTERS,
         }.items()
     }
