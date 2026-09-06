@@ -10,6 +10,7 @@ import numpy as np
 from scipy.linalg import solve_discrete_are
 
 from lawevo.pid.expression import SymbolicExpression
+from lawevo.pid.objective import objective_for
 
 # Backward-compatible alias: the evolved law genome is now a free-form symbolic
 # expression instead of a flat term list. Legacy callers that construct laws
@@ -31,6 +32,16 @@ class GymMetrics:
     complexity: int
     sg: float | None = None
     q: float | None = None
+
+    @property
+    def selection_key(self) -> tuple[float, float, float]:
+        """No finite return/effort gain can compensate for lower measured SR."""
+        import math
+
+        sg = 0.0 if self.sg is None else self.sg
+        if not all(math.isfinite(x) for x in (self.success_rate, sg, self.score)):
+            return (-math.inf, -math.inf, -math.inf)
+        return (self.success_rate, -sg, self.score)
 
     def to_dict(self) -> dict[str, float | int | None]:
         return {
@@ -56,11 +67,21 @@ class GymEpisode:
     constraint_violations: dict[str, float] | None = None
     progress_predicates: dict[str, bool] | None = None
     diagnostics: dict[str, float] | None = None
+    barrier_verification: dict | None = None
 
 
 def clip_violation(excess: float, scale: float) -> float:
     """Normalized violation in [0, 1] of a threshold that was exceeded by ``excess``."""
     return float(np.clip(excess / max(scale, 1e-9), 0.0, 1.0))
+
+
+def strict_upper_violation(value: float, threshold: float, scale: float) -> float:
+    """Gap for value < threshold, preserving failure exactly at the boundary."""
+    if not np.isfinite(value):
+        return 1.0
+    if value < threshold:
+        return 0.0
+    return max(1e-12, clip_violation(value - threshold, scale))
 
 
 class EpisodeTracker:
@@ -82,6 +103,23 @@ class EpisodeTracker:
     def reset(self) -> None:
         self.steps.clear()
         self.diagnostics.clear()
+
+
+class _CartPoleTracker(EpisodeTracker):
+    def update(self, env, observation, terminated: bool) -> None:
+        angle = abs(float(observation[1]))
+        self.steps.append({"angle": angle, "terminated": bool(terminated)})
+        self.diagnostics.update(steps=len(self.steps), final_abs_angle=angle)
+
+
+class _ReacherTracker(EpisodeTracker):
+    def update(self, env, observation, terminated: bool) -> None:
+        data = env.unwrapped.data
+        distance = float(np.linalg.norm(
+            data.body("fingertip").xpos[:2] - data.body("target").xpos[:2]
+        ))
+        self.steps.append({"distance": distance, "terminated": bool(terminated)})
+        self.diagnostics.update(steps=len(self.steps), final_distance=distance)
 
 
 class BenchmarkAdapter:
@@ -130,9 +168,34 @@ class BenchmarkAdapter:
         """Named binary subgoal achievements; ``None`` disables Q."""
         return None
 
+    @property
+    def success_gap_spec(self):
+        """Serializable definition, shared with prompts and run manifests."""
+        return None
+
+    @property
+    def progress_spec(self):
+        """Optional serializable Q milestones; Q never enters selection_key."""
+        return None
+
     def score(self, episode_return: float, energy: float, jerk: float, complexity: int) -> float:
-        del energy, jerk, complexity  # selection optimizes the environment return only
-        return episode_return
+        return self.objective_config.score(episode_return, energy, jerk, complexity)
+
+    @property
+    def objective_config(self):
+        return objective_for(self.env_id)
+
+    @property
+    def signal_contract(self):
+        from lawevo.pid.signal_schema import contract_for
+
+        return contract_for(self.env_id, self.allowed_terms)
+
+    def validate_structure(self, structure):
+        from lawevo.pid.signal_schema import validate_expression
+
+        structure.validate(self.allowed_terms)
+        return validate_expression(structure, self.signal_contract)
 
 
 class PendulumAdapter(BenchmarkAdapter):
@@ -193,6 +256,8 @@ class PendulumAdapter(BenchmarkAdapter):
 class InvertedPendulumAdapter(BenchmarkAdapter):
     env_id = "InvertedPendulum-v5"
     horizon = 500
+    final_angle_tolerance = 0.1
+    angle_gap_scale = 0.1
     allowed_terms = (
         "cart_position",
         "pole_angle",
@@ -228,12 +293,8 @@ class InvertedPendulumAdapter(BenchmarkAdapter):
         qpos = np.array([rng.uniform(-0.5, 0.5), rng.uniform(-0.14, 0.14)])
         qvel = np.array([rng.uniform(-0.25, 0.25), rng.uniform(-0.15, 0.15)])
         env.unwrapped.set_state(qpos, qvel)
-        # Vary both moving bodies without changing the XML or observation contract.
+        # Keep nominal dynamics identical to the Pulse pair; randomize state only.
         unwrapped = env.unwrapped
-        if not hasattr(unwrapped, "_lawevo_base_body_mass"):
-            unwrapped._lawevo_base_body_mass = unwrapped.model.body_mass.copy()
-        unwrapped.model.body_mass[:] = unwrapped._lawevo_base_body_mass
-        unwrapped.model.body_mass[1:] *= rng.uniform(0.85, 1.15, size=2)
         mujoco.mj_forward(unwrapped.model, unwrapped.data)
         return unwrapped._get_obs()
 
@@ -264,7 +325,66 @@ class InvertedPendulumAdapter(BenchmarkAdapter):
 
     def success(self, env, observation, steps, terminated):
         del env
-        return not terminated and steps == self.horizon and abs(observation[1]) < 0.1
+        return (not terminated and steps == self.horizon
+                and abs(observation[1]) < self.final_angle_tolerance)
+
+    def make_tracker(self):
+        return _CartPoleTracker(self.horizon)
+
+    def success_constraints(self, tracker):
+        count = len(tracker.steps)
+        terminated = any(step["terminated"] for step in tracker.steps)
+        # A failure on the last step must not become zero survival violation.
+        survival = max(abs(self.horizon - count) / self.horizon,
+                       1.0 / self.horizon if terminated else 0.0)
+        final_angle = tracker.steps[-1]["angle"] if count else float("inf")
+        return {
+            "survival": float(min(1.0, survival)),
+            "final_angle": strict_upper_violation(
+                final_angle, self.final_angle_tolerance, self.angle_gap_scale
+            ),
+        }
+
+    def progress_predicates(self, tracker):
+        halfway = (self.horizon + 1) // 2
+        count = len(tracker.steps)
+        return {
+            "survived_half_horizon": bool(
+                count >= halfway and not any(s["terminated"] for s in tracker.steps[:halfway])
+            ),
+            "survived_full_horizon": bool(
+                count == self.horizon and not any(s["terminated"] for s in tracker.steps)
+            ),
+            "final_angle_in_tolerance": bool(
+                count and strict_upper_violation(
+                    tracker.steps[-1]["angle"], self.final_angle_tolerance, self.angle_gap_scale
+                ) == 0.0
+            ),
+        }
+
+    @property
+    def progress_spec(self):
+        return {
+            "aggregation": "fraction of achieved milestones per episode, then mean over seeds",
+            "selection": "diagnostic only; excluded from selection_key",
+            "survived_half_horizon": "at least ceil(H/2) steps without termination in that prefix",
+            "survived_full_horizon": "exactly H steps with no termination",
+            "final_angle_in_tolerance": "abs(final pole angle) strictly below tolerance",
+            "horizon": self.horizon,
+            "angle_tolerance_rad": self.final_angle_tolerance,
+        }
+
+    @property
+    def success_gap_spec(self):
+        return {
+            "aggregation": "mean of constraint violations per episode, then mean over seeds",
+            "survival": "min(1,max(abs(H-steps)/H,1/H if terminated else 0))",
+            "horizon": self.horizon,
+            "final_angle": "strict upper-bound violation of abs(final pole angle)",
+            "angle_tolerance_rad": self.final_angle_tolerance,
+            "angle_scale_rad": self.angle_gap_scale,
+            "strict_boundary_floor": 1e-12,
+        }
 
 
 class InvertedDoublePendulumAdapter(BenchmarkAdapter):
@@ -385,6 +505,7 @@ class ReacherAdapter(BenchmarkAdapter):
     env_id = "Reacher-v5"
     horizon = 50
     success_tolerance = 0.05
+    distance_gap_scale = 0.20
     allowed_terms = (
         "jt_error",
         "joint_velocity",
@@ -399,20 +520,14 @@ class ReacherAdapter(BenchmarkAdapter):
         GymStructure("Task PI", ("jt_error", "integral_jt_error")),
         GymStructure("Task PD", ("jt_error", "joint_velocity")),
         GymStructure("Task PID", ("jt_error", "integral_jt_error", "joint_velocity")),
+        GymStructure("Jacobian-transpose PD", ("jt_error", "task_damping")),
+        GymStructure("Saturated PD", "K1*tanh(K2*jt_error) - K3*joint_velocity"),
     )
     energy_weight, jerk_weight = 0.01, 0.00002
 
     def prepare_reset(self, env, observation, seed):
-        rng = np.random.default_rng(seed + 2701)
-        unwrapped = env.unwrapped
-        if not hasattr(unwrapped, "_lawevo_base_body_mass"):
-            unwrapped._lawevo_base_body_mass = unwrapped.model.body_mass.copy()
-        unwrapped.model.body_mass[:] = unwrapped._lawevo_base_body_mass
-        unwrapped.model.body_mass[1:] *= rng.uniform(
-            0.9, 1.1, size=len(unwrapped.model.body_mass) - 1
-        )
-        mujoco.mj_forward(unwrapped.model, unwrapped.data)
-        return unwrapped._get_obs()
+        # Payload is an explicit paired variant, not hidden reset randomization.
+        return observation
 
     def features(self, env, observation, memory, dt):
         del observation
@@ -446,6 +561,49 @@ class ReacherAdapter(BenchmarkAdapter):
         data = env.unwrapped.data
         error = data.body("fingertip").xpos[:2] - data.body("target").xpos[:2]
         return float(np.linalg.norm(error)) < self.success_tolerance
+
+    def make_tracker(self):
+        return _ReacherTracker(self.horizon)
+
+    def success_constraints(self, tracker):
+        distance = tracker.steps[-1]["distance"] if tracker.steps else float("inf")
+        return {"goal_position": strict_upper_violation(
+            distance, self.success_tolerance, self.distance_gap_scale
+        )}
+
+    def progress_predicates(self, tracker):
+        distances = [s["distance"] for s in tracker.steps]
+
+        def inside(distance, tolerance):
+            return bool(strict_upper_violation(distance, tolerance, self.distance_gap_scale) == 0)
+
+        return {
+            "near_goal_once": any(inside(d, 2 * self.success_tolerance) for d in distances),
+            "goal_reached_once": any(inside(d, self.success_tolerance) for d in distances),
+            "goal_reached_final": bool(distances and inside(distances[-1], self.success_tolerance)),
+        }
+
+    @property
+    def progress_spec(self):
+        return {
+            "aggregation": "fraction of achieved milestones per episode, then mean over seeds",
+            "selection": "diagnostic only; excluded from selection_key",
+            "near_goal_once": "any post-step fingertip-target xy distance strictly below near radius",
+            "goal_reached_once": "any post-step distance strictly below success tolerance",
+            "goal_reached_final": "final distance strictly below success tolerance",
+            "near_radius_m": 2 * self.success_tolerance,
+            "success_tolerance_m": self.success_tolerance,
+        }
+
+    @property
+    def success_gap_spec(self):
+        return {
+            "aggregation": "mean of constraint violations per episode, then mean over seeds",
+            "goal_position": "strict upper-bound violation of final fingertip-target xy distance",
+            "distance_tolerance_m": self.success_tolerance,
+            "distance_scale_m": self.distance_gap_scale,
+            "strict_boundary_floor": 1e-12,
+        }
 
 
 class LocomotionAdapter(BenchmarkAdapter):
@@ -1115,7 +1273,9 @@ def run_episode(
     seed: int,
     *,
     env=None,
+    verify_barriers=False,
 ):
+    adapter.validate_structure(structure)
     owns_env = env is None
     if owns_env:
         env = adapter.make_env()
@@ -1130,9 +1290,25 @@ def run_episode(
         terminated = False
         steps = 0
         tracker = adapter.make_tracker()
+        contract = adapter.signal_contract
+        verifier = None
+        if verify_barriers:
+            from lawevo.verify.controller import ControllerBarrierVerifier
+
+            verifier = ControllerBarrierVerifier(adapter.env_id, env, observation, dt, seed)
         for steps in range(1, adapter.horizon + 1):
             features = adapter.features(env, observation, memory, dt)
+            if steps == 1 and contract.complete:
+                contract.validate_values(features)
             action = structure.evaluate(features, gains)
+            if verifier is not None:
+                with np.errstate(all="ignore"):
+                    raw = structure.evaluate_raw(features, gains)
+                valid = all(np.isfinite(value).all() for value in features.values())
+                if contract.complete:
+                    valid = valid and all(np.asarray(features[name]).shape == spec.shape
+                                          for name, spec in contract.signals.items())
+                verifier.check_action(raw, env.action_space.low, env.action_space.high, valid)
             action = np.clip(action, env.action_space.low, env.action_space.high).astype(np.float32)
             observation, reward, terminated, truncated, _ = env.step(action)
             total_return += float(reward)
@@ -1140,6 +1316,8 @@ def run_episode(
             jerk += dt * float(((action - previous) / dt) @ ((action - previous) / dt))
             previous = action.copy()
             tracker.update(env, observation, terminated)
+            if verifier is not None:
+                verifier.update(env, observation)
             if terminated or truncated:
                 break
         violations = adapter.success_constraints(tracker)
@@ -1167,6 +1345,7 @@ def run_episode(
             violations,
             predicates,
             tracker.diagnostics,
+            None if verifier is None else verifier.report(),
         )
     finally:
         if owns_env:
@@ -1180,17 +1359,19 @@ def evaluate_gym_structure(
     seeds: list[int],
     *,
     envs: list | None = None,
+    verify_barriers: bool = False,
 ) -> tuple[GymMetrics, list[GymEpisode]]:
+    adapter.validate_structure(structure)
     if not set(structure.signals) <= set(adapter.allowed_terms):
         raise ValueError("structure uses unavailable signals")
-    if envs is None and hasattr(adapter, "evaluate_episodes"):
+    if envs is None and hasattr(adapter, "evaluate_episodes") and not verify_barriers:
         episodes = adapter.evaluate_episodes(structure, gains, seeds)
     else:
         episodes = (
-            [run_episode(adapter, structure, gains, seed) for seed in seeds]
+            [run_episode(adapter, structure, gains, seed, verify_barriers=verify_barriers) for seed in seeds]
             if envs is None
             else [
-                run_episode(adapter, structure, gains, seed, env=env)
+                run_episode(adapter, structure, gains, seed, env=env, verify_barriers=verify_barriers)
                 for seed, env in zip(seeds, envs, strict=True)
             ]
         )
@@ -1214,6 +1395,7 @@ def tune_gym_cem(
     iterations: int = 5,
     population_size: int = 24,
 ) -> tuple[np.ndarray, GymMetrics]:
+    adapter.validate_structure(structure)
     digest = hashlib.sha256(
         json.dumps({"env": adapter.env_id, "law": structure.to_expression_string()}, sort_keys=True).encode()
     ).digest()
@@ -1229,13 +1411,13 @@ def tune_gym_cem(
             metrics = adapter.evaluate_gain_batch(structure, samples, seeds)
             scored = sorted(
                 zip(samples, metrics, strict=True),
-                key=lambda item: item[1].score,
+                key=lambda item: item[1].selection_key,
                 reverse=True,
             )
             elites = np.vstack([item[0] for item in scored[:elite_count]])
             mean = 0.25 * mean + 0.75 * elites.mean(axis=0)
             sigma = np.maximum(0.05, 0.25 * sigma + 0.75 * elites.std(axis=0))
-            if scored[0][1].score > best_metrics.score:
+            if scored[0][1].selection_key > best_metrics.selection_key:
                 best_gains, best_metrics = scored[0][0].copy(), scored[0][1]
         return best_gains, best_metrics
 
@@ -1253,11 +1435,11 @@ def tune_gym_cem(
                 )
                 for sample in samples
             ]
-            scored.sort(key=lambda item: item[1].score, reverse=True)
+            scored.sort(key=lambda item: item[1].selection_key, reverse=True)
             elites = np.vstack([item[0] for item in scored[:elite_count]])
             mean = 0.25 * mean + 0.75 * elites.mean(axis=0)
             sigma = np.maximum(0.05, 0.25 * sigma + 0.75 * elites.std(axis=0))
-            if scored[0][1].score > best_metrics.score:
+            if scored[0][1].selection_key > best_metrics.selection_key:
                 best_gains, best_metrics = scored[0][0].copy(), scored[0][1]
         return best_gains, best_metrics
     finally:

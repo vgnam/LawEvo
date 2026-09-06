@@ -1,0 +1,539 @@
+{
+  "model": "gpt-5.3-codex-spark",
+  "environment": "LawevoPandaReach-v1",
+  "morphology_fields": [
+    {
+      "name": "base_height",
+      "kind": "length",
+      "default": 0.333,
+      "bounds": [
+        0.28,
+        0.4
+      ],
+      "unit": "m"
+    },
+    {
+      "name": "upper_arm_len",
+      "kind": "length",
+      "default": 0.316,
+      "bounds": [
+        0.25,
+        0.42
+      ],
+      "unit": "m"
+    },
+    {
+      "name": "forearm_len",
+      "kind": "length",
+      "default": 0.384,
+      "bounds": [
+        0.3,
+        0.48
+      ],
+      "unit": "m"
+    },
+    {
+      "name": "wrist_len",
+      "kind": "length",
+      "default": 0.088,
+      "bounds": [
+        0.06,
+        0.13
+      ],
+      "unit": "m"
+    },
+    {
+      "name": "shoulder_offset",
+      "kind": "length",
+      "default": -0.0825,
+      "bounds": [
+        -0.12,
+        -0.05
+      ],
+      "unit": "m"
+    },
+    {
+      "name": "mass_link1",
+      "kind": "mass",
+      "default": 2.7,
+      "bounds": [
+        1.5,
+        4.5
+      ],
+      "unit": "kg"
+    },
+    {
+      "name": "mass_link2",
+      "kind": "mass",
+      "default": 2.73,
+      "bounds": [
+        1.5,
+        4.5
+      ],
+      "unit": "kg"
+    },
+    {
+      "name": "mass_link3",
+      "kind": "mass",
+      "default": 2.04,
+      "bounds": [
+        1.0,
+        3.5
+      ],
+      "unit": "kg"
+    },
+    {
+      "name": "mass_link4",
+      "kind": "mass",
+      "default": 2.08,
+      "bounds": [
+        1.0,
+        3.5
+      ],
+      "unit": "kg"
+    },
+    {
+      "name": "mass_link5",
+      "kind": "mass",
+      "default": 3.0,
+      "bounds": [
+        1.5,
+        5.0
+      ],
+      "unit": "kg"
+    },
+    {
+      "name": "mass_link6",
+      "kind": "mass",
+      "default": 1.3,
+      "bounds": [
+        0.6,
+        2.2
+      ],
+      "unit": "kg"
+    },
+    {
+      "name": "mass_link7",
+      "kind": "mass",
+      "default": 0.2,
+      "bounds": [
+        0.1,
+        0.6
+      ],
+      "unit": "kg"
+    },
+    {
+      "name": "motor_force",
+      "kind": "force",
+      "default": 1.0,
+      "bounds": [
+        0.6,
+        1.6
+      ],
+      "unit": "joint-force multiplier"
+    }
+  ],
+  "config": {
+    "generations": 1,
+    "proposals_per_side": 1,
+    "responsive_per_side": 0,
+    "joint_top_k": 2,
+    "cem_iterations": 1,
+    "cem_population": 4,
+    "knowledge_capacity": 24,
+    "retrieve_per_polarity": 3,
+    "train_episodes": 2,
+    "test_episodes": 3,
+    "grammar_seeds": 3,
+    "variants": [
+      "no_knowledge"
+    ]
+  },
+  "variants": {
+    "no_knowledge": {
+      "best": {
+        "spec": {
+          "base_height": 0.333,
+          "forearm_len": 0.384,
+          "mass_link1": 2.7,
+          "mass_link2": 2.73,
+          "mass_link3": 2.04,
+          "mass_link4": 2.08,
+          "mass_link5": 3.0,
+          "mass_link6": 1.3,
+          "mass_link7": 0.2,
+          "motor_force": 1.0,
+          "shoulder_offset": -0.0825,
+          "upper_arm_len": 0.316,
+          "wrist_len": 0.088
+        },
+        "spec_type": "parameters",
+        "structure": {
+          "name": "Task PD",
+          "expression": "K1*goal_error + K2*eef_damping",
+          "tree": {
+            "op": "sum",
+            "children": [
+              {
+                "op": "scale",
+                "child": {
+                  "op": "signal",
+                  "name": "goal_error"
+                }
+              },
+              {
+                "op": "scale",
+                "child": {
+                  "op": "signal",
+                  "name": "eef_damping"
+                }
+              }
+            ]
+          },
+          "signals": [
+            "goal_error",
+            "eef_damping"
+          ],
+          "parameter_count": 2,
+          "complexity": 3
+        },
+        "gains": [
+          8.03781780533967,
+          0.0017307474249248674
+        ],
+        "metrics": {
+          "score": -0.4137965204327883,
+          "episode_return": -0.3532309541478753,
+          "success_rate": 1.0,
+          "energy": 0.1620022577047348,
+          "energy_norm": 0.009020170250820423,
+          "jerk": 52.046543365889846,
+          "complexity": 3,
+          "morph_cost": 0.0,
+          "total_mass": 17.96
+        },
+        "generation": 0,
+        "provenance": "seed",
+        "episode_budget": 10,
+        "task": "panda_reach_morph",
+        "env": "LawevoPandaReach-v1"
+      },
+      "reports": [
+        {
+          "generation": 1,
+          "incumbent": "Task PD@{base_height=0.333, forearm_len=0.384, mass_link1=2.7, mass_link2=2.73, mass_link3=2.04, mass_link4=2.08, mass_link5=3, mass_link6=1.3, mass_link7=0.2, motor_force=1, shoulder_offset=-0.0825, upper_arm_len=0.316, wrist_len=0.088}",
+          "best_score": -0.4137965204327883,
+          "evaluated": 3,
+          "rejected": 0,
+          "cross_table": {
+            "law_cross": 1,
+            "morph_cross": 1,
+            "base_joint": 1,
+            "responsive": 0,
+            "rejected": 0
+          },
+          "navigator": {
+            "generation": 1,
+            "mode": "balance",
+            "reason": "search is progressing without a confirmed dominant interaction",
+            "law_guidance": "Mix one novel law motif with evidence-guided refinements.",
+            "morph_guidance": "Mix one physical probe with evidence-guided local morphology changes.",
+            "joint_guidance": "Balance predicted fitness, diversity, and hypothesis confirmation.",
+            "operator_stats": {
+              "law_mutation": {
+                "attempts": 2,
+                "proposed": 2,
+                "valid": 2,
+                "improved": 0,
+                "validity_rate": 1.0,
+                "improvement_rate": 0.0
+              },
+              "morph_mutation": {
+                "attempts": 2,
+                "proposed": 2,
+                "valid": 2,
+                "improved": 0,
+                "validity_rate": 1.0,
+                "improvement_rate": 0.0
+              }
+            }
+          },
+          "interaction_count": 1,
+          "mean_interaction": 0.13645668727032295,
+          "max_abs_interaction": 0.13645668727032295,
+          "interactions": [
+            {
+              "generation": 1,
+              "morphology": {
+                "base_height": 0.333,
+                "forearm_len": 0.384,
+                "mass_link1": 2.7,
+                "mass_link2": 2.73,
+                "mass_link3": 2.04,
+                "mass_link4": 2.08,
+                "mass_link5": 2.7,
+                "mass_link6": 1.15,
+                "mass_link7": 0.2,
+                "motor_force": 1.0,
+                "shoulder_offset": -0.0825,
+                "upper_arm_len": 0.316,
+                "wrist_len": 0.088
+              },
+              "law_expression": "K1*goal_error + K2*eef_damping + K3*goal_error*eef_damping + K4*tanh_goal_error",
+              "baseline_score": -0.4137965204327883,
+              "morph_score": -0.7699234125639457,
+              "law_score": -3.91530955140828,
+              "joint_score": -4.134979756269114,
+              "interaction": 0.13645668727032295,
+              "provenance": "base_joint"
+            }
+          ]
+        }
+      ],
+      "api_calls": 2,
+      "episodes_spent": 70,
+      "episodes_requested": 70,
+      "knowledge": {
+        "mode": "no_knowledge",
+        "banks": {
+          "morph_to_law:positive": [],
+          "morph_to_law:negative": [],
+          "law_to_morph:positive": [],
+          "law_to_morph:negative": []
+        },
+        "evidence": [
+          {
+            "id": "ev-e5ebda8d7c962a83",
+            "direction": "morph_to_law",
+            "generation": 1,
+            "parent_key": "{\"law_expression\": \"K1*goal_error + K2*eef_damping\", \"morphology\": {\"base_height\": 0.333, \"forearm_len\": 0.384, \"mass_link1\": 2.7, \"mass_link2\": 2.73, \"mass_link3\": 2.04, \"mass_link4\": 2.08, \"mass_link5\": 3.0, \"mass_link6\": 1.3, \"mass_link7\": 0.2, \"motor_force\": 1.0, \"shoulder_offset\": -0.0825, \"upper_arm_len\": 0.316, \"wrist_len\": 0.088}}",
+            "offspring_key": "{\"law_expression\": \"K1*goal_error + K2*eef_damping + K3*goal_error*eef_damping + K4*tanh_goal_error\", \"morphology\": {\"base_height\": 0.333, \"forearm_len\": 0.384, \"mass_link1\": 2.7, \"mass_link2\": 2.73, \"mass_link3\": 2.04, \"mass_link4\": 2.08, \"mass_link5\": 3.0, \"mass_link6\": 1.3, \"mass_link7\": 0.2, \"motor_force\": 1.0, \"shoulder_offset\": -0.0825, \"upper_arm_len\": 0.316, \"wrist_len\": 0.088}}",
+            "modification": "added signals tanh_goal_error to the law expression",
+            "delta_score": -3.5015130309754916,
+            "metric_deltas": {
+              "score": -3.5015130309754916,
+              "episode_return": -3.3658154914155602,
+              "success_rate": -0.5,
+              "energy_norm": 0.12110388693804201,
+              "jerk": 5509.202012524144,
+              "morph_cost": 0.0
+            },
+            "context": {
+              "task": "LawevoPandaReach-v1",
+              "morphology": {
+                "base_height": 0.333,
+                "forearm_len": 0.384,
+                "mass_link1": 2.7,
+                "mass_link2": 2.73,
+                "mass_link3": 2.04,
+                "mass_link4": 2.08,
+                "mass_link5": 3.0,
+                "mass_link6": 1.3,
+                "mass_link7": 0.2,
+                "motor_force": 1.0,
+                "shoulder_offset": -0.0825,
+                "upper_arm_len": 0.316,
+                "wrist_len": 0.088
+              },
+              "law_expression": "K1*goal_error + K2*eef_damping",
+              "metrics": {
+                "score": -0.4137965204327883,
+                "episode_return": -0.3532309541478753,
+                "success_rate": 1.0,
+                "energy": 0.1620022577047348,
+                "energy_norm": 0.009020170250820423,
+                "jerk": 52.046543365889846,
+                "complexity": 3,
+                "morph_cost": 0.0,
+                "total_mass": 17.96
+              }
+            },
+            "hypothesis_id": "kh-986712e569f4dfae",
+            "provenance": "one_sided",
+            "interaction": null
+          },
+          {
+            "id": "ev-db3ba1a371f52da5",
+            "direction": "law_to_morph",
+            "generation": 1,
+            "parent_key": "{\"law_expression\": \"K1*goal_error + K2*eef_damping\", \"morphology\": {\"base_height\": 0.333, \"forearm_len\": 0.384, \"mass_link1\": 2.7, \"mass_link2\": 2.73, \"mass_link3\": 2.04, \"mass_link4\": 2.08, \"mass_link5\": 3.0, \"mass_link6\": 1.3, \"mass_link7\": 0.2, \"motor_force\": 1.0, \"shoulder_offset\": -0.0825, \"upper_arm_len\": 0.316, \"wrist_len\": 0.088}}",
+            "offspring_key": "{\"law_expression\": \"K1*goal_error + K2*eef_damping\", \"morphology\": {\"base_height\": 0.333, \"forearm_len\": 0.384, \"mass_link1\": 2.7, \"mass_link2\": 2.73, \"mass_link3\": 2.04, \"mass_link4\": 2.08, \"mass_link5\": 2.7, \"mass_link6\": 1.15, \"mass_link7\": 0.2, \"motor_force\": 1.0, \"shoulder_offset\": -0.0825, \"upper_arm_len\": 0.316, \"wrist_len\": 0.088}}",
+            "modification": "base_height 0.333->0.333 (+0.0%), forearm_len 0.384->0.384 (+0.0%), mass_link1 2.7->2.7 (+0.0%), mass_link2 2.73->2.73 (+0.0%), mass_link3 2.04->2.04 (+0.0%), mass_link4 2.08->2.08 (+0.0%), mass_link5 3->2.7 (-10.0%), mass_link6 1.3->1.15 (-11.5%), mass_link7 0.2->0.2 (+0.0%), motor_force 1->1 (+0.0%), shoulder_offset -0.0825->-0.0825 (-0.0%), upper_arm_len 0.316->0.316 (+0.0%), wrist_len 0.088->0.088 (+0.0%)",
+            "delta_score": -0.3561268921311574,
+            "metric_deltas": {
+              "score": -0.3561268921311574,
+              "episode_return": -0.34527855832129717,
+              "success_rate": 0.0,
+              "energy_norm": 0.004433517796184642,
+              "jerk": 5.6935451648464905,
+              "morph_cost": 0.010769230769230772
+            },
+            "context": {
+              "task": "LawevoPandaReach-v1",
+              "morphology": {
+                "base_height": 0.333,
+                "forearm_len": 0.384,
+                "mass_link1": 2.7,
+                "mass_link2": 2.73,
+                "mass_link3": 2.04,
+                "mass_link4": 2.08,
+                "mass_link5": 3.0,
+                "mass_link6": 1.3,
+                "mass_link7": 0.2,
+                "motor_force": 1.0,
+                "shoulder_offset": -0.0825,
+                "upper_arm_len": 0.316,
+                "wrist_len": 0.088
+              },
+              "law_expression": "K1*goal_error + K2*eef_damping",
+              "metrics": {
+                "score": -0.4137965204327883,
+                "episode_return": -0.3532309541478753,
+                "success_rate": 1.0,
+                "energy": 0.1620022577047348,
+                "energy_norm": 0.009020170250820423,
+                "jerk": 52.046543365889846,
+                "complexity": 3,
+                "morph_cost": 0.0,
+                "total_mass": 17.96
+              }
+            },
+            "hypothesis_id": "kh-57c6fa993f043e8c",
+            "provenance": "one_sided",
+            "interaction": null
+          },
+          {
+            "id": "ev-dd27a3666e3e5901",
+            "direction": "morph_to_law",
+            "generation": 1,
+            "parent_key": "{\"law_expression\": \"K1*goal_error + K2*eef_damping\", \"morphology\": {\"base_height\": 0.333, \"forearm_len\": 0.384, \"mass_link1\": 2.7, \"mass_link2\": 2.73, \"mass_link3\": 2.04, \"mass_link4\": 2.08, \"mass_link5\": 2.7, \"mass_link6\": 1.15, \"mass_link7\": 0.2, \"motor_force\": 1.0, \"shoulder_offset\": -0.0825, \"upper_arm_len\": 0.316, \"wrist_len\": 0.088}}",
+            "offspring_key": "{\"law_expression\": \"K1*goal_error + K2*eef_damping + K3*goal_error*eef_damping + K4*tanh_goal_error\", \"morphology\": {\"base_height\": 0.333, \"forearm_len\": 0.384, \"mass_link1\": 2.7, \"mass_link2\": 2.73, \"mass_link3\": 2.04, \"mass_link4\": 2.08, \"mass_link5\": 2.7, \"mass_link6\": 1.15, \"mass_link7\": 0.2, \"motor_force\": 1.0, \"shoulder_offset\": -0.0825, \"upper_arm_len\": 0.316, \"wrist_len\": 0.088}}",
+            "modification": "added signals tanh_goal_error to the law expression",
+            "delta_score": -3.365056343705169,
+            "metric_deltas": {
+              "score": -3.365056343705169,
+              "episode_return": -3.217270690947771,
+              "success_rate": -0.5,
+              "energy_norm": 0.15373238059731978,
+              "jerk": 6701.6990854410815,
+              "morph_cost": 0.0
+            },
+            "context": {
+              "task": "LawevoPandaReach-v1",
+              "morphology": {
+                "base_height": 0.333,
+                "forearm_len": 0.384,
+                "mass_link1": 2.7,
+                "mass_link2": 2.73,
+                "mass_link3": 2.04,
+                "mass_link4": 2.08,
+                "mass_link5": 2.7,
+                "mass_link6": 1.15,
+                "mass_link7": 0.2,
+                "motor_force": 1.0,
+                "shoulder_offset": -0.0825,
+                "upper_arm_len": 0.316,
+                "wrist_len": 0.088
+              },
+              "law_expression": "K1*goal_error + K2*eef_damping",
+              "metrics": {
+                "score": -0.7699234125639457,
+                "episode_return": -0.6985095124691725,
+                "success_rate": 1.0,
+                "energy": 0.23557407770305872,
+                "energy_norm": 0.013453688047005065,
+                "jerk": 57.74008853073634,
+                "complexity": 3,
+                "morph_cost": 0.010769230769230772,
+                "total_mass": 17.51
+              }
+            },
+            "hypothesis_id": "kh-986712e569f4dfae",
+            "provenance": "base_joint",
+            "interaction": 0.13645668727032295
+          },
+          {
+            "id": "ev-cdb818a70b783468",
+            "direction": "law_to_morph",
+            "generation": 1,
+            "parent_key": "{\"law_expression\": \"K1*goal_error + K2*eef_damping + K3*goal_error*eef_damping + K4*tanh_goal_error\", \"morphology\": {\"base_height\": 0.333, \"forearm_len\": 0.384, \"mass_link1\": 2.7, \"mass_link2\": 2.73, \"mass_link3\": 2.04, \"mass_link4\": 2.08, \"mass_link5\": 3.0, \"mass_link6\": 1.3, \"mass_link7\": 0.2, \"motor_force\": 1.0, \"shoulder_offset\": -0.0825, \"upper_arm_len\": 0.316, \"wrist_len\": 0.088}}",
+            "offspring_key": "{\"law_expression\": \"K1*goal_error + K2*eef_damping + K3*goal_error*eef_damping + K4*tanh_goal_error\", \"morphology\": {\"base_height\": 0.333, \"forearm_len\": 0.384, \"mass_link1\": 2.7, \"mass_link2\": 2.73, \"mass_link3\": 2.04, \"mass_link4\": 2.08, \"mass_link5\": 2.7, \"mass_link6\": 1.15, \"mass_link7\": 0.2, \"motor_force\": 1.0, \"shoulder_offset\": -0.0825, \"upper_arm_len\": 0.316, \"wrist_len\": 0.088}}",
+            "modification": "base_height 0.333->0.333 (+0.0%), forearm_len 0.384->0.384 (+0.0%), mass_link1 2.7->2.7 (+0.0%), mass_link2 2.73->2.73 (+0.0%), mass_link3 2.04->2.04 (+0.0%), mass_link4 2.08->2.08 (+0.0%), mass_link5 3->2.7 (-10.0%), mass_link6 1.3->1.15 (-11.5%), mass_link7 0.2->0.2 (+0.0%), motor_force 1->1 (+0.0%), shoulder_offset -0.0825->-0.0825 (-0.0%), upper_arm_len 0.316->0.316 (+0.0%), wrist_len 0.088->0.088 (+0.0%)",
+            "delta_score": -0.21967020486083433,
+            "metric_deltas": {
+              "score": -0.21967020486083433,
+              "episode_return": -0.196733757853508,
+              "success_rate": 0.0,
+              "energy_norm": 0.037062011455462396,
+              "jerk": 1198.1906180817832,
+              "morph_cost": 0.010769230769230772
+            },
+            "context": {
+              "task": "LawevoPandaReach-v1",
+              "morphology": {
+                "base_height": 0.333,
+                "forearm_len": 0.384,
+                "mass_link1": 2.7,
+                "mass_link2": 2.73,
+                "mass_link3": 2.04,
+                "mass_link4": 2.08,
+                "mass_link5": 3.0,
+                "mass_link6": 1.3,
+                "mass_link7": 0.2,
+                "motor_force": 1.0,
+                "shoulder_offset": -0.0825,
+                "upper_arm_len": 0.316,
+                "wrist_len": 0.088
+              },
+              "law_expression": "K1*goal_error + K2*eef_damping + K3*goal_error*eef_damping + K4*tanh_goal_error",
+              "metrics": {
+                "score": -3.91530955140828,
+                "episode_return": -3.7190464455634356,
+                "success_rate": 0.5,
+                "energy": 2.3370280671119694,
+                "energy_norm": 0.13012405718886244,
+                "jerk": 5561.248555890034,
+                "complexity": 7,
+                "morph_cost": 0.0,
+                "total_mass": 17.96
+              }
+            },
+            "hypothesis_id": "kh-57c6fa993f043e8c",
+            "provenance": "base_joint",
+            "interaction": 0.13645668727032295
+          }
+        ]
+      },
+      "operator_stats": {
+        "law_mutation": {
+          "attempts": 2,
+          "proposed": 2,
+          "valid": 2,
+          "improved": 0,
+          "validity_rate": 1.0,
+          "improvement_rate": 0.0
+        },
+        "morph_mutation": {
+          "attempts": 2,
+          "proposed": 2,
+          "valid": 2,
+          "improved": 0,
+          "validity_rate": 1.0,
+          "improvement_rate": 0.0
+        }
+      },
+      "failures": [],
+      "heldout": {
+        "score": -0.23042091777347987,
+        "episode_return": -0.17011562859018645,
+        "success_rate": 1.0,
+        "energy": 0.07590408901373545,
+        "energy_norm": 0.004226285579829368,
+        "jerk": 28.41577553942788,
+        "complexity": 3,
+        "morph_cost": 0.0,
+        "total_mass": 17.96
+      }
+    }
+  }
+}

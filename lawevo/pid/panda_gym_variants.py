@@ -289,7 +289,9 @@ def _register_variant_environments() -> None:
 
         def step(self, action):
             self.task.advance(self.sim.dt)
-            return RobotTaskEnv.step(self, action)
+            observation, reward, _, truncated, info = RobotTaskEnv.step(self, action)
+            # Reaching once is not terminal for a sustained tracking task.
+            return observation, reward, False, truncated, info
 
     class PushIceTask(Push):
         """Push across a low-friction table past a static offset obstacle."""
@@ -747,6 +749,7 @@ class _ReachMovingTracker(EpisodeTracker):
     """Post-step end-effector/goal snapshots for the orbiting-goal task."""
 
     distance_threshold: float = 0.05
+    tracking_radius: float = TRACK_RADIUS
 
     def update(self, env, observation, terminated: bool) -> None:
         state = np.asarray(observation["observation"], dtype=float)
@@ -778,7 +781,7 @@ class _ReachMovingTracker(EpisodeTracker):
         post = self.distances[TRACK_WARMUP_STEPS:]
         if not len(post):
             return 0.0
-        return float(np.mean(post <= TRACK_RADIUS))
+        return float(np.mean(post <= self.tracking_radius))
 
     @property
     def final_distance(self) -> float:
@@ -790,6 +793,7 @@ class PandaReachMovingAdapter(_VariantAdapter):
 
     env_id = REACH_MOVING_ENV_ID
     horizon = 50
+    tracking_radius = TRACK_RADIUS
     allowed_terms = (
         "goal_error",
         "normalized_goal_error",
@@ -813,7 +817,9 @@ class PandaReachMovingAdapter(_VariantAdapter):
     )
 
     def make_tracker(self) -> EpisodeTracker:
-        return _ReachMovingTracker(self.horizon)
+        tracker = _ReachMovingTracker(self.horizon)
+        tracker.tracking_radius = self.tracking_radius
+        return tracker
 
     def success_constraints(self, tracker):
         # C1: sustained post-warmup tracking; C2: finish inside the radius.
@@ -823,19 +829,32 @@ class PandaReachMovingAdapter(_VariantAdapter):
                 TRACKING_RATE_REQUIRED - tracking_rate, TRACKING_RATE_REQUIRED
             ),
             "final_distance": clip_violation(
-                tracker.final_distance - TRACK_RADIUS, REACH_DISTANCE_SCALE
+                tracker.final_distance - self.tracking_radius, REACH_DISTANCE_SCALE
             ),
+        }
+
+    @property
+    def success_gap_spec(self):
+        return {
+            "aggregation": "mean of constraint violations per episode, then mean over seeds",
+            "tracking_rate": "clip((required_rate - post_warmup_tracking_rate)/required_rate,0,1)",
+            "final_distance": "clip((final eef-goal distance - radius)/distance_scale,0,1)",
+            "required_rate": TRACKING_RATE_REQUIRED,
+            "warmup_steps": TRACK_WARMUP_STEPS,
+            "radius_m": self.tracking_radius,
+            "distance_scale_m": REACH_DISTANCE_SCALE,
+            "boundary": "inclusive, preserving existing tracking success",
         }
 
     def progress_predicates(self, tracker):
         post = tracker.distances[TRACK_WARMUP_STEPS:]
         return {
-            "goal_acquired_once": bool(len(post) and np.any(post <= TRACK_RADIUS)),
+            "goal_acquired_once": bool(len(post) and np.any(post <= self.tracking_radius)),
             "intermediate_tracking_rate": bool(
                 tracker.tracking_rate >= TRACKING_RATE_INTERMEDIATE
             ),
             "required_tracking_rate": bool(tracker.tracking_rate >= TRACKING_RATE_REQUIRED),
-            "finish_inside_radius": bool(tracker.final_distance <= TRACK_RADIUS),
+            "finish_inside_radius": bool(tracker.final_distance <= self.tracking_radius),
         }
 
     def features(self, env, observation, memory, dt):

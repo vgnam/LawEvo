@@ -180,7 +180,7 @@ class PandaGymAdapter(BenchmarkAdapter):
 
 class PandaReachAdapter(PandaGymAdapter):
     env_id = "PandaReachDense-v3"
-    horizon = 50
+    horizon = 150  # Same time budget as MovingSlow: six seconds at 25 Hz.
     allowed_terms = (
         "goal_error",
         "normalized_goal_error",
@@ -193,6 +193,7 @@ class PandaReachAdapter(PandaGymAdapter):
         GymStructure("Task PI", ("goal_error", "integral_goal_error")),
         GymStructure("Task PD", ("goal_error", "eef_damping")),
         GymStructure("Task PID", ("goal_error", "integral_goal_error", "eef_damping")),
+        GymStructure("Saturated PD", "K1*tanh(K2*goal_error) + K3*eef_damping"),
     )
 
     def features(self, env, observation, memory, dt):
@@ -218,6 +219,15 @@ class PandaReachAdapter(PandaGymAdapter):
         tolerance = float(tracker.distance_threshold)
         return {
             "goal_position": clip_violation(final_distance - tolerance, REACH_DISTANCE_SCALE),
+        }
+
+    @property
+    def success_gap_spec(self):
+        return {
+            "aggregation": "mean of constraint violations per episode, then mean over seeds",
+            "goal_position": "clip((final eef-goal distance - task.distance_threshold)/scale,0,1)",
+            "distance_scale_m": REACH_DISTANCE_SCALE,
+            "boundary": "inclusive, preserving existing Panda benchmark success",
         }
 
     def progress_predicates(self, tracker):
@@ -279,6 +289,18 @@ class PandaObjectMotionAdapter(PandaGymAdapter):
             "goal_position": clip_violation(final_distance - tolerance, PUSH_DISTANCE_SCALE),
         }
 
+    @property
+    def success_gap_spec(self):
+        if type(self).success_constraints is not PandaObjectMotionAdapter.success_constraints:
+            # Extended legacy tasks may add constraints (for example gate passage).
+            return None
+        return {
+            "aggregation": "mean of constraint violations per episode, then mean over seeds",
+            "goal_position": "clip((final object-goal distance - task.distance_threshold)/scale,0,1)",
+            "distance_scale_m": PUSH_DISTANCE_SCALE,
+            "boundary": "inclusive, preserving existing Panda benchmark success",
+        }
+
     def progress_predicates(self, tracker):
         start_obj = np.asarray(tracker.steps[0]["obj"], dtype=float)
         goal = np.asarray(tracker.steps[0]["goal"], dtype=float)
@@ -305,10 +327,83 @@ class PandaObjectMotionAdapter(PandaGymAdapter):
 
 class PandaPushAdapter(PandaObjectMotionAdapter):
     env_id = "PandaPushDense-v3"
+    allowed_terms = PandaObjectMotionAdapter.allowed_terms + ("waypoint_push",)
+    classical = PandaObjectMotionAdapter.classical + (
+        GymStructure("Waypoint Push P", ("waypoint_push",)),
+        GymStructure("Waypoint Push PD", ("waypoint_push", "eef_damping")),
+    )
+
+    def features(self, env, observation, memory, dt):
+        signals = super().features(env, observation, memory, dt)
+        eef, _, achieved, desired = self._state(observation)
+        obj = achieved[:3]
+        error = desired[:3] - obj
+        direction = _normalized(np.array([error[0], error[1], 0.0]))
+        behind = obj - 0.07 * direction
+        behind[2] += 0.01
+        phase = memory.get("push_phase", "align")
+        if phase == "align" and np.linalg.norm(behind - eef) < 0.025:
+            phase = "push"
+        elif phase == "push":
+            lateral = (obj - eef) - np.dot(obj - eef, direction) * direction
+            if np.linalg.norm(lateral[:2]) > 0.05 or np.dot(obj - eef, direction) < -0.02:
+                phase = "align"
+        memory["push_phase"] = phase
+        # Once aligned, target slightly through the rear face; stop driving at goal.
+        push = obj + 0.02 * direction - eef
+        push *= min(1.0, float(np.linalg.norm(error[:2])) / 0.05)
+        signals["waypoint_push"] = behind - eef if phase == "align" else push
+        return signals
 
 
 class PandaSlideAdapter(PandaObjectMotionAdapter):
     env_id = "PandaSlideDense-v3"
+    allowed_terms = PandaObjectMotionAdapter.allowed_terms + (
+        "slide_align", "slide_strike", "slide_retract", "slide_damping",
+    )
+    classical = PandaObjectMotionAdapter.classical + (
+        GymStructure(
+            "Align-Strike-Retract", ("slide_align", "slide_strike", "slide_retract")
+        ),
+        GymStructure(
+            "Align-Strike-Retract PD",
+            ("slide_align", "slide_strike", "slide_retract", "slide_damping"),
+        ),
+    )
+
+    def features(self, env, observation, memory, dt):
+        signals = super().features(env, observation, memory, dt)
+        eef, velocity, achieved, desired = self._state(observation)
+        obj = achieved[:3]
+        error = desired[:3] - obj
+        direction = _normalized(np.array([error[0], error[1], 0.0]))
+        behind = obj - 0.06 * direction
+        behind[2] += 0.01
+        phase = memory.get("slide_phase", "align")
+        if phase == "align" and np.linalg.norm(behind - eef) < 0.025:
+            phase = "strike"
+            memory["strike_elapsed"] = 0.0
+            memory["strike_direction"] = direction.copy()
+            memory["strike_distance"] = float(np.linalg.norm(error[:2]))
+            memory["retract_target"] = eef + np.array([0.0, 0.0, 0.10])
+        if phase == "strike" and memory["strike_elapsed"] >= 0.24:
+            phase = "retract"
+        signals.update({name: np.zeros(3) for name in (
+            "slide_align", "slide_strike", "slide_retract", "slide_damping"
+        )})
+        if phase == "align":
+            signals["slide_align"] = behind - eef
+        elif phase == "strike":
+            signals["slide_strike"] = (
+                memory["strike_direction"] * min(1.0, memory["strike_distance"] / 0.25)
+            )
+            memory["strike_elapsed"] += dt
+        else:
+            signals["slide_retract"] = memory["retract_target"] - eef
+        if phase != "strike":
+            signals["slide_damping"] = -velocity
+        memory["slide_phase"] = phase
+        return signals
 
 
 class PandaPickAndPlaceAdapter(PandaGymAdapter):

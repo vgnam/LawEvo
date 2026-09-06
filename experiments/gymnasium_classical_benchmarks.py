@@ -26,6 +26,7 @@ from lawevo.evolve.nvidia_nim import (
 )
 from lawevo.pid import (
     ADAPTERS,
+    CONTROLLED_VARIANT_ADAPTERS,
     GENESIS_ADAPTERS,
     LOCOMOTION_ADAPTERS,
     MANISKILL_ADAPTERS,
@@ -38,6 +39,9 @@ from lawevo.pid import (
     inverted_pendulum_lqr,
     tune_gym_cem,
 )
+from lawevo.pid.objective import PROTOCOL_VERSION
+from lawevo.pid.signal_schema import validate_expression
+from lawevo.verify.controller import barrier_spec
 
 ENVIRONMENT_DESCRIPTIONS = {
     "pendulum": """Task: swing a torque-limited pendulum up and keep it upright for a
@@ -505,6 +509,122 @@ touching the cube or moving the hand to the goal without the cube is not success
 }
 
 
+# The controlled suite uses nominal physics in each base task and changes only
+# one physical/task factor per variant. Stateful signal helpers are shared by
+# the hand-designed baselines and the evolved expressions.
+for _key in ("robosuite_lift_nominal", "robosuite_door_unlocked", "robosuite_wipe"):
+    _adapter = ROBOSUITE_ADAPTERS[_key]
+    ENVIRONMENT_DESCRIPTIONS[_key] = (
+        f"Control Panda in robosuite {_adapter.task_name} for {_adapter.horizon} steps at 20 Hz. "
+        "Dense native rewards; stock physical parameters, no added mass jitter. "
+        "Fixed world-frame OSC_POSE (kp=150, damping ratio=1); normalized delta pose actions, "
+        "not torque commands. Door disables its latch; Wipe uses a non-actuated wiping tool "
+        "and retains stock dirt generation and early termination. "
+        "Simulator object / marker state is available equally to baseline and evolved laws. "
+        + _adapter.stage_description
+    )
+    CONTROL_GOALS[_key] = (
+        "Maximize measured final native task success first, then minimize success gap only "
+        "at equal success rate, then maximize fixed secondary utility. Q is diagnostic only. "
+        "Shared hand-written scheduling / grasp logic is not evolved and its complexity is "
+        "not included in AST size. Tune the feedback around those helpers. "
+        + _adapter.gap_description
+    )
+
+for _key in ("panda_drawer", "panda_planar_wipe", "panda_peg_insertion_easy"):
+    _adapter = PANDA_GYM_ADAPTERS[_key]
+    ENVIRONMENT_DESCRIPTIONS[_key] = (
+        f"Custom Panda-Gym/PyBullet {_adapter.task_name} task; 150 steps at 25Hz, "
+        "state-only DIRECT simulation. Stock Panda Cartesian displacement IK and joint servo; "
+        "no torque control. Randomized task xy placement; physical contacts and simple geometry. "
+        + _adapter.helper_description
+    )
+    CONTROL_GOALS[_key] = (
+        "Maximize final success first, then minimize SG at equal SR, then secondary utility. "
+        "Q is diagnostic only. Shared FSM and mounted tools are fixed task/controller support, "
+        "not discovered by the law. Native task specification: "
+        + _adapter.success_gap_spec["definition"]
+    )
+
+ENVIRONMENT_DESCRIPTIONS["inverted_pendulum"] = """Balance the MuJoCo cart-pole for
+500 control steps. Initial cart/pole positions and velocities are randomized;
+body masses remain nominal. Actions are bounded cart actuation and signals are
+cart position, pole angle, their velocities and integrals. State-feedback PD and
+an analytically computed nominal LQR are the classical comparisons."""
+ENVIRONMENT_DESCRIPTIONS["reacher"] = """Move a planar two-joint MuJoCo arm to a
+randomized fixed target within 50 steps using joint torques. Physics is nominal.
+Signals include Jacobian-transpose position error, joint velocity, and
+Jacobian-transpose task velocity (task_damping). Jacobian-transpose PD and a
+tanh-saturated PD are classical comparisons. Final distance below 0.05 m is success."""
+ENVIRONMENT_DESCRIPTIONS["panda_reach"] = """Move the Panda end-effector to a
+randomized stationary Cartesian goal with nominal stock physics. Actions are
+three normalized end-effector displacements with a blocked gripper. The horizon
+is 150 steps (6 seconds), shared with MovingSlow. Signals include position error,
+integral error and negative end-effector velocity. Native goal success ends the
+static task early; MovingSlow must keep running to assess sustained tracking."""
+CONTROL_GOALS["inverted_pendulum"] = CONTROL_GOALS["inverted_pendulum"].replace(
+    "randomized initial conditions and\nbody masses", "randomized initial conditions and nominal masses"
+)
+CONTROL_GOALS["reacher"] = CONTROL_GOALS["reacher"].replace(
+    "randomized targets, initial states, and link masses",
+    "randomized targets and initial states with nominal link masses",
+)
+CONTROL_GOALS["panda_reach"] = """Reach the stationary Cartesian goal within 150
+steps. Finish within the task's distance tolerance. Compare return and success
+against Cartesian P, PD, PI, PID and saturated PD; among successful controllers
+prefer lower action effort and smoother commands. Actions are normalized
+end-effector displacements, not joint torques."""
+ENVIRONMENT_DESCRIPTIONS["panda_push"] += """ Additional waypoint_push is a
+hand-designed stateful helper: align 7 cm behind the cube along the goal direction,
+then push through its rear face; realign if contact geometry is lost. The same
+helper is available to evolved laws and Waypoint Push P/PD baselines."""
+ENVIRONMENT_DESCRIPTIONS["panda_slide"] += """ Additional slide_align,
+slide_strike, slide_retract and slide_damping signals share a hand-designed FSM.
+Align 6 cm behind the puck, strike for 0.24 seconds along a latched goal direction
+with distance-scaled amplitude, then retract upward. Damping is active outside
+the strike. The phase logic and timing are fixed; CEM tunes the signal gains.
+These helpers are equally available to evolved laws and classical baselines."""
+_CONTROLLED_PAIRS = {
+    "inverted_pendulum_pulse": ("inverted_pendulum", """Apply a +5 N horizontal
+force to the cart on control step 250 for exactly one control interval. No other
+physics or initial-state distribution changes. Recover without pole termination;
+the external force is not a controller action and is not charged as actuator effort."""),
+    "reacher_payload": ("reacher", """Add a concentric 1 cm spherical payload at
+the fingertip, with mass 15% of the final arm link's nominal mass. Update mass and
+rotational inertia together. Resets do not accumulate mass. All other dynamics,
+state distributions, observations, action limits and the horizon match the base."""),
+    "panda_reach_moving_slow": ("panda_reach", """The goal follows a slow planar
+orbit from its original sampled position: x amplitude 0.025 m, y amplitude 0.0125 m,
+period 5 seconds. Run all 150 steps, even after touching the target. After a
+10-step warmup, at least 60% of samples must be within 0.05 m and the final sample
+must also be inside. goal_velocity is measured by finite differences; phase_sin
+and phase_cos use controller time. Feedforward P and Tracking PD are included."""),
+    "panda_push_low_friction": ("panda_push", """Multiply only the table's
+lateral friction by 0.75. Retain the stock cube, table geometry, reset distribution,
+reward, tolerance and 50-step horizon. There is no obstacle and the cube's own
+friction is unchanged. Maintain contact, avoid overshoot and stop the cube at goal."""),
+    "panda_slide_friction_shift": ("panda_slide", """Multiply only the table's
+lateral friction by 1.25. Retain the stock puck friction, geometry, reset
+distribution, reward, tolerance and 50-step horizon. There is no gate. Tune the
+distance-scaled strike to compensate for the changed sliding distance."""),
+}
+for _variant_key, (_base_key, _change) in _CONTROLLED_PAIRS.items():
+    ENVIRONMENT_DESCRIPTIONS[_variant_key] = (
+        ENVIRONMENT_DESCRIPTIONS[_base_key] + "\nVariant: " + _change
+    )
+    CONTROL_GOALS[_variant_key] = CONTROL_GOALS[_base_key] + "\n" + _change
+
+ENVIRONMENT_DESCRIPTIONS["panda_reach_moving_slow_v1"] = (
+    ENVIRONMENT_DESCRIPTIONS["panda_reach_moving_slow"].replace("within 0.05 m", "within 0.01 m")
+    + " Version 1 changes only the tracking/final-position success radius to 0.01 m. "
+    "The orbit, dense reward, 10-step warmup and required 60% tracking rate are unchanged."
+)
+CONTROL_GOALS["panda_reach_moving_slow_v1"] = (
+    CONTROL_GOALS["panda_reach_moving_slow"].replace("within 0.05 m", "within 0.01 m")
+    + " For v1, all tracking milestones and final-position checks use the 0.01 m radius."
+)
+
+
 EOH_OPERATOR_GUIDANCE = (
     (
         "E1",
@@ -565,7 +685,7 @@ def eoh_operator_plan(count: int) -> list[dict[str, object]]:
 def efficiency_goal(elites: list[dict]) -> str:
     """Create quantitative energy/jerk targets from the strongest-success cohort."""
     if not elites:
-        return "No measured reference is available yet; minimize both energy and jerk."
+        return "No reference yet: prioritize SR, then SG; efficiency only breaks ties."
     max_success = max(float(item["metrics"]["success_rate"]) for item in elites)
     reliable = [
         item
@@ -574,13 +694,14 @@ def efficiency_goal(elites: list[dict]) -> str:
     ]
     energy_target = min(float(item["metrics"]["energy"]) for item in reliable)
     jerk_target = min(float(item["metrics"]["jerk"]) for item in reliable)
-    return f"""Energy goal: minimize E = sum(dt * ||u_t||^2); lower is better. Current
-reference among the highest-success structures is E <= {energy_target:.6g}. Jerk goal:
+    return f"""Command effort E = sum(dt * ||u_t||^2); lower is better. Current
+reference among the highest-success structures is E <= {energy_target:.6g}. Action slew diagnostic:
 minimize J = sum(dt * ||(u_t-u_(t-1))/dt||^2); lower means smoother commands and is better.
 Current reference among the highest-success structures is J <= {jerk_target:.6g}. Treat
-these as improvement targets, not hard constraints: never reduce success or materially
-damage return merely to meet them. Seek Pareto improvements; if one structure cannot
-improve everything, propose distinct performance-, energy-, jerk-, and balanced variants."""
+these as diagnostics. Selection is strictly lexicographic: maximize measured SR,
+then minimize SG when available, then maximize the configured secondary utility.
+Never exchange any measured success for return, effort, smoothness or complexity.
+At equal SR and SG, modest return loss may be accepted for better secondary utility."""
 
 
 def fallback_structures(
@@ -588,6 +709,7 @@ def fallback_structures(
     elites: list[dict],
     excluded: set,
     count: int,
+    contract=None,
 ) -> list[GymStructure]:
     """Deterministic local expression mutations when the remote generator returns nothing."""
     elite_sets = [
@@ -614,13 +736,12 @@ def fallback_structures(
     for variant in variants:
         if not variant:
             continue
-        parts = [
-            f"K{index + 1}*tanh({name})" if index % 2 else f"K{index + 1}*{name}"
-            for index, name in enumerate(variant)
-        ]
+        parts = [f"K{index + 1}*{name}" for index, name in enumerate(variant)]
         expression = " + ".join(parts)
         try:
             structure = GymStructure("candidate", expression)
+            if contract is not None:
+                validate_expression(structure, contract)
         except ValueError:
             continue
         if structure.key() in seen:
@@ -632,7 +753,8 @@ def fallback_structures(
     return output
 
 
-def extract_structures(response: str, allowed: tuple[str, ...]) -> list[GymStructure]:
+def extract_structures(response: str, allowed: tuple[str, ...], contract=None,
+                       rejections=None) -> list[GymStructure]:
     text = re.sub(r"```(?:json)?|```", "", response, flags=re.IGNORECASE).strip()
     starts = [index for index in (text.find("["), text.find("{")) if index >= 0]
     if not starts:
@@ -656,11 +778,17 @@ def extract_structures(response: str, allowed: tuple[str, ...]) -> list[GymStruc
                 structure = GymStructure(
                     str(item.get("name", f"proposal_{index}"))[:50], tuple(item["terms"])
                 )
-        except (AttributeError, KeyError, TypeError, ValueError):
+        except (AttributeError, KeyError, TypeError, ValueError) as exc:
+            if rejections is not None:
+                rejections.append({"proposal": index, "reason": str(exc)})
             continue
         try:
             structure.validate(allowed)
-        except ValueError:
+            if contract is not None:
+                validate_expression(structure, contract)
+        except (ValueError, KeyError) as exc:
+            if rejections is not None:
+                rejections.append({"proposal": index, "reason": str(exc)})
             continue
         if structure.key() not in {existing.key() for existing in output}:
             output.append(structure)
@@ -674,7 +802,12 @@ def prompt(
     archive: list[dict],
     count: int,
     generation: int,
+    validation_feedback=None,
 ) -> str:
+    adapters = {**ADAPTERS, **CONTROLLED_VARIANT_ADAPTERS, **GENESIS_ADAPTERS,
+                **LOCOMOTION_ADAPTERS, **MANISKILL_ADAPTERS, **PANDA_GYM_ADAPTERS,
+                **PANDA_VARIANT_ADAPTERS, **ROBOSUITE_ADAPTERS}
+    adapter = adapters[env_name]
     return f"""Generation {generation}: evolve {count} compact feedback-controller laws
 specifically for {env_name}. Treat the environment description below as authoritative.
 
@@ -699,6 +832,15 @@ only when it serves the control goal. Limits: at most 16 structural nodes, depth
 12 distinct K slots.
 
 Allowed signals: {json.dumps(allowed)}
+Signal types, units, signs, frames, ranges, action mapping, zero conditions and memory:
+{json.dumps(adapter.signal_contract.to_dict(), indent=2)}
+The numeric gain values are tuned by CEM, but their units are inferred from the AST.
+Repeated K tokens must share both their numeric value and one consistent unit.
+Addition/min/max require matching units; tanh/sin/cos/exp require dimensionless
+inputs (radians count as dimensionless). Use K*tanh(K2*error), not tanh(error)
+for a dimensional error. Scalar constants broadcast to action channels.
+For legacy contracts marked incomplete, physical units have not been audited.
+
 Best current classical and evolved laws after CEM tuning:
 {json.dumps(elites, indent=2)}
 
@@ -711,8 +853,18 @@ parent. The evolvable genome is only the expression structure, never the numeric
 Prefix every candidate name with its operator code (for example E2_backbone_damping) so
 the variation provenance remains visible in generation logs.
 
-Exact scalar fitness is the environment return. Energy, jerk, success, and
-complexity are reported as diagnostics only and never modify fitness. Infer
+Exact selection is lexicographic: (SR descending, SG ascending when available,
+secondary_score descending). No success decrease can be compensated by any other
+metric. SG is compared only after SR ties exactly. Q is diagnostic only.
+Secondary score is used only after both SR and SG tie; it is not the overall rank.
+Fixed normalization and weights (identical in CEM and outer selection):
+{json.dumps(adapter.objective_config.to_dict(), indent=2)}
+Task-specific SG definition (zero means all success conditions are satisfied):
+{json.dumps(adapter.success_gap_spec, indent=2)}
+Q milestone definition when declared (diagnostic only, never used in selection):
+{json.dumps(adapter.progress_spec, indent=2)}
+Effort is squared command effort, not physical energy in joules. The stored jerk
+column is action slew cost, not mechanical jerk. Infer
 failure modes and trade-offs from the tuned metrics. Mutate/crossover strong
 laws, but also test task-motivated alternatives when the elite has poor success,
 excessive energy, or excessive jerk.
@@ -723,9 +875,11 @@ Previously evaluated laws (never repeat an identical expression):
 Return {count} genuinely novel and diverse laws. Use only allowed signals and avoid
 redundant ones unless their different saturation/scaling has a clear purpose. Before
 choosing each law, reason internally about how its signals and operators serve the control
-goal and address an observed elite failure mode. When count >= 4, include at least one
-performance-focused, energy-focused, jerk-focused, and balanced Pareto proposal; reflect
-that role in each proposal's name. Do not include the internal reasoning in output.
+goal. Prioritize success and success-gap repairs. Efficiency proposals are useful
+only when they preserve SR and SG; do not satisfy arbitrary energy/jerk quotas.
+Do not include the internal reasoning in output.
+Previous parser/type rejections to correct:
+{json.dumps(validation_feedback or [])}
 Return ONLY a JSON array of exactly {count} objects with keys name and expression, where
 expression is a single grammar-compliant string.
 """
@@ -735,7 +889,8 @@ def evaluate_test(adapter, records: list[dict], seeds: list[int]) -> dict[str, d
     output = {}
     for record in records:
         metrics, episodes = evaluate_gym_structure(
-            adapter, record["structure"], np.asarray(record["gains"]), seeds
+            adapter, record["structure"], np.asarray(record["gains"]), seeds,
+            verify_barriers=barrier_spec(adapter.env_id) is not None,
         )
         output[record["label"]] = {
             "metrics": metrics.to_dict(),
@@ -752,6 +907,7 @@ def evaluate_test(adapter, records: list[dict], seeds: list[int]) -> dict[str, d
             ],
             "progress_predicates": [episode.progress_predicates for episode in episodes],
             "diagnostics": [episode.diagnostics for episode in episodes],
+            "barrier_verification": [episode.barrier_verification for episode in episodes],
             "energy": [episode.energy for episode in episodes],
             "jerk": [episode.jerk for episode in episodes],
         }
@@ -901,6 +1057,7 @@ def main() -> None:
         adapter.env_id: (name, adapter)
         for name, adapter in {
             **ADAPTERS,
+            **CONTROLLED_VARIANT_ADAPTERS,
             **GENESIS_ADAPTERS,
             **LOCOMOTION_ADAPTERS,
             **MANISKILL_ADAPTERS,
@@ -967,9 +1124,27 @@ def main() -> None:
         "started_at": started_at.isoformat(),
         "status": "running",
         "requested_environment": args.environment,
+        "protocol_version": PROTOCOL_VERSION,
+        "objective": available_adapters[args.environment][1].objective_config.to_dict(),
+        "signal_contract": available_adapters[args.environment][1].signal_contract.to_dict(),
+        "success_gap": available_adapters[args.environment][1].success_gap_spec,
+        "progress_spec": available_adapters[args.environment][1].progress_spec,
+        "barrier_verification": barrier_spec(available_adapters[args.environment][1].env_id),
+        "evaluation_config": {"train_episodes": args.train_episodes,
+                              "cem_iterations": args.cem_iterations,
+                              "cem_population": args.cem_population},
     }
     if args.resume_run and manifest_path.exists():
-        manifest.update(json.loads(manifest_path.read_text(encoding="utf-8")))
+        previous_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if (previous_manifest.get("protocol_version") != PROTOCOL_VERSION
+                or previous_manifest.get("objective") != json.loads(json.dumps(manifest["objective"]))
+                or previous_manifest.get("signal_contract") != json.loads(json.dumps(manifest["signal_contract"]))
+                or previous_manifest.get("evaluation_config") != manifest["evaluation_config"]
+                or previous_manifest.get("success_gap") != manifest["success_gap"]
+                or previous_manifest.get("progress_spec") != manifest["progress_spec"]
+                or previous_manifest.get("requested_environment") != args.environment):
+            raise ValueError("Cannot resume incompatible law/selection/signal/metric protocol; start a new run")
+        manifest.update(previous_manifest)
         manifest["status"] = "running"
         manifest["resumed_at"] = started_at.isoformat()
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -1028,7 +1203,8 @@ def main() -> None:
             generation_key = str(record["generation"])
             recovered = env_plans.setdefault(generation_key, [])
             recovered_keys = {GymStructure.from_dict(item).key() for item in recovered}
-            for structure in extract_structures(record["response"], adapter.allowed_terms):
+            for structure in extract_structures(record["response"], adapter.allowed_terms,
+                                                adapter.signal_contract):
                 if structure.key() not in recovered_keys and len(recovered) < args.proposals:
                     recovered.append(structure.to_dict())
                     recovered_keys.add(structure.key())
@@ -1088,11 +1264,12 @@ def main() -> None:
                     )
                 print(
                     f"env={env_name} gen={generation} structure={structure.name!r} "
-                    f"score={metrics.score:.4f}",
+                    f"sr={metrics.success_rate:.4f} sg={metrics.sg} q={metrics.q} "
+                    f"return={metrics.episode_return:.4f} secondary_score={metrics.score:.4f}",
                     flush=True,
                 )
             ranked = sorted(
-                evaluated.values(), key=lambda item: item["metrics"].score, reverse=True
+                evaluated.values(), key=lambda item: item["metrics"].selection_key, reverse=True
             )
             generation_output = environment_output / "lawevo" / "generations"
             generation_output.mkdir(parents=True, exist_ok=True)
@@ -1144,10 +1321,14 @@ def main() -> None:
                 ]
                 continue
             elites = [
-                {"structure": item["structure"].to_dict(), "metrics": item["metrics"].to_dict()}
+                {"structure": item["structure"].to_dict(), "metrics": item["metrics"].to_dict(),
+                 "gains": item["gains"].tolist(),
+                 "gain_units": adapter.validate_structure(item["structure"]),
+                 "selection_key": item["metrics"].selection_key}
                 for item in ranked[:6]
             ]
             proposals: list[GymStructure] = []
+            validation_feedback = []
             for attempt in range(1, args.proposal_attempts + 1):
                 archive = [item["structure"].to_dict() for item in ranked] + [
                     proposal.to_dict() for proposal in proposals
@@ -1163,6 +1344,7 @@ def main() -> None:
                             archive,
                             args.proposals - len(proposals),
                             generation + 1,
+                            validation_feedback,
                         ),
                         temperature=0.8,
                         reasoning_effort=reasoning_effort,
@@ -1190,7 +1372,8 @@ def main() -> None:
                 known_keys = set(evaluated) | {proposal.key() for proposal in proposals}
                 fresh = [
                     proposal
-                    for proposal in extract_structures(response, adapter.allowed_terms)
+                    for proposal in extract_structures(response, adapter.allowed_terms,
+                                                       adapter.signal_contract, validation_feedback)
                     if proposal.key() not in known_keys
                 ]
                 proposals.extend(fresh[: args.proposals - len(proposals)])
@@ -1201,6 +1384,7 @@ def main() -> None:
                         "attempt": attempt,
                         "valid_new": len(fresh),
                         "response": response,
+                        "validation_rejections": list(validation_feedback),
                     }
                 )
                 responses_path.write_text(
@@ -1215,6 +1399,7 @@ def main() -> None:
                     elites,
                     set(evaluated),
                     args.proposals,
+                    adapter.signal_contract,
                 )
                 raw_responses.append(
                     {
@@ -1237,7 +1422,7 @@ def main() -> None:
                 json.dumps(generation_plans, indent=2), encoding="utf-8"
             )
 
-        ranked = sorted(evaluated.values(), key=lambda item: item["metrics"].score, reverse=True)
+        ranked = sorted(evaluated.values(), key=lambda item: item["metrics"].selection_key, reverse=True)
         classical_keys = {structure.key() for structure in adapter.classical}
         classical = [item for item in ranked if item["structure"].key() in classical_keys]
         evolved = [item for item in ranked if item["structure"].key() not in classical_keys]
@@ -1250,7 +1435,7 @@ def main() -> None:
             }
             for item in classical
         ]
-        if env_name == "inverted_pendulum":
+        if env_name in ("inverted_pendulum", "inverted_pendulum_pulse"):
             lqr_structure, lqr_gains = inverted_pendulum_lqr()
             comparison_records.append(
                 {"label": "LQR", "structure": lqr_structure, "gains": lqr_gains}
@@ -1262,12 +1447,35 @@ def main() -> None:
                 "gains": best_evolved["gains"],
             }
         )
+        # Select the usable controller on training data, including the baseline
+        # incumbent. The best evolved-only law may be worse and remains a separate
+        # experimental comparison; test outcomes never influence this choice.
+        selected = ranked[0]
+        selected_label = ("Evolved Structure" if selected["structure"].key() not in classical_keys
+                          else selected["structure"].name)
+        if env_name in ("inverted_pendulum", "inverted_pendulum_pulse"):
+            lqr_metrics, _ = evaluate_gym_structure(
+                adapter, lqr_structure, lqr_gains, train_seeds
+            )
+            if lqr_metrics.selection_key > selected["metrics"].selection_key:
+                selected = {"structure": lqr_structure, "gains": lqr_gains,
+                            "metrics": lqr_metrics}
+                selected_label = "LQR"
         test_results = evaluate_test(adapter, comparison_records, test_seeds)
         plot_environment(adapter.env_id, test_results, environment_output / "plot")
         all_results[env_name] = {
             "environment": adapter.env_id,
             "train_seeds": train_seeds,
             "test_seeds": test_seeds,
+            "selected_controller": {
+                "label": selected_label,
+                "structure": selected["structure"].to_dict(),
+                "gains": selected["gains"].tolist(),
+                "train_metrics": selected["metrics"].to_dict(),
+                "selection_key": selected["metrics"].selection_key,
+                "selection_data": "training only; test metrics are reporting only",
+                "test": test_results[selected_label],
+            },
             "best_evolved": {
                 "structure": best_evolved["structure"].to_dict(),
                 "gains": best_evolved["gains"].tolist(),
@@ -1296,6 +1504,12 @@ def main() -> None:
             ],
         }
     protocol = {
+        "protocol_version": PROTOCOL_VERSION,
+        "objective": adapter.objective_config.to_dict(),
+        "signal_contract": adapter.signal_contract.to_dict(),
+        "success_gap": adapter.success_gap_spec,
+        "progress_spec": adapter.progress_spec,
+        "barrier_verification": barrier_spec(adapter.env_id),
         "generations": args.generations,
         "proposals": args.proposals,
         "proposal_attempts": args.proposal_attempts,
@@ -1308,6 +1522,19 @@ def main() -> None:
     }
     for env_name, result in all_results.items():
         environment_output = run_root / result["environment"]
+        barrier_reports = {
+            label: data["barrier_verification"] for label, data in result["test"].items()
+            if any(report is not None for report in data.get("barrier_verification", []))
+        }
+        if barrier_reports:
+            (environment_output / "summary" / "barrier_verification.json").write_text(
+                json.dumps({"method": "sampled controller barrier audit; not a formal certificate",
+                            "selection_affected": False, "controllers": barrier_reports}, indent=2),
+                encoding="utf-8",
+            )
+        (environment_output / "summary" / "selected_controller.json").write_text(
+            json.dumps(result["selected_controller"], indent=2), encoding="utf-8"
+        )
         (environment_output / "classical" / "controllers.json").write_text(
             json.dumps(result["classical_controllers"], indent=2), encoding="utf-8"
         )

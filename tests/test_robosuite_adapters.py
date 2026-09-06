@@ -18,7 +18,7 @@ def test_robosuite_adapter_features_match_osc_action(adapter_key: str) -> None:
 
         features = adapter.features(env, observation, memory, env.dt)
 
-        assert action_dim == 7
+        assert action_dim == getattr(adapter, "action_dim", 7)
         assert set(features) == set(adapter.allowed_terms)
         assert all(np.asarray(value).shape == (action_dim,) for value in features.values())
         assert all(np.isfinite(value).all() for value in features.values())

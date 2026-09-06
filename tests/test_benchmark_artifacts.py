@@ -2,6 +2,8 @@ import json
 import re
 import sys
 
+import pytest
+
 from lawevo.evolve.nvidia_nim import NIMError, NVIDIAChatClient
 
 
@@ -21,7 +23,9 @@ def test_prompt_assigns_all_eoh_variation_operators() -> None:
         assert f'"operator": "{operator}"' in text
     assert "never the numeric gains" in text
     assert "Prefix every candidate name with its operator code" in text
-    assert "Exact scalar fitness is the environment return" in text
+    assert "Exact selection is lexicographic" in text
+    assert "No success decrease can be compensated" in text
+    assert "Fixed normalization and weights" in text
 
 
 def test_timestamped_environment_artifact_layout(tmp_path, monkeypatch) -> None:
@@ -77,6 +81,33 @@ def test_timestamped_environment_artifact_layout(tmp_path, monkeypatch) -> None:
     assert (environment / "summary" / "metrics_summary.csv").is_file()
     assert (environment / "summary" / "rollout_metrics.csv").is_file()
     assert (environment / "summary" / "results.json").is_file()
+    audit = json.loads((environment / "summary" / "barrier_verification.json").read_text())
+    assert not audit["selection_affected"]
+    assert audit["controllers"]["LQR"][0]["certified_between_samples"] is False
+    selected_path = environment / "summary" / "selected_controller.json"
+    selected = json.loads(selected_path.read_text())
+    assert selected["label"] == "LQR"  # Unsuccessful zero-gain evolved law cannot replace LQR.
+    assert selected["train_metrics"]["success_rate"] == 1.0
+    assert "training only" in selected["selection_data"]
+    assert manifest["signal_contract"]["complete"]
+    assert manifest["objective"]["rank_order"][0] == "success_rate descending"
+
+    # Compatible resumes preserve the chosen law and never request fresh proposals.
+    monkeypatch.setattr(benchmark, "plot_environment", lambda *args: None)
+    monkeypatch.setattr(NVIDIAChatClient, "complete", lambda *a, **k: pytest.fail("resume called LLM"))
+    monkeypatch.setattr(sys, "argv", [*sys.argv, "--resume-run", run_root.name])
+    benchmark.main()
+    assert json.loads(selected_path.read_text())["structure"] == selected["structure"]
+
+    # Old or incompatible protocol files fail before they are overwritten.
+    manifest_path = run_root / "run_manifest.json"
+    bad_manifest = json.loads(manifest_path.read_text())
+    bad_manifest["protocol_version"] = "old-return-only"
+    manifest_path.write_text(json.dumps(bad_manifest))
+    before = manifest_path.read_bytes()
+    with pytest.raises(ValueError, match="incompatible"):
+        benchmark.main()
+    assert manifest_path.read_bytes() == before
 
 
 def test_llm_failure_falls_back_without_stopping_run(tmp_path, monkeypatch) -> None:

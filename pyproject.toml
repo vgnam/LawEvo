@@ -26,6 +26,9 @@ benchmarks = [
 [tool.setuptools.packages.find]
 include = ["lawevo*"]
 
+[tool.setuptools.package-data]
+"lawevo.pid" = ["assets/*.urdf"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

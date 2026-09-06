@@ -5,6 +5,199 @@ interpretable robot controllers and control-barrier functions (CBFs). It combine
 outer loop that proposes compact symbolic controller structures with a numerical inner
 loop that optimizes every gain under an equal evaluation budget.
 
+## Robosuite Panda: Lift, DoorUnlocked, Wipe
+
+Three additional LawEvo adapter IDs are available with the existing benchmark CLI
+(robosuite 1.5.2 is included in the `benchmarks` extra):
+
+```powershell
+py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteLiftNominal-v0
+py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteDoorUnlocked-v0
+py -m experiments.gymnasium_classical_benchmarks --environment RobosuiteWipe-v0
+```
+
+These IDs belong to the LawEvo CLI, not `gymnasium.make`. Existing
+`RobosuiteLift-v0`, Stack, NutAssembly and latched Door adapters remain available.
+The new Lift uses stock mass / inertia without the legacy adapter's added mass
+jitter. Door uses the native `use_latch=False` option. Wipe retains stock dirt,
+friction, reward and early termination rules. Reset seeds are applied to the
+generator shared by scene samplers, without replacing its object reference.
+
+| Adapter | Horizon at 20 Hz | Baselines | Final success / SG |
+| --- | --- | --- | --- |
+| LiftNominal | 300 | Staged OSC P, PD, PID | Native cube height > table + 0.04 m; normalized height deficit / 0.04 m |
+| DoorUnlocked | 300 | Staged OSC P, PD, PID | Native positive hinge angle > 0.3 rad; angle deficit / 0.3 rad |
+| Wipe | 500 | Waypoint Wipe P, PD, PID | Native all markers wiped; fraction of markers still dirty |
+
+SG is clipped to [0,1]; strict height / angle boundary failures retain a minimum
+gap of 1e-12. Episode success is exactly SG=0. Q averages three milestones:
+Lift (near cube once, native grasp once, final success), Door (near handle once,
+half-open once, final success), Wipe (some cleaned, half cleaned, all cleaned).
+Return, SR, SG, Q, integrated squared action and action slew are exported through
+the existing reports. Selection remains SR first, then SG, then secondary utility;
+Q does not select controllers. Secondary reference scales are horizon for return,
+10 for command effort and 100 for action slew.
+
+All three use fixed OSC_POSE, kp=150 and damping ratio=1. Actions are normalized
+world-frame delta pose commands (0.05 m translation / 0.5 rad rotation), not
+torques. Lift / Door have seven channels including gripper; Wipe has six and a
+non-actuated wiping tool. Signals are dimensionless after explicit normalization,
+with complete formula, shape, sign, zero-condition and memory contracts in prompts.
+
+Baseline and evolved laws share hand-written helpers: Lift approach/close/lift,
+Door approach/close/hinge-tangent tracking, and Wipe a nearest-unwiped-marker
+waypoint scheduler. Wipe uses simulator marker positions and wipe flags, holds
+the tool face horizontal, and presses through a 3 mm downward position offset;
+it does not implement force feedback. Helper complexity is not counted in AST
+size. This suite evaluates feedback around those helpers, not discovery of the
+entire manipulation strategy.
+
+Initial untuned P smoke rollouts achieved Lift and Wipe success on seed 31.
+Door's untuned baseline did not succeed on that seed. These are integration checks,
+not a measured success-rate claim; use the normal CEM and held-out evaluation to
+assess baseline strength, especially Door.
+
+## Controller barrier audit for the ten-task suite
+
+Test evaluation automatically audits all baseline and evolved controllers for
+InvertedPendulum/Pulse, Reacher/Payload, PandaReach/MovingSlow,
+PandaPush/LowFriction and PandaSlide/FrictionShift. Reports are embedded in test
+results and written to `summary/barrier_verification.json`. The selected
+controller's report is also carried in its `test` record. Existing training
+selection stays SR -> SG -> secondary utility; the audit does not rerank,
+filter, modify actions, or add rollouts. It checks existing test trajectories.
+
+`ControllerBarrierVerifier` is a **sampled executed-controller audit**, separate
+from the existing model-based `BarrierVerifier` (which tests CBF feasibility).
+Neither name means the ten-task controller has a global stability certificate.
+
+| Pair | Barrier envelope |
+| --- | --- |
+| InvertedPendulum / Pulse | h=1-(theta/0.2 rad)^2, native upright episode boundary |
+| Reacher / Payload | Per-joint h=1-(qdot/20 rad/s)^2; 20 rad/s is a declared engineering choice, not a native joint limit |
+| PandaReach / MovingSlow | Seven arm joint position ranges read from the robot model |
+| PandaPush / LowFriction | Arm joint ranges plus object AABB inside table AABB in xy, and object top above table top |
+| PandaSlide / FrictionShift | Same checks, using Slide's actual larger table geometry |
+
+Joint-position barriers use h=1-((q-midpoint)/half_range)^2. Table edge margins
+are divided by table width; the fall margin is divided by 0.1 m. These are
+restricted audit envelopes, not full robot safety specifications. In particular,
+they do not establish collision freedom, acceptable force, task success or
+robustness to disturbances beyond the simulated trajectory.
+
+At each control-step endpoint the audit checks h>=-1e-6 and the discrete residual
+`h_next - exp(-5*dt)*h >= -1e-6` for constraints whose previous state was inside
+the envelope. The decay rate 5/s is fixed, not tuned after observing failures.
+A negative residual can occur **without leaving the envelope**; the JSON reports
+those separately. It also checks initial margins, raw action NaN/Inf before
+replacement, finite signals and action shape (including legal scalar broadcast).
+Action clipping is counted separately and is not by itself a failure.
+
+Reports include seed, step, first failure, minimum margin/residual and
+`certified_between_samples=false`. No substep or unseen-state guarantee is claimed.
+The normal evaluator's numerical fallback remains in place; the audit exposes
+its use instead of silently treating it as verified behavior.
+
+Audit an already saved controller without rerunning CEM or calling an LLM:
+
+```powershell
+py -m experiments.verify_controller --environment Reacher-v5 --controller "results/<run>/Reacher-v5/summary/selected_controller.json" --episodes 30 --output "results/reacher_barrier_audit.json"
+```
+
+Choose the matching environment explicitly (saved law files do not always carry
+the environment ID). Default audit seeds start at 90000; `--seed` changes that.
+If you use audit outcomes to redesign or select laws, treat those seeds as
+validation data and reserve new seeds for the final test.
+
+## Three lightweight custom Panda contact tasks
+
+These LawEvo CLI adapters use panda-gym's Panda robot and PyBullet DIRECT with
+state observations, simple collision geometry and no image rendering. They
+reuse the existing `benchmarks` dependencies; no new simulator is required.
+
+```powershell
+py -m experiments.gymnasium_classical_benchmarks --environment LawevoPandaDrawer-v0
+py -m experiments.gymnasium_classical_benchmarks --environment LawevoPandaPlanarWipe-v0
+py -m experiments.gymnasium_classical_benchmarks --environment LawevoPandaPegInsertionEasy-v0
+```
+
+These are custom tasks, not stock Panda-Gym environments or `gymnasium.make`
+registrations. All run for 150 control steps at 25 Hz (20 physics substeps per
+action), with seeded task placement and fixed physics. Success does not end an
+episode early. Each has P, PD and PID structures tuned by the existing equal-budget
+CEM, complete typed signal contracts and SR/SG/Q/return/effort/action-slew output.
+Selection stays SR -> SG -> secondary utility. No full CEM/LLM training was run
+as part of integration.
+
+| Task | Physical scene and task success | Fixed baseline support |
+| --- | --- | --- |
+| Drawer | Passive prismatic drawer, travel 0–0.18 m, real gripper contact; final opening >=0.12 m | Approach above handle, descend, close for 0.4 s, pull along -x; no synthetic grasp attachment |
+| PlanarWipe | 50 mm square mounted pad and nine logical dirt markers; all markers must have contacted its footprint while table contact force >0.1 N | Nearest uncleared marker scheduler, approach then 2 mm downward position offset; no force feedback |
+| PegInsertionEasy | Mounted 24 mm diameter peg and four collision walls defining a 36 mm square hole; final radial tip error <=4 mm, tip z in [5,40] mm | Fixed downward orientation; align above hole, lower in 5 mm target increments, retry alignment if radial error exceeds 5 mm |
+
+The wipe markers are task-state points rather than particle bodies; clearing
+requires physical pad/table contact and marker inclusion in the pad's actual
+frame. Wipe contact is checked at every physics substep until all markers are
+clean. Drawer checks every substep until first contact is recorded. Afterwards,
+and for Peg throughout, only the final substep's contact force is queried.
+All physics substeps still run. Observations, rewards, progress tracking and
+controller features share one refreshed state snapshot per control step.
+Peg walls have real collision
+geometry; the peg starts mounted, so this task excludes grasp acquisition.
+Pad and peg are attached with physical fixed constraints, not teleported during
+steps. The Panda's internal IK holds a downward orientation and maps normalized
+xyz commands to 0.05 m displacement. Drawer additionally has one gripper channel
+(positive opens, negative closes). Baseline and evolved laws share the same
+privileged state and helper memory; helper complexity is excluded from AST size.
+
+SG is normalized opening deficit for Drawer, fraction of uncleared markers for
+Wipe, and mean normalized lateral/depth/floor deficits for Peg. SG=0 exactly
+matches task success. Q averages two intermediate milestones achieved at any
+point and final success. The exact formulas and normalizers are recorded in the
+run protocol and prompt. Secondary reference scales are 150 for return, 5 for
+command effort, 100 for action slew. Contact force is a diagnostic, not a force
+limit or a safety certificate. The ten-task barrier audit has not been extended
+to these custom scenes.
+
+Real-physics reference rollouts with unit P gains succeeded on seed 31 for all
+three tasks. This confirms feasibility for that seed, not a held-out success-rate
+claim. Tests also check seeded reset, actual wipe contact, peg-wall collision and
+CLI report export. The Drawer URDF is included as package data.
+
+For a short pipeline run, append:
+
+```powershell
+--generations 2 --proposals 2 --cem-iterations 2 --cem-population 8 --train-episodes 2 --test-episodes 5
+```
+
+## MovingSlow v1: 1 cm tracking radius
+
+Use `LawevoPandaReachMovingSlow-v1` for the stricter tracking benchmark:
+
+```powershell
+py -m experiments.gymnasium_classical_benchmarks --environment LawevoPandaReachMovingSlow-v1
+```
+
+Version 1 changes the tracking and final-position radius from 0.05 m to 0.01 m.
+SR, SG and Q use the same new radius. Orbit amplitudes (0.025 m x, 0.0125 m y),
+period (5 s), horizon (150 steps), warmup (10 steps), required tracking rate
+(60%), dense reward, physics, signals and baseline structures remain unchanged.
+The native task's success-distance threshold is also 0.01 m. The sampled joint
+barrier audit supports v1 with the same envelope as v0.
+
+The entire orbit fits inside a 0.025 m ball, so staying at its center can pass
+v0's 0.05 m criterion. This stationary-center trajectory fails v1. This fixes
+that metric loophole; it does not guarantee that well-tuned classical feedback
+will find v1 difficult. `LawevoPandaReachMovingSlow-v0` retains its old definition
+for existing runs. Use a new run with the v1 ID rather than resuming v0 as v1.
+
+Radius validation with frozen gains from `20260906_095324` (no retuning), on
+30 seeds starting at 90000: Task P/PD 27/30, PID 24/30, PI/Saturated PD/
+Feedforward P 30/30. Tracking PD was 0/30 with its previously selected all-zero
+gains, so that row does not establish the capability of a properly tuned tracking
+controller. Full metrics and gains: `results/analysis/moving_slow_v1_baseline_check.json`.
+This is a validation check of the new criterion, not a new training run.
+
 ## Research idea
 
 The central idea is to separate **structure discovery** from **parameter optimization**:
@@ -77,6 +270,113 @@ term-list genome. It provides `to_expression_string()`, a canonical order-insens
 NumPy `evaluate(signals, gains)` and a batched Torch `evaluate_torch(signals, gains)` for
 GPU rollouts, plus both a string parser and a JSON-tree parser. It owns an evaluator on the
 standard pipeline of classical baselines, CEM tuning, and the LLM archive.
+
+## Success-first selection and typed signal contracts
+
+All ten controlled-suite tasks also report Q, the mean fraction of achieved
+progress milestones per episode, averaged over evaluation seeds. Q is diagnostic
+only and does not enter the selection key. The four MuJoCo tasks use three equally
+weighted milestones each:
+
+| Task pair | Q milestones |
+| --- | --- |
+| Reacher / Payload | Ever within 0.10 m of the goal; ever within the 0.05 m success radius; finally within the success radius. All comparisons are strict `<`, on post-step fingertip-target xy distances. |
+| InvertedPendulum / Pulse | Survive the first `ceil(H/2)` steps without termination; survive exactly H steps without termination; finish with absolute pole angle strictly below 0.1 rad. |
+
+For these four tasks, each episode has Q in `{0, 1/3, 2/3, 1}`, and Q=1 iff
+the episode succeeds. Reacher's near radius is twice its success tolerance so
+subclasses with a different tolerance stay consistent. Reaching briefly and then
+drifting away earns 2/3; falling after the halfway milestone does not erase that
+milestone. No samples means no milestones achieved. Existing Panda Q definitions
+are retained. The new milestones are declared in `progress_spec` and included in
+prompts, manifests and result protocols; resume rejects a missing or changed
+definition for the four affected tasks. An already-running process must be
+restarted in a new run to load the new Q definitions.
+
+All ten tasks in the controlled suite define Success Gap (SG). For each episode,
+SG is the mean of its normalized constraint violations in [0,1]; the reported
+aggregate SG is the mean over evaluation seeds. Episode SG is exactly zero iff
+that episode succeeds. Aggregate SG is zero iff all evaluated episodes succeed.
+
+| Task pair | Per-episode violations averaged into SG |
+| --- | --- |
+| InvertedPendulum / Pulse | Survival deficit `max((H-steps)/H, 1/H if terminated else 0)` and final-angle excess above 0.1 rad divided by 0.1 rad; each clipped to [0,1] |
+| Reacher / Payload | Final fingertip-target xy distance excess above 0.05 m divided by 0.20 m, clipped to [0,1] |
+| PandaReach | Final hand-goal distance excess above the task tolerance divided by 0.15 m, clipped to [0,1] |
+| PandaReach MovingSlow | Post-warmup tracking-rate shortfall below 0.6 divided by 0.6, and final distance excess above 0.05 m divided by 0.15 m; each clipped to [0,1] |
+| PandaPush / LowFriction | Final object-goal distance excess above the task tolerance divided by 0.20 m, clipped to [0,1] |
+| PandaSlide / FrictionShift | Same position-gap normalization as Push (0.20 m), preserving the existing Panda metric |
+
+The MuJoCo tasks keep their original strict final bounds (`angle < 0.1`,
+`distance < 0.05`). At an exact boundary their gap has a positive floor of 1e-12,
+so failure cannot be mistaken for zero gap. Termination on the last cart-pole
+step also has a positive survival violation. Panda bounds remain inclusive as
+in the existing benchmark. Reacher's criterion remains final position only;
+no new velocity, survival or settling requirement is introduced. The SG formulas
+and constants are included in the LLM prompt, run manifest and result protocol.
+Runs created before protocol `success-first-typed-sg-v2` must be started afresh
+because their cached rankings may omit SG.
+
+The Gymnasium/Panda benchmark (`experiments.gymnasium_classical_benchmarks.py`)
+uses the exact lexicographic key `(success_rate, -sg, secondary_score)`, descending.
+A lower measured SR can never win through return, effort, smoothness or simplicity.
+SG is compared only when SR ties exactly; if a task has no SG, that coordinate is
+neutral. Q remains a diagnostic. There is no SR threshold, tolerance bucket or
+weighted success penalty. This is a guarantee about selection on the evaluated
+training seeds, not a guarantee of unchanged success on unseen seeds.
+
+The same key is used by both CEM paths, best-gain retention, outer elite selection,
+and final controller selection. `score` in JSON/CSV is now **secondary utility**,
+not return and not the overall ordering. The secondary utility is:
+
+```text
+r = 0.5 + atan(return / return_scale) / pi
+cost(x, scale) = x / (x + scale)
+secondary_score = 0.60*r - 0.20*cost(effort, effort_scale)
+                 - 0.15*cost(slew, slew_scale) - 0.05*cost(nodes, 16)
+```
+
+Scales are fixed per task family in `lawevo/pid/objective.py`; a base and its
+controlled variant share the same scales. Defaults are initial engineering
+settings, not calibrated optimal weights. They never depend on the current
+population or test outcomes. Both scales and weights are saved in each manifest.
+The legacy `energy` column means integrated squared action (command effort), and
+`jerk` means integrated squared action slew; neither denotes measured joules or
+mechanical jerk for Panda displacement commands.
+
+`summary/selected_controller.json` is the usable controller selected on training
+metrics, including classical incumbents and nominal LQR where applicable.
+`lawevo/best_controller.json` remains the best **evolved-only** comparison; it may
+be worse than the selected baseline. Test metrics are reported only and never used
+to select either controller.
+
+The five base tasks and five controlled variants have complete signal contracts
+in `lawevo/pid/signal_schema.py`. Each records semantic category, scalar/vector
+shape, SI units, formula/sign, coordinate frame, action mapping, zero conditions,
+bounds (or explicitly no adapter clipping), and hand-designed memory/phase logic.
+Runtime feature shapes are checked at the first step. The expression checker
+infers metre/second exponents for all gains jointly; angles retain their semantic
+category but radians are dimensionless for SI checks. It supports scalar broadcast,
+requires compatible units for sums/min/max, and requires dimensionless inputs to
+`tanh/sin/cos/exp`. The output is a normalized actuator command, not a measured force.
+For example, `K1*goal_error + K2*eef_damping` is valid with different gain units,
+whereas `K1*(goal_error + eef_damping)` is invalid. A literal zero is unit-polymorphic.
+Where unit equations are underdetermined, the checker reports one consistent
+assignment and the number of free unit variables; it does not invent unique units.
+Legacy tasks outside this audited suite explicitly report an incomplete contract
+and retain signal-name checks rather than fabricated physical metadata.
+
+Prompts include the contracts, fixed objective configuration, tuned elite gains,
+and inferred gain units. Type/parser rejection reasons are returned on retries.
+The existing phase helpers remain hand-designed, not discovered by the LLM.
+
+Law JSON format 2 treats the AST as authoritative and persists gain-slot identity.
+Text rendering preserves grouping and numeric constants, and archive keys preserve
+parameter sharing while ignoring gain names and commutative operand order.
+Legacy expression-only files remain readable; historical lossy strings cannot be
+assumed to reconstruct the original controller. Resume rejects old protocol files,
+changed signal/objective contracts, and changed training/CEM evaluation budgets
+before overwriting the manifest. Start a new run for those changes.
 
 ## Quick start
 
@@ -717,6 +1017,77 @@ the original methodology.
 - `boundary_margin(axis, bound, margin)` uses a signed bound: nonnegative `bound` means
   `x_axis <= bound`; negative `bound` means `x_axis >= bound`. Use `min` of the two sides
   to describe a bounded interval.
+
+## Controlled classical benchmark: five base tasks and five variants
+
+The benchmark CLI includes the following single-factor pairs. Defaults below
+are starting settings for a pilot, not measured claims about task difficulty.
+
+| Base environment | Variant environment | Only variant change | Classical comparisons |
+| --- | --- | --- | --- |
+| `InvertedPendulum-v5` | `LawevoInvertedPendulumPulse-v0` | +5 N horizontal cart force at step 250, for one control interval | State-feedback PD (`PD`), nominal analytic LQR |
+| `Reacher-v5` | `LawevoReacherPayload-v0` | Centered fingertip payload: 15% of distal link mass, with matching spherical inertia | Jacobian-transpose PD, saturated PD |
+| `PandaReachDense-v3` | `LawevoPandaReachMovingSlow-v0` | Slow planar goal motion, 5 s period, x/y amplitudes 2.5/1.25 cm | Cartesian PD/PID, saturated PD; Feedforward P and Tracking PD on moving goal |
+| `PandaPushDense-v3` | `LawevoPandaPushLowFriction-v0` | Table lateral friction multiplied by 0.75 | Waypoint Push P/PD |
+| `PandaSlideDense-v3` | `LawevoPandaSlideFrictionShift-v0` | Table lateral friction multiplied by 1.25 | Align-Strike-Retract, with optional PD damping |
+
+Existing simple baselines remain available. The variants preserve stock geometry,
+object friction, rewards, action limits and reset distributions. There are no
+extra obstacles or gates in the new friction variants. Reacher and InvertedPendulum
+now keep nominal masses; the existing InvertedPendulum initial-state perturbations
+remain shared by the base and Pulse. The payload changes both mass and rotational
+inertia at construction, never cumulatively at reset. Its mass is relative to
+the distal arm link, not to the small fingertip body.
+
+PandaReach and MovingSlow share a 150-step maximum horizon (6 s). Static Reach
+still ends on native success. MovingSlow runs to the horizon even after reaching
+the moving goal: after a 10-step warmup, at least 60% of samples must be within
+5 cm, and the final sample must also be within 5 cm. The older
+`LawevoPandaReachMoving-v0` also no longer terminates on a transient goal contact.
+These protocol and baseline changes require fresh runs; do not resume old cached
+runs or directly pool their scores with this suite.
+
+The manipulation baselines deliberately expose their hand-designed logic:
+
+- `waypoint_push` aligns the hand 7 cm behind the cube along the goal direction,
+  pushes through the rear face, and realigns after lateral contact geometry is lost.
+- `slide_align`, `slide_strike` and `slide_retract` share an episode-local state
+  machine. It aligns 6 cm behind the puck, strikes for 0.24 s along a latched goal
+  direction with distance-scaled amplitude, then retracts upward. `slide_damping`
+  is active during alignment and retraction only.
+- CEM tunes the baseline expression gains. Waypoint offsets, phase thresholds and
+  strike duration are fixed helper constants, not searched parameters. Evolved
+  expressions receive these same helper signals. Their internal state-machine
+  complexity is not included in symbolic tree node counts.
+- LQR uses the existing nominal MuJoCo linearization and is evaluated on both
+  InvertedPendulum environments. It is an analytic reference, not a CEM-tuned law.
+  All other listed baselines use the common CEM tuning path.
+
+Run one new environment through the usual pipeline (uses the configured LLM endpoint):
+
+```powershell
+py -m experiments.gymnasium_classical_benchmarks --environment LawevoPandaSlideFrictionShift-v0
+```
+
+Run all ten in PowerShell:
+
+```powershell
+$taskEnvironments = @(
+    'InvertedPendulum-v5', 'LawevoInvertedPendulumPulse-v0',
+    'Reacher-v5', 'LawevoReacherPayload-v0',
+    'PandaReachDense-v3', 'LawevoPandaReachMovingSlow-v0',
+    'PandaPushDense-v3', 'LawevoPandaPushLowFriction-v0',
+    'PandaSlideDense-v3', 'LawevoPandaSlideFrictionShift-v0'
+)
+foreach ($taskEnvironment in $taskEnvironments) {
+    py -m experiments.gymnasium_classical_benchmarks --environment $taskEnvironment
+    if ($LASTEXITCODE -ne 0) { throw "Benchmark failed: $taskEnvironment" }
+}
+```
+
+For programmatic use, adapters are exported as `CONTROLLED_VARIANT_ADAPTERS`
+from `lawevo.pid`. Calling an adapter's `make_env()` registers the custom Gymnasium
+IDs lazily. The implementation is in `lawevo/pid/controlled_variants.py`.
 
 ## Layout
 

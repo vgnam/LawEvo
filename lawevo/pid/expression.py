@@ -17,6 +17,7 @@ clipped to the environment action space by the rollout code as before.
 from __future__ import annotations
 
 import re
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 
@@ -183,25 +184,87 @@ def _scale_nodes(node: Node) -> list[Scale]:
     return [*_scale_nodes(node.left), *_scale_nodes(node.right)]
 
 
-def _canonical(node: Node) -> tuple:
+def _canonical(node: Node, slots: Mapping[int, int] | None = None) -> tuple:
     """Order-insensitive structural key: slot indices and sum ordering do not matter."""
     if isinstance(node, Signal):
         return ("sig", node.name)
     if isinstance(node, Const):
-        return ("const", round(node.value, 9))
+        return ("const", node.value)
     if isinstance(node, Scale):
-        return ("scale", _canonical(node.child))
+        # Adjacent scalar multiplications commute, including parser-hoisted gains.
+        labels = []
+        child = node
+        while isinstance(child, Scale):
+            labels.append(-1 if slots is None else slots.get(child.k, -1))
+            child = child.child
+        return ("scale", tuple(sorted(labels)), _canonical(child, slots))
     if isinstance(node, SumOp):
-        return ("sum", tuple(sorted(_canonical(child) for child in node.children)))
+        return ("sum", tuple(sorted(_canonical(child, slots) for child in node.children)))
     if isinstance(node, ProductOp):
-        return ("prod", tuple(sorted(_canonical(factor) for factor in node.factors)))
+        return ("prod", tuple(sorted(_canonical(factor, slots) for factor in node.factors)))
     if isinstance(node, UnaryOp):
-        return ("unary", node.fn, _canonical(node.child))
+        return ("unary", node.fn, _canonical(node.child, slots))
     if node.fn in BINARY_FNS:
         return ("binary", node.fn) + tuple(
-            sorted((_canonical(node.left), _canonical(node.right)))
+            sorted((_canonical(node.left, slots), _canonical(node.right, slots)))
         )
-    return ("binary", node.fn, _canonical(node.left), _canonical(node.right))
+    return ("binary", node.fn, _canonical(node.left, slots), _canonical(node.right, slots))
+
+
+def _sharing_key(root: Node) -> tuple:
+    """Canonicalize shared gains by partition refinement and individualization.
+
+    Single-use gains are independent wildcards. Repeated gains are colored by
+    their global contexts; unresolved cells are individualized. Exact swap
+    automorphisms prune symmetric branches, avoiding factorial enumeration of
+    interchangeable gains in long products.
+    """
+    counts = Counter(node.k for node in _scale_nodes(root))
+    repeated = [slot for slot, count in counts.items() if count > 1]
+    fully_labeled = {slot: index for index, slot in enumerate(repeated)}
+    reference = _canonical(root, fully_labeled)
+
+    def interchangeable(first, second):
+        swapped = dict(fully_labeled)
+        swapped[first], swapped[second] = swapped[second], swapped[first]
+        return _canonical(root, swapped) == reference
+
+    def refine(colors):
+        while True:
+            signatures = {}
+            for slot in colors:
+                marked = dict(colors)
+                marked[slot] = max(colors.values()) + 1
+                signatures[slot] = (colors[slot], _canonical(root, marked))
+            palette = {signature: index for index, signature in enumerate(
+                sorted(set(signatures.values()))
+            )}
+            updated = {slot: palette[signature] for slot, signature in signatures.items()}
+            # Refinement never merges existing cells.
+            if len(set(updated.values())) == len(set(colors.values())):
+                return updated
+            colors = updated
+
+    def search(colors):
+        colors = refine(colors)
+        cells = {}
+        for slot, color in colors.items():
+            cells.setdefault(color, []).append(slot)
+        unresolved = [cell for _, cell in sorted(cells.items()) if len(cell) > 1]
+        if not unresolved:
+            return _canonical(root, colors)
+        candidates = []
+        representatives = []
+        for slot in unresolved[0]:
+            if any(interchangeable(slot, other) for other in representatives):
+                continue
+            representatives.append(slot)
+            individualized = dict(colors)
+            individualized[slot] = max(colors.values()) + 1
+            candidates.append(search(individualized))
+        return min(candidates)
+
+    return search({slot: 0 for slot in repeated})
 
 
 def _render(node: Node, gains: Sequence[float] | None, names: Mapping[int, str]) -> str:
@@ -213,13 +276,19 @@ def _render(node: Node, gains: Sequence[float] | None, names: Mapping[int, str])
     if isinstance(node, Signal):
         return node.name
     if isinstance(node, Const):
-        return f"{node.value:.6g}"
+        return repr(node.value)
     if isinstance(node, Scale):
-        return f"{token_for(node.k)}*{_render(node.child, gains, names)}"
+        child = _render(node.child, gains, names)
+        if isinstance(node.child, SumOp):
+            child = f"({child})"
+        return f"{token_for(node.k)}*{child}"
     if isinstance(node, SumOp):
         return " + ".join(_render(child, gains, names) for child in node.children)
     if isinstance(node, ProductOp):
-        return "*".join(_render(factor, gains, names) for factor in node.factors)
+        return "*".join(
+            f"({_render(factor, gains, names)})" if isinstance(factor, SumOp)
+            else _render(factor, gains, names) for factor in node.factors
+        )
     if isinstance(node, UnaryOp):
         return f"{node.fn}({_render(node.child, gains, names)})"
     return f"{node.fn}({_render(node.left, gains, names)}, {_render(node.right, gains, names)})"
@@ -231,7 +300,7 @@ def _to_tree(node: Node) -> dict[str, object]:
     if isinstance(node, Const):
         return {"op": "const", "value": node.value}
     if isinstance(node, Scale):
-        return {"op": "scale", "child": _to_tree(node.child)}
+        return {"op": "scale", "slot": node.k, "child": _to_tree(node.child)}
     if isinstance(node, SumOp):
         return {"op": "sum", "children": [_to_tree(child) for child in node.children]}
     if isinstance(node, ProductOp):
@@ -259,7 +328,10 @@ def _from_tree(payload: Mapping[str, object]) -> Node:
     if op == "const":
         return Const(float(payload["value"]))  # type: ignore[arg-type]
     if op == "scale":
-        return Scale(-1, _from_tree(_as_mapping(payload["child"], "scale child")))
+        slot = payload.get("slot", -1)
+        if not isinstance(slot, int) or slot < -1:
+            raise ValueError("scale slot must be a nonnegative integer")
+        return Scale(slot, _from_tree(_as_mapping(payload["child"], "scale child")))
     if op == "sum":
         children = payload.get("children")
         if not isinstance(children, Sequence) or isinstance(children, (str, bytes)):
@@ -306,6 +378,8 @@ def _finalize_slots(root: Node, gain_keys: Mapping[int, str] | None = None) -> N
             # Assign this wrapper's slot before walking children (true pre-order)
             # so textual K numbering matches evaluation order.
             key = temp_to_key.get(id(node))
+            if key is None and node.k >= 0:
+                key = f"slot:{node.k}"
             if key is not None and key in key_to_slot:
                 slot = key_to_slot[key]
             else:
@@ -336,6 +410,8 @@ def _validate_tree(root: Node) -> None:
     scales = _scale_nodes(root)
     if not scales:
         raise ValueError("expression requires at least one K gain slot")
+    if len({node.k for node in scales}) > MAX_PARAMS:
+        raise ValueError(f"expression exceeds {MAX_PARAMS} gain slots")
     names: list[str] = []
     _signals(root, names)
     if not names:
@@ -570,12 +646,15 @@ class SymbolicExpression:
     # -- identity -------------------------------------------------------------
 
     def key(self) -> tuple:
-        return ("expr", _canonical(self.root), self.parameter_count)
+        if not hasattr(self, "_key"):
+            self._key = ("expr-v2", _sharing_key(self.root), self.parameter_count)
+        return self._key
 
     # -- serialization --------------------------------------------------------
 
     def to_dict(self) -> dict[str, object]:
         return {
+            "format_version": 2,
             "name": self.name,
             "expression": self.to_expression_string(),
             "tree": _to_tree(self.root),
@@ -587,6 +666,8 @@ class SymbolicExpression:
     @classmethod
     def from_dict(cls, payload: Mapping[str, object]) -> SymbolicExpression:
         name = str(payload.get("name", "structure"))
+        if payload.get("format_version") == 2:
+            return cls(name, _as_mapping(payload["tree"], "tree"))
         if "expression" in payload:
             value = payload["expression"]
             if isinstance(value, str):
@@ -628,6 +709,11 @@ class SymbolicExpression:
         return _render(self.root, list(gains), self._gain_names)
 
     def evaluate(self, signal_values: Mapping[str, object], gains: Sequence[float]) -> np.ndarray:
+        result = self.evaluate_raw(signal_values, gains)
+        return np.nan_to_num(result, nan=0.0, posinf=1e6, neginf=-1e6)
+
+    def evaluate_raw(self, signal_values: Mapping[str, object], gains: Sequence[float]) -> np.ndarray:
+        """Evaluate before NaN/Inf replacement, for controller numerical audits."""
         missing = [signal for signal in self._signals if signal not in signal_values]
         if missing:
             raise ValueError(f"missing signal values: {', '.join(missing)}")
@@ -637,8 +723,7 @@ class SymbolicExpression:
         vector = np.asarray(gains, dtype=float)
         if vector.shape != (self._parameter_count,):
             raise ValueError("gain vector does not match the expression parameter slots")
-        result = self._eval_numpy(self.root, values, vector)
-        return np.nan_to_num(result, nan=0.0, posinf=1e6, neginf=-1e6)
+        return self._eval_numpy(self.root, values, vector)
 
     def _eval_numpy(
         self, node: Node, values: dict[str, np.ndarray], gains: np.ndarray

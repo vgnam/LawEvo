@@ -8,6 +8,7 @@ from lawevo.pid.benchmark import (
     grid_tune,
     simulate_pid,
 )
+from lawevo.pid.controlled_variants import CONTROLLED_VARIANT_ADAPTERS
 from lawevo.pid.expression import (
     BINARY_FNS,
     MAX_DEPTH,
@@ -30,7 +31,9 @@ from lawevo.pid.gym_benchmark import (
 from lawevo.pid.maniskill_benchmark import MANISKILL_ADAPTERS
 from lawevo.pid.panda_gym_benchmark import PANDA_GYM_ADAPTERS
 from lawevo.pid.panda_gym_variants import PANDA_MORPH_STOCK_ADAPTERS, PANDA_VARIANT_ADAPTERS
+from lawevo.pid.panda_light_tasks import PANDA_LIGHT_ADAPTERS
 from lawevo.pid.robosuite_benchmark import ROBOSUITE_ADAPTERS
+from lawevo.pid.robosuite_classical import ROBOSUITE_CLASSICAL_ADAPTERS
 from lawevo.pid.structure import (
     DISTANCE_TERMS,
     HEADING_TERMS,
@@ -41,9 +44,13 @@ from lawevo.pid.structure import (
     tune_cem,
 )
 
+ROBOSUITE_ADAPTERS.update(ROBOSUITE_CLASSICAL_ADAPTERS)
+PANDA_GYM_ADAPTERS.update(PANDA_LIGHT_ADAPTERS)
+
 __all__ = [
     "ADAPTERS",
     "BINARY_FNS",
+    "CONTROLLED_VARIANT_ADAPTERS",
     "DISTANCE_TERMS",
     "GENESIS_ADAPTERS",
     "HEADING_TERMS",
@@ -53,9 +60,11 @@ __all__ = [
     "MAX_NODES",
     "MAX_PARAMS",
     "PANDA_GYM_ADAPTERS",
+    "PANDA_LIGHT_ADAPTERS",
     "PANDA_MORPH_STOCK_ADAPTERS",
     "PANDA_VARIANT_ADAPTERS",
     "ROBOSUITE_ADAPTERS",
+    "ROBOSUITE_CLASSICAL_ADAPTERS",
     "UNARY_FNS",
     "VELOCITY_GATES",
     "ControllerStructure",

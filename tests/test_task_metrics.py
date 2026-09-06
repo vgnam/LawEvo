@@ -78,8 +78,7 @@ def test_q_zero_when_no_progress_and_bounded_by_sg_semantics(adapter_key: str) -
             )
 
 
-def test_selection_score_is_pure_return() -> None:
-    """Selection uses the environment return only; energy/jerk/complexity are diagnostics."""
+def test_secondary_score_rewards_efficiency_at_equal_performance() -> None:
     from lawevo.pid.gym_benchmark import BenchmarkAdapter
 
     class _Adapter(BenchmarkAdapter):
@@ -88,5 +87,5 @@ def test_selection_score_is_pure_return() -> None:
         allowed_terms = ()
 
     adapter = _Adapter()
-    assert adapter.score(12.5, 1e6, 1e6, 999) == 12.5
-    assert adapter.score(-3.0, 0.0, 0.0, 0) == -3.0
+    assert adapter.score(12.5, 1.0, 1.0, 5) > adapter.score(12.5, 1e6, 1e6, 999)
+    assert adapter.score(12.5, 1.0, 1.0, 5) > adapter.score(-3.0, 1.0, 1.0, 5)

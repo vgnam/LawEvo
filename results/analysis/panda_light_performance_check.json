@@ -1,0 +1,20 @@
+{
+  "drawer": {
+    "steps_compared": 450,
+    "before_seconds": 1.2936989977024496,
+    "after_seconds": 1.2202868012245744,
+    "speedup": 1.060159788997312
+  },
+  "wipe": {
+    "steps_compared": 450,
+    "before_seconds": 1.4913054967764765,
+    "after_seconds": 1.2431671975646168,
+    "speedup": 1.1996017106129944
+  },
+  "peg": {
+    "steps_compared": 450,
+    "before_seconds": 0.9864177962299436,
+    "after_seconds": 0.9154216991737485,
+    "speedup": 1.0775556195797802
+  }
+}
