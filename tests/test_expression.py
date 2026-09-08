@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from lawevo.pid.expression import MAX_NODES, SymbolicExpression
+from morphlaw.control.expression import MAX_NODES, SymbolicExpression
 
 
 def test_legacy_terms_build_linear_expression() -> None:
@@ -137,9 +137,9 @@ def test_from_dict_accepts_legacy_terms_payload() -> None:
 
 
 def test_run_episode_uses_expression_law() -> None:
-    from lawevo.pid.gym_benchmark import ADAPTERS, run_episode
+    from morphlaw.control.gym_benchmark import ADAPTERS, run_episode
 
-    adapter = ADAPTERS["pendulum"]
-    law = SymbolicExpression("swing", "K1*tanh(K2*angle) + K3*angular_velocity")
+    adapter = ADAPTERS["reacher"]
+    law = SymbolicExpression("reach", "K1*tanh(K2*jt_error) + K3*joint_velocity")
     episode = run_episode(adapter, law, np.array([2.0, 1.5, -0.4]), seed=7)
     assert np.isfinite(episode.episode_return)

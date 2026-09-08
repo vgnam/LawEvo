@@ -1,14 +1,9 @@
 import numpy as np
 import pytest
 
-from lawevo.pid import ADAPTERS, LOCOMOTION_ADAPTERS, run_episode
+from morphlaw.control import ADAPTERS, LOCOMOTION_ADAPTERS, run_episode
 
-NEW_ADAPTER_KEYS = (
-    "swimmer",
-    "inverted_double_pendulum",
-    "humanoid_standup",
-    "bipedal_walker",
-)
+NEW_ADAPTER_KEYS = ("reacher", "pusher", "hopper", "walker2d", "half_cheetah", "swimmer", "ant")
 
 
 @pytest.mark.parametrize("adapter_key", NEW_ADAPTER_KEYS)
@@ -43,16 +38,11 @@ def test_new_adapter_features_match_action_space(adapter_key: str) -> None:
 
 
 def test_new_adapters_have_task_specific_prompt_context() -> None:
-    from experiments.gymnasium_classical_benchmarks import (
-        CONTROL_GOALS,
-        ENVIRONMENT_DESCRIPTIONS,
-    )
+    from morphlaw.tasks import TASK_DESCRIPTIONS
 
     for adapter_key in NEW_ADAPTER_KEYS:
-        assert adapter_key in ENVIRONMENT_DESCRIPTIONS
-        assert adapter_key in CONTROL_GOALS
-        assert len(ENVIRONMENT_DESCRIPTIONS[adapter_key]) > 200
-        assert len(CONTROL_GOALS[adapter_key]) > 200
+        assert len(TASK_DESCRIPTIONS[adapter_key]) > 200
+
 
 
 def test_swimmer_reset_drift_is_not_success() -> None:

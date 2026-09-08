@@ -1,1 +1,1 @@
-"""Reproducible LawEvo experiment entry points."""
+"""Reproducible MorphLaw experiment entry points."""

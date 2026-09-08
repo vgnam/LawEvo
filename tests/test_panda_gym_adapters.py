@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from lawevo.pid import PANDA_GYM_ADAPTERS, run_episode
+from morphlaw.control import PANDA_GYM_ADAPTERS, run_episode
 
 pytest.importorskip("panda_gym")
 
@@ -36,16 +36,10 @@ def test_panda_gym_adapter_features_match_action_space(adapter_key: str) -> None
 
 
 def test_panda_gym_adapters_have_task_specific_prompt_context() -> None:
-    from experiments.gymnasium_classical_benchmarks import (
-        CONTROL_GOALS,
-        ENVIRONMENT_DESCRIPTIONS,
-    )
+    from morphlaw.tasks import TASK_DESCRIPTIONS
 
     for adapter_key in PANDA_GYM_ADAPTERS:
-        assert adapter_key in ENVIRONMENT_DESCRIPTIONS
-        assert adapter_key in CONTROL_GOALS
-        assert len(ENVIRONMENT_DESCRIPTIONS[adapter_key]) > 200
-        assert len(CONTROL_GOALS[adapter_key]) > 200
+        assert len(TASK_DESCRIPTIONS[adapter_key]) > 200
 
 
 def test_panda_reach_runs_through_common_episode_loop() -> None:

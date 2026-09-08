@@ -1,5 +1,5 @@
-from lawevo.evolve import nvidia_nim
-from lawevo.evolve.nvidia_nim import env_setting, load_env_file, resolve_endpoint
+from morphlaw import llm as nvidia_nim
+from morphlaw.llm import env_setting, load_env_file, resolve_endpoint
 
 
 def test_env_setting_returns_first_non_empty(monkeypatch):

@@ -1,6 +1,6 @@
 import json
 
-from lawevo.evolve.nvidia_nim import NVIDIAChatClient
+from morphlaw.llm import NVIDIAChatClient
 
 
 class _FakeResponse:
