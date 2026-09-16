@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from itertools import pairwise
 from typing import Any
 
 import gymnasium as gym
@@ -49,6 +50,7 @@ class ManiSkillAdapter(BenchmarkAdapter):
     horizon = 50
     fallback_dt = 0.05
     energy_weight, jerk_weight = 0.01, 0.00001
+    reward_mode = "dense"
 
     def make_env(self):
         try:
@@ -77,7 +79,7 @@ class ManiSkillAdapter(BenchmarkAdapter):
             num_envs=1,
             obs_mode="state_dict",
             control_mode="pd_ee_delta_pose",
-            reward_mode="dense",
+            reward_mode=self.reward_mode,
             max_episode_steps=self.horizon,
         )
         return CPUGymWrapper(env)
@@ -201,7 +203,89 @@ class ManiSkillPickCubeAdapter(ManiSkillAdapter):
         }
 
 
+class ManiSkillDrawAdapter(ManiSkillAdapter):
+    """Trace observed outlines with a shared approach/lower/trace scheduler."""
+
+    reward_mode = "sparse"
+    allowed_terms = ("path_error", "normalized_path_error", "integral_path", "eef_damping")
+    classical = (
+        GymStructure("Path P", ("path_error",)),
+        GymStructure("Path PD", ("path_error", "eef_damping")),
+        GymStructure("Path PID", ("path_error", "integral_path", "eef_damping")),
+    )
+
+    def __init__(self, env_id, horizon, *, closed):
+        self.env_id = env_id
+        self.horizon = horizon
+        self.closed = closed
+
+    def make_env(self):
+        from lawevo.pid.cpu_kinematics import accelerate_cpu_jacobians
+
+        env = super().make_env()
+        try:
+            accelerate_cpu_jacobians(env)
+        except Exception:
+            env.close()
+            raise
+        return env
+
+    def reset_controller(self, action_dim):
+        memory = super().reset_controller(action_dim)
+        memory.update(path=None, waypoint=0, phase="approach")
+        return memory
+
+    def features(self, env, observation, memory, dt):
+        del env
+        extra, tcp, velocity, action_dim = self._common(observation, memory, dt)
+        if action_dim != 6:
+            raise ValueError("PandaStick delta-pose control requires six action channels")
+        if memory["path"] is None:
+            if not _as_bool(extra.get("continuous", True)):
+                raise ValueError("Drawing adapter currently supports continuous SVG paths only")
+            vertices = np.asarray(extra["vertices"], dtype=float).reshape(-1, 3)
+            if len(vertices) < 2 or not np.isfinite(vertices).all():
+                raise ValueError("Drawing outline needs at least two finite vertices")
+            if self.closed:
+                vertices = np.vstack((vertices, vertices[0]))
+            points = []
+            for start, end in pairwise(vertices):
+                count = max(1, int(np.ceil(np.linalg.norm(end[:2] - start[:2]) / 0.008)))
+                points.extend(np.linspace(start, end, count, endpoint=False))
+            points.append(vertices[-1])
+            memory["path"] = np.asarray(points)
+            # Native drawing deposits ink below z=0.028 m; canvas top is 0.02 m.
+            memory["path"][:, 2] = 0.025
+        path = memory["path"]
+        target = path[memory["waypoint"]].copy()
+        if memory["phase"] == "approach":
+            target[2] = 0.06
+            if np.linalg.norm(target - tcp) < 0.006:
+                memory["phase"] = "lower"
+                target[2] = 0.025
+        elif np.linalg.norm(target - tcp) < 0.006:
+            memory["phase"] = "trace"
+            memory["waypoint"] = min(memory["waypoint"] + 1, len(path) - 1)
+            target = path[memory["waypoint"]].copy()
+            memory["integral_xyz"][:] = 0
+        error = target - tcp
+        memory["integral_xyz"] = np.clip(memory["integral_xyz"] + error * dt, -0.05, 0.05)
+
+        def translation(value):
+            # No gripper on PandaStick: the final three channels are rotation.
+            return np.concatenate((value, np.zeros(3)))
+
+        return {
+            "path_error": translation(error),
+            "normalized_path_error": translation(_normalized(error)),
+            "integral_path": translation(memory["integral_xyz"]),
+            "eef_damping": translation(-velocity),
+        }
+
+
 MANISKILL_ADAPTERS = {
     "maniskill_push_cube": ManiSkillPushCubeAdapter(),
     "maniskill_pick_cube": ManiSkillPickCubeAdapter(),
+    "maniskill_draw_triangle": ManiSkillDrawAdapter("DrawTriangle-v1", 300, closed=True),
+    "maniskill_draw_svg": ManiSkillDrawAdapter("DrawSVG-v1", 500, closed=False),
 }

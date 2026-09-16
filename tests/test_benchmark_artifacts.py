@@ -65,13 +65,18 @@ def test_timestamped_environment_artifact_layout(tmp_path, monkeypatch) -> None:
 
     benchmark.main()
 
-    run_roots = list((tmp_path / "results").glob("????????_??????"))
-    assert len(run_roots) == 1
-    run_root = run_roots[0]
+    problem_roots = list((tmp_path / "results").glob("*"))
+    assert [path.name for path in problem_roots] == ["InvertedPendulum-v5"]
+    runs = list(problem_roots[0].glob("????????_??????"))
+    assert len(runs) == 1
+    run_root = runs[0]
     manifest = json.loads((run_root / "run_manifest.json").read_text(encoding="utf-8"))
     assert manifest["status"] == "complete"
     assert manifest["requested_environment"] == "InvertedPendulum-v5"
-    environment = run_root / "InvertedPendulum-v5"
+    assert manifest["run_id"] == run_root.name
+    environment = run_root / "data"
+    assert manifest["environment_folders"] == ["data"]
+    assert not (run_root / "InvertedPendulum-v5").exists()
     assert (environment / "classical" / "controllers.json").is_file()
     assert (environment / "lawevo" / "best_controller.json").is_file()
     assert (environment / "lawevo" / "generations" / "generation_000.json").is_file()
@@ -98,6 +103,7 @@ def test_timestamped_environment_artifact_layout(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(sys, "argv", [*sys.argv, "--resume-run", run_root.name])
     benchmark.main()
     assert json.loads(selected_path.read_text())["structure"] == selected["structure"]
+    assert run_root.exists()  # bare timestamp name keeps writing into the same problem folder
 
     # Old or incompatible protocol files fail before they are overwritten.
     manifest_path = run_root / "run_manifest.json"
@@ -148,7 +154,7 @@ def test_llm_failure_falls_back_without_stopping_run(tmp_path, monkeypatch) -> N
 
     benchmark.main()
 
-    run_root = next((tmp_path / "results").glob("????????_??????"))
+    run_root = next((tmp_path / "results" / "InvertedPendulum-v5").glob("????????_??????"))
     manifest = json.loads((run_root / "run_manifest.json").read_text(encoding="utf-8"))
     plan = json.loads((run_root / "state" / "generation_plans.json").read_text())
     assert manifest["status"] == "complete"

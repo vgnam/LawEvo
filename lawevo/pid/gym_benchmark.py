@@ -1394,7 +1394,12 @@ def tune_gym_cem(
     *,
     iterations: int = 5,
     population_size: int = 24,
+    progress=None,
 ) -> tuple[np.ndarray, GymMetrics]:
+    def report(message):
+        if progress is not None:
+            progress(message)
+
     adapter.validate_structure(structure)
     digest = hashlib.sha256(
         json.dumps({"env": adapter.env_id, "law": structure.to_expression_string()}, sort_keys=True).encode()
@@ -1403,10 +1408,12 @@ def tune_gym_cem(
     dimension = structure.parameter_count
     mean, sigma = np.zeros(dimension), np.full(dimension, 3.0)
     if hasattr(adapter, "evaluate_gain_batch"):
+        report("evaluating initial gains")
         best_gains = mean.copy()
         best_metrics = adapter.evaluate_gain_batch(structure, mean[None, :], seeds)[0]
         elite_count = max(2, round(0.2 * population_size))
-        for _ in range(iterations):
+        for iteration in range(iterations):
+            report(f"CEM {iteration + 1}/{iterations}: evaluating batch of {population_size}")
             samples = np.clip(rng.normal(mean, sigma, size=(population_size, dimension)), -20, 20)
             metrics = adapter.evaluate_gain_batch(structure, samples, seeds)
             scored = sorted(
@@ -1421,20 +1428,25 @@ def tune_gym_cem(
                 best_gains, best_metrics = scored[0][0].copy(), scored[0][1]
         return best_gains, best_metrics
 
-    envs = [adapter.make_env() for _ in seeds]
+    envs = []
     try:
+        for index, _seed in enumerate(seeds, 1):
+            report(f"creating training environment {index}/{len(seeds)}")
+            envs.append(adapter.make_env())
         best_gains = mean.copy()
+        report(f"evaluating initial gains across {len(seeds)} episodes")
         best_metrics, _ = evaluate_gym_structure(adapter, structure, best_gains, seeds, envs=envs)
         elite_count = max(2, round(0.2 * population_size))
-        for _ in range(iterations):
+        for iteration in range(iterations):
             samples = np.clip(rng.normal(mean, sigma, size=(population_size, dimension)), -20, 20)
-            scored = [
-                (
-                    sample,
-                    evaluate_gym_structure(adapter, structure, sample, seeds, envs=envs)[0],
+            scored = []
+            for index, sample in enumerate(samples, 1):
+                report(
+                    f"CEM {iteration + 1}/{iterations}: candidate {index}/{population_size} "
+                    f"({len(seeds)} episodes); best_sr={best_metrics.success_rate:.4f}"
                 )
-                for sample in samples
-            ]
+                metrics, _ = evaluate_gym_structure(adapter, structure, sample, seeds, envs=envs)
+                scored.append((sample, metrics))
             scored.sort(key=lambda item: item[1].selection_key, reverse=True)
             elites = np.vstack([item[0] for item in scored[:elite_count]])
             mean = 0.25 * mean + 0.75 * elites.mean(axis=0)

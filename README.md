@@ -109,6 +109,36 @@ the environment ID). Default audit seeds start at 90000; `--seed` changes that.
 If you use audit outcomes to redesign or select laws, treat those seeds as
 validation data and reserve new seeds for the final test.
 
+## Genetic Programming baseline
+
+The [baseline folder](baseline/README.md) provides tree GP with tournament selection,
+subtree crossover/mutation, and the same CEM tuner and evaluation protocol as LawEvo.
+Run `py -m baseline.genetic_programming --environment Reacher-v5 --gp-seed 1`.
+Results are under `results/<env_id>/<timestamp>/data/gp/`; no LLM API is required.
+
+## ManiSkill drawing tasks
+
+```powershell
+py -m experiments.gymnasium_classical_benchmarks --environment DrawTriangle-v1
+py -m experiments.gymnasium_classical_benchmarks --environment DrawSVG-v1
+```
+
+Registry keys are `maniskill_draw_triangle` and `maniskill_draw_svg`.
+Both use PandaStick with six delta-pose action channels (no gripper), state
+observations, native sparse rewards, and P/PD/PID path-following baselines.
+For single-robot CPU drawing, the PyTorch IK fallback uses a cached NumPy
+serial-chain Jacobian. The IK solver, simulation timestep, rewards, and CEM
+budget are unchanged; batched or autograd Jacobian calls retain the upstream implementation.
+Triangle runs for 300 steps; SVG runs for 500 steps using ManiSkill's default
+continuous outline. Install `pip install -e ".[benchmarks]"` to include
+`svgpathtools`, required by DrawSVG.
+
+A shared fixed scheduler approaches above the first vertex, lowers the tip,
+then traces interpolated segments. This helper is not evolved. Native success
+checks coverage and off-outline dots; SVG's native 0.1 m tolerance is loose,
+so success is not a precision-drawing guarantee. SG/Q and audited signal units
+are not defined for these adapters, consistent with the existing ManiSkill tasks.
+
 ## Three lightweight custom Panda contact tasks
 
 These LawEvo CLI adapters use panda-gym's Panda robot and PyBullet DIRECT with
@@ -507,11 +537,11 @@ py -m experiments.gymnasium_classical_benchmarks --environment GenesisPickCube-v
 ```
 
 The reported return, success rate, energy, and jerk are means over the 30 held-out test
-episodes. No output path is required. Every invocation creates a timestamped run with one
-folder per environment:
+episodes. No output path is required. Every invocation creates a timestamped run grouped by
+environment ID (`problem` means `env_id`):
 
 ```text
-results/<YYYYMMDD_HHMMSS>/<environment>/
+results/<env_id>/<YYYYMMDD_HHMMSS>/data/
   classical/
     controllers.json
   lawevo/
@@ -534,14 +564,18 @@ results/<YYYYMMDD_HHMMSS>/<environment>/
 Every generation JSON stores all individuals evaluated in that generation, their optimized
 gains and metrics, the full ranking so far, and the best-so-far individual. The timestamp
 root also contains `run_manifest.json` and a `state/` directory for checkpoints.
+`<env_id>` is the environment ID, for example `DrawSVG-v1`, `DrawTriangle-v1`,
+or `InvertedPendulum-v5`. There is no repeated environment folder under the timestamp.
 
 The same metrics are printed to the console when the run finishes. To resume a timestamped
-run, provide its directory name:
+run, provide its directory name (the bare timestamp also works when the run lives directly
+under a legacy `results/<registry_key>/<timestamp>/` or `results/<timestamp>/`
+location; those existing runs retain their original output layout):
 
 ```powershell
 py -m experiments.gymnasium_classical_benchmarks `
   --environment Ant-v5 `
-  --resume-run 20260827_231500 `
+  --resume-run Ant-v5/20260827_231500 `
   --generations 20 `
   --proposals 6 `
   --cem-iterations 10 `

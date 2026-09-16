@@ -130,7 +130,7 @@ def test_cli_exports_new_light_tasks(key, tmp_path, monkeypatch):
         "--cem-population", "2", "--train-episodes", "1", "--test-episodes", "1",
     ])
     benchmark.main()
-    path, = tmp_path.glob(f"results/*/{adapter.env_id}/summary/results.json")
+    path, = tmp_path.glob(f"results/{adapter.env_id}/*/data/summary/results.json")
     payload = json.loads(path.read_text())
     assert payload["protocol"]["success_gap"] == adapter.success_gap_spec
     assert payload["protocol"]["progress_spec"] == adapter.progress_spec

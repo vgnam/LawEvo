@@ -180,7 +180,7 @@ def test_new_variant_cli_exports_tuned_baselines_and_evolved_law(key, tmp_path, 
         "--train-episodes", "1", "--test-episodes", "1",
     ])
     benchmark.main()
-    summaries = list(tmp_path.glob(f"results/*/{env_id}/summary/results.json"))
+    summaries = list(tmp_path.glob(f"results/{env_id}/*/data/summary/results.json"))
     assert len(summaries) == 1
     result = json.loads(summaries[0].read_text())["result"]
     assert result["environment"] == env_id

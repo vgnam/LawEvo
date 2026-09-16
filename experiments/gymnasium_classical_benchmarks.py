@@ -531,6 +531,26 @@ for _key in ("robosuite_lift_nominal", "robosuite_door_unlocked", "robosuite_wip
         + _adapter.gap_description
     )
 
+for _key in ("maniskill_draw_triangle", "maniskill_draw_svg"):
+    _adapter = MANISKILL_ADAPTERS[_key]
+    ENVIRONMENT_DESCRIPTIONS[_key] = (
+        f"Task: trace the observed outline in ManiSkill {_adapter.env_id} using PandaStick "
+        f"for {_adapter.horizon} steps at 20 Hz with native sparse rewards. Six normalized "
+        "delta-pose channels: xyz translation (0.1 m scale), then rotation (kept zero); "
+        "there is no gripper. State observations expose randomized world-frame vertices. "
+        "A fixed shared scheduler approaches the first point at z=0.06 m, lowers to "
+        "z=0.025 m, then follows segments sampled at <=0.008 m spacing, advancing within "
+        "0.006 m. Triangle closes its third edge; SVG uses the stock continuous outline. "
+        "Signals are path error, unit error, clipped integral, and negative TCP velocity."
+    )
+    CONTROL_GOALS[_key] = (
+        "Maximize final native drawing success before secondary utility. Cover reference "
+        "points while avoiding off-outline ink; merely reaching the goal center is insufficient. "
+        "The approach/lower/trace scheduler is fixed support shared by all controllers, "
+        "not evolved. SG and Q are unavailable. Native SVG success uses a loose 0.1 m "
+        "point threshold; triangle uses 0.025 m. Sparse reward is retained unchanged."
+    )
+
 for _key in ("panda_drawer", "panda_planar_wipe", "panda_peg_insertion_easy"):
     _adapter = PANDA_GYM_ADAPTERS[_key]
     ENVIRONMENT_DESCRIPTIONS[_key] = (
@@ -953,6 +973,7 @@ def write_metric_logs(all_results: dict[str, object], output: Path) -> None:
                         "environment": result["environment"],
                         "controller": controller,
                         "controller_kind": (
+                            "gp" if controller == "Genetic Programming" else
                             "evolved" if controller == "Evolved Structure" else "classical"
                         ),
                         "return": metrics["episode_return"],
@@ -976,9 +997,8 @@ def write_metric_logs(all_results: dict[str, object], output: Path) -> None:
                             "environment": result["environment"],
                             "controller": controller,
                             "controller_kind": (
-                                "evolved"
-                                if controller == "Evolved Structure"
-                                else "classical"
+                                "gp" if controller == "Genetic Programming" else
+                                "evolved" if controller == "Evolved Structure" else "classical"
                             ),
                             "rollout": index + 1,
                             "seed": seed,
@@ -1093,6 +1113,9 @@ def main() -> None:
     )
     parser.add_argument("--request-timeout", type=float, default=600.0)
     parser.add_argument("--generations", type=int, default=20)
+    parser.add_argument("--search-method", choices=("llm", "gp"), default="llm")
+    parser.add_argument("--gp-seed", type=int, default=0)
+    parser.add_argument("--gp-population", type=int, default=24)
     parser.add_argument("--proposals", type=int, default=6)
     parser.add_argument("--proposal-attempts", type=int, default=3)
     parser.add_argument("--cem-iterations", type=int, default=5)
@@ -1107,23 +1130,49 @@ def main() -> None:
     )
     parser.add_argument(
         "--resume-run",
-        help="resume a timestamped run directory under results, for example 20260827_231500",
+        help="resume a run under results/<env_id>/<timestamp>, for example DrawSVG-v1/20260827_231500",
     )
     args = parser.parse_args()
+    if args.gp_seed < 0 or args.gp_population < 1:
+        parser.error("GP seed must be nonnegative and GP population positive")
+    if args.search_method == "gp" and (args.generations < 1 or args.proposals < 1):
+        parser.error("GP requires at least one generation and one proposal per generation")
+    search_folder = "gp" if args.search_method == "gp" else "lawevo"
+    evolved_label = "Genetic Programming" if args.search_method == "gp" else "Evolved Structure"
     if args.genesis_batch_size < 1:
         parser.error("--genesis-batch-size must be positive")
     os.environ["LAWEVO_GENESIS_BATCH_SIZE"] = str(args.genesis_batch_size)
     started_at = datetime.now().astimezone()
-    run_id = args.resume_run or started_at.strftime("%Y%m%d_%H%M%S")
-    run_root = Path("results") / run_id
+    registry_key, selected_adapter = available_adapters[args.environment]
+    problem_name = selected_adapter.env_id
+    if args.resume_run:
+        run_id = Path(args.resume_run).name
+        run_root = Path("results") / problem_name / run_id
+        if not run_root.exists():
+            for legacy in (Path("results") / registry_key / run_id, Path("results") / run_id):
+                if legacy.exists():
+                    run_root = legacy
+                    break
+    else:
+        run_id = started_at.strftime("%Y%m%d_%H%M%S")
+        run_root = Path("results") / problem_name / run_id
     state_dir = run_root / "state"
     state_dir.mkdir(parents=True, exist_ok=True)
+    print(
+        f"Starting {problem_name}; results={run_root}; CEM={args.cem_iterations} iterations "
+        f"x {args.cem_population} candidates x {args.train_episodes} episodes per controller",
+        flush=True,
+    )
     manifest_path = run_root / "run_manifest.json"
     manifest = {
         "run_id": run_id,
         "started_at": started_at.isoformat(),
         "status": "running",
         "requested_environment": args.environment,
+        "search_method": args.search_method,
+        "search_config": ({"seed": args.gp_seed, "population": args.gp_population,
+                           "proposals": args.proposals, "version": 1}
+                          if args.search_method == "gp" else {"temperature": 0.7}),
         "protocol_version": PROTOCOL_VERSION,
         "objective": available_adapters[args.environment][1].objective_config.to_dict(),
         "signal_contract": available_adapters[args.environment][1].signal_contract.to_dict(),
@@ -1137,6 +1186,9 @@ def main() -> None:
     if args.resume_run and manifest_path.exists():
         previous_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         if (previous_manifest.get("protocol_version") != PROTOCOL_VERSION
+                or previous_manifest.get("search_method", "llm") != args.search_method
+                or (args.search_method == "gp"
+                    and previous_manifest.get("search_config") != manifest["search_config"])
                 or previous_manifest.get("objective") != json.loads(json.dumps(manifest["objective"]))
                 or previous_manifest.get("signal_contract") != json.loads(json.dumps(manifest["signal_contract"]))
                 or previous_manifest.get("evaluation_config") != manifest["evaluation_config"]
@@ -1148,18 +1200,19 @@ def main() -> None:
         manifest["status"] = "running"
         manifest["resumed_at"] = started_at.isoformat()
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    api_key = env_setting("OPENAI_API_KEY", "NVIDIA_API_KEY") or getpass.getpass("API key: ")
-    if not api_key:
-        raise SystemExit("Set OPENAI_API_KEY (or NVIDIA_API_KEY) in .env")
-    client = NVIDIAChatClient(
-        api_key,
-        model=args.model,
-        endpoint=args.base_url,
-        timeout=args.request_timeout,
-    )
+    client = None
+    if args.search_method == "llm":
+        api_key = env_setting("OPENAI_API_KEY", "NVIDIA_API_KEY") or getpass.getpass("API key: ")
+        if not api_key:
+            raise SystemExit("Set OPENAI_API_KEY (or NVIDIA_API_KEY) in .env")
+        client = NVIDIAChatClient(
+            api_key, model=args.model, endpoint=args.base_url, timeout=args.request_timeout,
+        )
     reasoning_effort = args.reasoning_effort
     all_results: dict[str, object] = {}
-    responses_path = state_dir / "nim_responses.json"
+    responses_path = state_dir / (
+        "proposal_events.json" if args.search_method == "gp" else "nim_responses.json"
+    )
     cache_path = state_dir / "evaluation_cache.json"
     plans_path = state_dir / "generation_plans.json"
     raw_responses: list[dict] = (
@@ -1180,11 +1233,17 @@ def main() -> None:
 
     env_name, adapter = available_adapters[args.environment]
     adapters = {env_name: adapter}
-    manifest["environment_folders"] = [adapter.env_id for adapter in adapters.values()]
+    # Preserve the output location when resuming an existing legacy run.
+    data_folder = (
+        selected_adapter.env_id
+        if args.resume_run and (run_root / selected_adapter.env_id).is_dir()
+        else "data"
+    )
+    manifest["environment_folders"] = [data_folder]
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     for env_index, (env_name, adapter) in enumerate(adapters.items()):
-        environment_output = run_root / adapter.env_id
-        for child in ("classical", "lawevo", "plot", "summary"):
+        environment_output = run_root / data_folder
+        for child in ("classical", search_folder, "plot", "summary"):
             (environment_output / child).mkdir(parents=True, exist_ok=True)
         train_seeds = [
             10_000 * (env_index + 1) + index for index in range(args.train_episodes)
@@ -1237,12 +1296,25 @@ def main() -> None:
                     gains = np.asarray(cached["gains"], dtype=float)
                     metrics = GymMetrics(**cached["metrics"])
                 else:
+                    tuning_started = time.monotonic()
+
+                    def tuning_progress(
+                        message, env_id=adapter.env_id, gen=generation,
+                        name=structure.name, started=tuning_started,
+                    ):
+                        print(
+                            f"env={env_id} gen={gen} structure={name!r} "
+                            f"elapsed={time.monotonic() - started:.1f}s {message}",
+                            flush=True,
+                        )
+
                     gains, metrics = tune_gym_cem(
                         adapter,
                         structure,
                         train_seeds,
                         iterations=args.cem_iterations,
                         population_size=args.cem_population,
+                        progress=tuning_progress,
                     )
                 evaluated[structure.key()] = {
                     "structure": structure,
@@ -1271,7 +1343,7 @@ def main() -> None:
             ranked = sorted(
                 evaluated.values(), key=lambda item: item["metrics"].selection_key, reverse=True
             )
-            generation_output = environment_output / "lawevo" / "generations"
+            generation_output = environment_output / search_folder / "generations"
             generation_output.mkdir(parents=True, exist_ok=True)
             (generation_output / f"generation_{generation:03d}.json").write_text(
                 json.dumps(
@@ -1320,6 +1392,23 @@ def main() -> None:
                     for record in cached_by_generation[generation + 1]
                 ]
                 continue
+            if args.search_method == "gp":
+                from baseline.genetic_programming import propose
+
+                current = propose(
+                    adapter, ranked, set(evaluated), args.proposals,
+                    seed=args.gp_seed, generation=generation + 1,
+                    population_size=args.gp_population,
+                )
+                raw_responses.append({
+                    "environment": env_name, "generation": generation + 1,
+                    "search_method": "gp", "seed": args.gp_seed,
+                    "valid_new": len(current), "operators": [law.name for law in current],
+                })
+                responses_path.write_text(json.dumps(raw_responses, indent=2), encoding="utf-8")
+                env_plans[str(generation + 1)] = [law.to_dict() for law in current]
+                plans_path.write_text(json.dumps(generation_plans, indent=2), encoding="utf-8")
+                continue
             elites = [
                 {"structure": item["structure"].to_dict(), "metrics": item["metrics"].to_dict(),
                  "gains": item["gains"].tolist(),
@@ -1346,7 +1435,7 @@ def main() -> None:
                             generation + 1,
                             validation_feedback,
                         ),
-                        temperature=0.8,
+                        temperature=0.7,
                         reasoning_effort=reasoning_effort,
                     )
                 except NIMError as exc:
@@ -1442,7 +1531,7 @@ def main() -> None:
             )
         comparison_records.append(
             {
-                "label": "Evolved Structure",
+                "label": evolved_label,
                 "structure": best_evolved["structure"],
                 "gains": best_evolved["gains"],
             }
@@ -1451,7 +1540,7 @@ def main() -> None:
         # incumbent. The best evolved-only law may be worse and remains a separate
         # experimental comparison; test outcomes never influence this choice.
         selected = ranked[0]
-        selected_label = ("Evolved Structure" if selected["structure"].key() not in classical_keys
+        selected_label = (evolved_label if selected["structure"].key() not in classical_keys
                           else selected["structure"].name)
         if env_name in ("inverted_pendulum", "inverted_pendulum_pulse"):
             lqr_metrics, _ = evaluate_gym_structure(
@@ -1480,7 +1569,7 @@ def main() -> None:
                 "structure": best_evolved["structure"].to_dict(),
                 "gains": best_evolved["gains"].tolist(),
                 "train_metrics": best_evolved["metrics"].to_dict(),
-                "test": test_results["Evolved Structure"],
+                "test": test_results[evolved_label],
             },
             "classical_controllers": [
                 {
@@ -1490,7 +1579,7 @@ def main() -> None:
                     "test": test_results[record["label"]],
                 }
                 for record in comparison_records
-                if record["label"] != "Evolved Structure"
+                if record["label"] != evolved_label
             ],
             "test": test_results,
             "all_structures": [
@@ -1521,7 +1610,7 @@ def main() -> None:
         "prompt_context": "task-specific environment description and control goal",
     }
     for env_name, result in all_results.items():
-        environment_output = run_root / result["environment"]
+        environment_output = run_root / data_folder
         barrier_reports = {
             label: data["barrier_verification"] for label, data in result["test"].items()
             if any(report is not None for report in data.get("barrier_verification", []))
@@ -1538,13 +1627,15 @@ def main() -> None:
         (environment_output / "classical" / "controllers.json").write_text(
             json.dumps(result["classical_controllers"], indent=2), encoding="utf-8"
         )
-        (environment_output / "lawevo" / "best_controller.json").write_text(
+        (environment_output / search_folder / "best_controller.json").write_text(
             json.dumps(result["best_evolved"], indent=2), encoding="utf-8"
         )
-        (environment_output / "lawevo" / "generation_plans.json").write_text(
+        (environment_output / search_folder / "generation_plans.json").write_text(
             json.dumps(generation_plans.get(env_name, {}), indent=2), encoding="utf-8"
         )
-        (environment_output / "lawevo" / "nim_responses.json").write_text(
+        (environment_output / search_folder / (
+            "proposal_events.json" if args.search_method == "gp" else "nim_responses.json"
+        )).write_text(
             json.dumps(
                 [item for item in raw_responses if item.get("environment") == env_name],
                 indent=2,
@@ -1554,7 +1645,8 @@ def main() -> None:
         (environment_output / "summary" / "results.json").write_text(
             json.dumps(
                 {
-                    "model": args.model,
+                    "model": args.model if args.search_method == "llm" else None,
+                    "search_method": args.search_method,
                     "protocol": protocol,
                     "result": result,
                 },
